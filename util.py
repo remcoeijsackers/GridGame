@@ -1,7 +1,16 @@
 import random
 import os
 
+from numpy.lib.shape_base import column_stack
+
 cols = ["A","B","C","D","E","F","G","H","I","J"]
+rows = [i for i in range(10)]
+colsandrows = []
+for col in cols:
+    cl = []
+    for i in range(10):
+        cl.append(col)
+    colsandrows.append(list(zip(rows, cl)))
 
 def placeip(dataframe, placee):
     def cl():

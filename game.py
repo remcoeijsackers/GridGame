@@ -1,6 +1,6 @@
 import numpy as np
 from manager import manager, unitcontroller
-from util import placeip
+from util import placeip, cols, colsandrows
 from state import state
 from objects import player, cell
 
@@ -9,6 +9,8 @@ st = state()
 user = player("P")
 control = unitcontroller()
 placeip(brd.board, user)
+#user.set_loc((1,'A'))
+#control.place(user, "1A", brd.board)
 control.moverange(user, brd.board)
 
 while True:
@@ -47,7 +49,19 @@ while True:
         action = cleaninput(action, "load")
         brd.board = st.load(action)
         #print(user.loc)
-        #nn = brd.board.to_numpy()
+        #for label in brd.board.items():
+        #    for content in brd.board.items():
+        #        print(label, content)
+        df = brd.board
+        #print(df.apply(lambda row: row.astype(str).str.contains('P').any(), axis=1))
+        #mask = np.column_stack([df[col].str.contains("P", na=False) for col in df])
+        #print(df.loc[mask.any(axis=1)])
+        #brd.board.get(player)
+        print(colsandrows)
+        for loclist in colsandrows:
+            for loc in loclist:
+                print(brd.search(loc, "P"))
+            
         print(brd.show())
 
     if "exit" in action:

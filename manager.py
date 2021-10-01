@@ -35,6 +35,18 @@ class manager:
         pr = colsc.get(loc[1])
         contents = self.board.iloc[int(loc[0])][int(pr)]
         print(contents.description)
+        return contents
+    
+    def search(self, loc, item):
+        colsc = dict(zip(cols, list(range(10)))) #for mapping colname to ints
+        pr = colsc.get(loc[1])
+        contents = self.board.iloc[int(loc[0])][int(pr)]
+        #print(str(contents))
+        if item == str(contents):
+            return loc
+        else: 
+            pass
+
 
 class unitcontroller:
     def __init__(self) -> None:
