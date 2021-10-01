@@ -1,4 +1,5 @@
 import random
+import os
 
 cols = ["A","B","C","D","E","F","G","H","I","J"]
 
@@ -24,3 +25,10 @@ def placeclus(dataframe, placee, count):
     loc = colsc.get(placee.loc[0]) - 1
     x =  eval('colsr.get(loc[0]) spread()')
     print(x)
+
+def clearconsole():
+    command = 'clear'
+    if os.name in ('nt', 'dos'):
+        command = 'cls'
+    os.system(command)
+

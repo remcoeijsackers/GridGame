@@ -2,6 +2,8 @@ class cell:
     def __init__(self, name = ".") -> None:
         self.name = name
         self.walkable = True
+        self.description = "a cell on the grid"
+        
     def __repr__(self) -> str:
         return self.name
 
@@ -11,8 +13,9 @@ class cell:
 class unit:
     def __init__(self, args) -> None:
         self.name = args[0]
+        self.description = "{}".format(self.name)
         self.walkrange = 2
-        self.steps = []
+        self.steps = 1
 
     def __str__(self) -> str:
         return self.name
@@ -63,3 +66,4 @@ class player(unit):
     def __init__(self, args) -> None:
         super().__init__(args)
         self.health = 10
+        self.description = "The player"
