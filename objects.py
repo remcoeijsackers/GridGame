@@ -3,7 +3,7 @@ class cell:
         self.name = name
         self.walkable = True
         self.description = "a cell on the grid"
-        
+
     def __repr__(self) -> str:
         return self.name
 
@@ -14,8 +14,9 @@ class unit:
     def __init__(self, args) -> None:
         self.name = args[0]
         self.description = "{}".format(self.name)
-        self.walkrange = 2
+        self.range = 5
         self.steps = 1
+        self.walkable = False
 
     def __str__(self) -> str:
         return self.name
