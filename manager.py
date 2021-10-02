@@ -5,7 +5,7 @@ from pandas.core.frame import DataFrame
 
 
 from grid import grid
-from util import cols, placeip, clearconsole
+from util import cols, placeip, clearconsole, colsandrows
 from state import state
 from objects import cell, unit, map_object, player, scenery, building
 
@@ -37,15 +37,14 @@ class manager:
         print(contents.description)
         return contents
     
-    def search(self, loc, item):
+    def search(self, item):
         colsc = dict(zip(cols, list(range(10)))) #for mapping colname to ints
-        pr = colsc.get(loc[1])
-        contents = self.board.iloc[int(loc[0])][int(pr)]
-        #print(str(contents))
-        if item == str(contents):
-            return loc
-        else: 
-            pass
+        for loclist in colsandrows:
+            for loc in loclist:
+                pr = colsc.get(loc[1])
+                contents = self.board.iloc[int(loc[0])][int(pr)]
+                if item == str(contents):
+                    return loc
 
 
 class unitcontroller:

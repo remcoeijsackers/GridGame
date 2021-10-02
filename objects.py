@@ -27,7 +27,7 @@ class unit:
 
 class map_object:
     def __init__(self) -> None:
-        pass
+        self.name = ""
     def __repr__(self) -> str:
         return self.name
 
