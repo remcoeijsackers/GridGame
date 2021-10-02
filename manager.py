@@ -5,9 +5,9 @@ from pandas.core.frame import DataFrame
 
 
 from grid import grid
-from util import cols, placeip, clearconsole, colsandrows
+from util import cols, placeip, clearconsole, colsandrows, colsc, colsr
 from state import state
-from objects import cell, unit, map_object, player, scenery, building
+from objects import cell, unit, map_object, player, scenery, building, broken_cell
 
 class manager:
     def __init__(self) -> None:
@@ -17,10 +17,13 @@ class manager:
     def show(self) -> DataFrame:
         return self.board
     
+    def modify(self, board) -> None:
+        self.board = board 
+
     def __setup(self):
         #placing units
-        pla = [unit(i) for i in ["E", "E"]]
-        [placeip(self.board, i) for i in pla]
+        #pla = [unit(i) for i in ["E", "E"]]
+        #[placeip(self.board, i) for i in pla]
 
         #placing obstacles
         plb = [building(i) for i in ["B" for i in range(random.randint(1,6))]]
@@ -31,14 +34,13 @@ class manager:
         [placeip(self.board, i) for i in pls]  
 
     def inspect(self, loc):
-        colsc = dict(zip(cols, list(range(10)))) #for mapping colname to ints
         pr = colsc.get(loc[1])
         contents = self.board.iloc[int(loc[0])][int(pr)]
         print(contents.description)
         return contents
     
     def search(self, item):
-        colsc = dict(zip(cols, list(range(10)))) #for mapping colname to ints
+        # loop trough the entire dataframe until there is a match on name, then return the location
         for loclist in colsandrows:
             for loc in loclist:
                 pr = colsc.get(loc[1])
@@ -52,7 +54,6 @@ class unitcontroller:
         pass
 
     def count(self, unit, loc) -> int:
-        colsc = dict(zip(cols, list(range(10)))) #for mapping colname to ints
         z = unit.loc[0], colsc.get(unit.loc[1])
         b = int(loc[0]), colsc.get(loc[1])
         outcome = abs(z[0] - b[0]) + abs(z[1] - b[1])
@@ -60,7 +61,6 @@ class unitcontroller:
        
 
     def place(self, unit, loc, board: DataFrame) -> DataFrame:
-        colsc = dict(zip(cols, list(range(10)))) #for mapping colname to ints
         pr = colsc.get(loc[1])
         ul = colsc.get(unit.loc[1])
         distance = self.count(unit, loc)
@@ -76,8 +76,6 @@ class unitcontroller:
             return board
 
     def move(self, direction, unit, board) -> DataFrame:
-        colsc = dict(zip(cols, list(range(10)))) #for mapping colname to ints
-        colsr = dict(zip(list(range(10)), cols)) # for mapping ints to colname
         y, x = unit.loc[0],unit.loc[1]
         def __moveandclean(y,x):
             board.at[unit.loc[0], unit.loc[1]] = cell() #clean old position
@@ -105,10 +103,36 @@ class unitcontroller:
                 if getattr(board.at[y, x], 'walkable'):
                     __moveandclean(y,x)
         return board
+    
+    def attack(self, direction, unit, board) -> DataFrame:
+        y, x = unit.loc[0],unit.loc[1]
+        def __break(y,x):
+            board.at[y, x] = broken_cell()
+
+        if direction == "up" and y != 0:
+                y -= int(unit.steps)
+                if getattr(board.at[y, x], 'walkable'):
+                    __break(y,x)
+
+        if direction == "down" and y != 9:
+                y += int(unit.steps)
+                if getattr(board.at[y, x], 'walkable'):
+                    __break(y,x)
+
+        if direction == "left" and x != "A":
+                loc = colsc.get(x) - unit.steps
+                x = colsr.get(loc)
+                if getattr(board.at[y, x], 'walkable'):
+                    __break(y,x)
+
+        if direction == "right" and x != "J":
+                loc = colsc.get(x) + unit.steps
+                x = colsr.get(loc)
+                if getattr(board.at[y, x], 'walkable'):
+                    __break(y,x)
+        return board
 
     def moverange(self, unit, board):
-        colsc = dict(zip(cols, list(range(10)))) #for mapping colname to ints
-        colsr = dict(zip(list(range(10)), cols)) # for mapping ints to colname
         y, x = unit.loc[0],unit.loc[1]
         z = y - unit.steps
         p = y + unit.steps

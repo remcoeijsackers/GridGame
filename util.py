@@ -4,7 +4,13 @@ import os
 from numpy.lib.shape_base import column_stack
 
 cols = ["A","B","C","D","E","F","G","H","I","J"]
+
+colsc = dict(zip(cols, list(range(10)))) #for mapping colname to ints
+
+colsr = dict(zip(list(range(10)), cols)) # for mapping ints to colname
+
 rows = [i for i in range(10)]
+
 colsandrows = []
 for col in cols:
     cl = []

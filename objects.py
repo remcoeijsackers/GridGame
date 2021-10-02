@@ -10,6 +10,18 @@ class cell:
     def __str__(self) -> str:
         return self.name
 
+class broken_cell:
+    def __init__(self, name = "x") -> None:
+        self.name = name
+        self.walkable = False
+        self.description = "a broken cell on the grid"
+    
+    def __repr__(self) -> str:
+        return self.name
+
+    def __str__(self) -> str:
+        return self.name
+
 class unit:
     def __init__(self, args) -> None:
         self.name = args[0]

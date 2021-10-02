@@ -9,12 +9,10 @@ st = state()
 user = player("P")
 control = unitcontroller()
 placeip(brd.board, user)
-#user.set_loc((1,'A'))
-#control.place(user, "1A", brd.board)
 control.moverange(user, brd.board)
 
 while True:
-    action = input("Options: move(up/down/left/right) inspect(cell) place(cell) his load(file) \nwhat now?")
+    action = input("Options:\nmove(up/down/left/right), attack(up/down/left/right).\ninspect(cell), place(cell), his, load(file), exit. \nwhat now?")
 
     def cleaninput(action, ip):
         action = action.replace("{} ".format(ip), "")
@@ -26,11 +24,16 @@ while True:
         step = 1
         if len(aclist) > 1:
             step = int(aclist[1])
-        #st.save(brd.move(aclist[0],user))
-        #brd.move(aclist[0],user)
         brd.board = control.move(aclist[0], user, brd.board)
         st.save(brd.board)
         control.moverange(user, brd.board)
+    
+    if "attack" in action:
+        action = cleaninput(action , "attack")
+        brd.board = control.attack(action, user, brd.board)
+        st.save(brd.board)
+        print(brd.show())
+        #control.moverange(user, brd.board)
 
     if "place" in action:
         action = cleaninput(action, "place")
