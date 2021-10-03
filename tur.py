@@ -1,92 +1,221 @@
-"""Memory, puzzle game of number pairs.
+from tkinter import *
+import numpy as np
+from util import colsr
 
-Exercises:
-
-1. Count and print how many taps occur.
-2. Decrease the number of tiles to a 4x4 grid.
-3. Detect when all tiles are revealed.
-4. Center single-digit tile.
-5. Use letters instead of tiles.
-
-"""
-
-from random import shuffle
-from turtle import Turtle, onscreenclick, tracer, update, ontimer, done
-from turtle import setup as setup_turtle
+size_of_board = 600
+number_of_col_squares = 6
+symbol_size = (size_of_board / 6 - size_of_board / 8) / 2
+symbol_thickness = 50
+symbol_X_color = '#EE4035'
+symbol_O_color = '#0492CF'
+Green_color = '#7BC043'
 
 
-tiles = list(range(64))
-state = {'mark': None}
-hide = [True] * 64
+class visual():
+    # ------------------------------------------------------------------
+    # Initialization Functions:
+    # ------------------------------------------------------------------
+    def __init__(self):
+        self.window = Tk()
+        self.window.title('GridGame')
+        self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
+        self.canvas.pack()
+        # Input from user in form of clicks
+        self.window.bind('<Button-1>', self.click)
 
-tt = Turtle()
+        self.initialize_board()
+        self.player_X_turns = True
+        self.board_status = np.zeros(shape=(number_of_col_squares, number_of_col_squares))
+
+        self.player_X_starts = True
+        self.reset_board = False
+        self.gameover = False
+        self.tie = False
+        self.X_wins = False
+        self.O_wins = False
+
+        self.X_score = 0
+        self.O_score = 0
+        self.tie_score = 0
+
+    def mainloop(self):
+        self.window.mainloop()
+
+    def initialize_board(self):
+        for i in range(6):
+            self.canvas.create_line((i + 1) * size_of_board / number_of_col_squares, 0, (i + 1) * size_of_board / number_of_col_squares, size_of_board)
+
+        for i in range(6):
+            self.canvas.create_line(0, (i + 1) * size_of_board / number_of_col_squares, size_of_board, (i + 1) * size_of_board / number_of_col_squares)
+
+    def play_again(self):
+        self.initialize_board()
+        self.player_X_starts = not self.player_X_starts
+        self.player_X_turns = self.player_X_starts
+        self.board_status = np.zeros(shape=(number_of_col_squares, number_of_col_squares))
+
+    # ------------------------------------------------------------------
+    # Drawing Functions:
+    # The modules required to draw required game based object on canvas
+    # ------------------------------------------------------------------
+
+    def draw_O(self, logical_position):
+        logical_position = np.array(logical_position)
+        # logical_position = grid value on the board
+        # grid_position = actual pixel values of the center of the grid
+        grid_position = self.convert_logical_to_grid_position(logical_position)
+        self.canvas.create_oval(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
+                                grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness,
+                                outline=symbol_O_color)
+
+    def draw_X(self, logical_position):
+        grid_position = self.convert_logical_to_grid_position(logical_position)
+        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
+                                grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness,
+                                fill=symbol_X_color)
+        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] + symbol_size,
+                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
+                                fill=symbol_X_color)
+
+    def display_gameover(self):
+
+        if self.X_wins:
+            self.X_score += 1
+            text = 'Winner: Player 1 (X)'
+            color = symbol_X_color
+        elif self.O_wins:
+            self.O_score += 1
+            text = 'Winner: Player 2 (O)'
+            color = symbol_O_color
+        else:
+            self.tie_score += 1
+            text = 'Its a tie'
+            color = 'gray'
+
+        self.canvas.delete("all")
+        self.canvas.create_text(size_of_board / 2, size_of_board / 3, font="cmr 60 bold", fill=color, text=text)
+
+        score_text = 'Scores \n'
+        self.canvas.create_text(size_of_board / 2, 5 * size_of_board / 8, font="cmr 40 bold", fill=Green_color,
+                                text=score_text)
+
+        score_text = 'Player 1 (X) : ' + str(self.X_score) + '\n'
+        score_text += 'Player 2 (O): ' + str(self.O_score) + '\n'
+        score_text += 'Tie                    : ' + str(self.tie_score)
+        self.canvas.create_text(size_of_board / 2, 3 * size_of_board / 4, font="cmr 30 bold", fill=Green_color,
+                                text=score_text)
+        self.reset_board = True
+
+        score_text = 'Click to play again \n'
+        self.canvas.create_text(size_of_board / 2, 15 * size_of_board / 16, font="cmr 20 bold", fill="gray",
+                                text=score_text)
+
+    # ------------------------------------------------------------------
+    # Logical Functions:
+    # The modules required to carry out game logic
+    # ------------------------------------------------------------------
+
+    def convert_logical_to_grid_position(self, logical_position):
+        logical_position = np.array(logical_position, dtype=int)
+        return (size_of_board / 6) * logical_position + size_of_board / 12
+
+    def convert_grid_to_logical_position(self, grid_position):
+        grid_position = np.array(grid_position)
+        print(np.array(grid_position // (size_of_board / number_of_col_squares), dtype=int))
+        return np.array(grid_position // (size_of_board / number_of_col_squares), dtype=int)
+
+    def convert_logical_to_map(self, logical_postion):
+        alp = [i for i in logical_postion]
+        letter = colsr.get(alp[0])
+        map_position = (alp[1], letter)
+        print(map_position)
+        return map_position
+
+    def is_grid_occupied(self, logical_position):
+        if self.board_status[logical_position[0]][logical_position[1]] == 0:
+            return False
+        else:
+            return True
+
+    def is_winner(self, player):
+
+        player = -1 if player == 'X' else 1
+
+        # Three in a row
+        for i in range(6):
+            if self.board_status[i][0] == self.board_status[i][1] == self.board_status[i][2] == player:
+                return True
+            if self.board_status[0][i] == self.board_status[1][i] == self.board_status[2][i] == player:
+                return True
+
+        # Diagonals
+        if self.board_status[0][0] == self.board_status[1][1] == self.board_status[2][2] == player:
+            return True
+
+        if self.board_status[0][2] == self.board_status[1][1] == self.board_status[2][0] == player:
+            return True
+
+        return False
+
+    def is_tie(self):
+
+        r, c = np.where(self.board_status == 0)
+        tie = False
+        if len(r) == 0:
+            tie = True
+
+        return tie
+
+    def is_gameover(self):
+        # Either someone wins or all grid occupied
+        self.X_wins = self.is_winner('X')
+        if not self.X_wins:
+            self.O_wins = self.is_winner('O')
+
+        if not self.O_wins:
+            self.tie = self.is_tie()
+
+        gameover = self.X_wins or self.O_wins or self.tie
+
+        if self.X_wins:
+            print('X wins')
+        if self.O_wins:
+            print('O wins')
+        if self.tie:
+            print('Its a tie')
+
+        return gameover
 
 
-def square(x, y):
-    "Draw white square with black outline at (x, y)."
-    tt.up()
-    tt.goto(x, y)
-    tt.down()
-    tt.color('black', 'white')
-    tt.begin_fill()
-    for count in range(4):
-        tt.forward(50)
-        tt.left(90)
-    tt.end_fill()
 
 
-def index(x, y):
-    "Convert (x, y) coordinates to tiles index."
-    return int((x + 200) // 50 + ((y + 200) // 50) * 8)
+
+    def click(self, event):
+        grid_position = [event.x, event.y]
+        logical_position = self.convert_grid_to_logical_position(grid_position)
+        self.convert_logical_to_map(logical_position)
+
+        if not self.reset_board:
+            if self.player_X_turns:
+                if not self.is_grid_occupied(logical_position):
+                    self.draw_X(logical_position)
+                    self.board_status[logical_position[0]][logical_position[1]] = -1
+                    self.player_X_turns = not self.player_X_turns
+            else:
+                if not self.is_grid_occupied(logical_position):
+                    self.draw_O(logical_position)
+                    self.board_status[logical_position[0]][logical_position[1]] = 1
+                    self.player_X_turns = not self.player_X_turns
+
+            # Check if game is concluded
+            if self.is_gameover():
+                self.display_gameover()
+                # print('Done')
+        else:  # Play Again
+            self.canvas.delete("all")
+            self.play_again()
+            self.reset_board = False
 
 
-def xy(count):
-    "Convert tiles count to (x, y) coordinates."
-    return (count % 8) * 50 - 200, (count // 8) * 50 - 200
-
-
-def tap(x, y):
-    "Update mark and hidden tiles based on tap."
-    spot = index(x, y)
-    mark = state['mark']
-    print(spot)
-
-    if mark is None or mark == spot or tiles[mark] != tiles[spot]:
-        state['mark'] = spot
-    #else:
-    #    hide[spot] = False
-    #    hide[mark] = False
-    #    state['mark'] = None
-
-
-def draw():
-    "Draw image and tiles."
-    tt.clear()
-    tt.goto(0, 0)
-    tt.stamp()
-
-    for count in range(64):
-        if hide[count]:
-            x, y = xy(count)
-            square(x, y)
-
-    mark = state['mark']
-
-    if mark is not None and hide[mark]:
-        x, y = xy(mark)
-        tt.up()
-        tt.goto(x + 2, y)
-        tt.color('black')
-        tt.write(tiles[mark], font=('Arial', 30, 'normal'))
-
-    update()
-    ontimer(draw, 100)
-
-
-#shuffle(tiles)
-setup_turtle(420, 420, 370, 0)
-tt.hideturtle()
-tracer(False)
-onscreenclick(tap)
-draw()
-done()
+game_instance = visual()
+game_instance.mainloop()

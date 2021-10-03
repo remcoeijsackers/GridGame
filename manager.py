@@ -118,6 +118,7 @@ class unitcontroller:
             board.at[unit.loc[0], unit.loc[1]] = cell() #clean old position
             board.at[y, x] = unit
             unit.set_loc((y,x))
+            
         if direction == "up" and y != 0:
                 y -= int(unit.steps)
                 if getattr(board.at[y, x], 'walkable'):
