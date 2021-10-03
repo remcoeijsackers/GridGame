@@ -1,16 +1,18 @@
 import numpy as np
-from manager import manager, unitcontroller
-from util import placeip, cols, colsandrows
+from manager import manager, unitcontroller, placement
+from util import placeip, cols, colsandrows, fullcols
 from state import state
 from objects import player, cell
+import random
 
 brd = manager()   
 st = state()
 user = player("P")
 control = unitcontroller()
+gen = placement(str(random.randint(10000000000, 99999999999)))
 placeip(brd.board, user)
+brd.board = gen.generate(brd.board)
 control.moverange(user, brd.board)
-
 while True:
     action = input("Options:\nmove(up/down/left/right), attack(up/down/left/right).\ninspect(cell), place(cell), his, load(file), exit. \nwhat now?")
 

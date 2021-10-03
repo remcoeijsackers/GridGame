@@ -5,14 +5,51 @@ from pandas.core.frame import DataFrame
 
 
 from grid import grid
-from util import cols, placeip, clearconsole, colsandrows, colsc, colsr
+from util import cols, fullcols, placeip, clearconsole, colsandrows, colsc, colsr, rows
 from state import state
 from objects import cell, unit, map_object, player, scenery, building, broken_cell
+from settings import gridsize
+
+class placement:
+    def __init__(self, seed: str) -> None:
+        self.seed = seed
+        self.coreseed = seed[:len(seed)//2]
+        self.subseed = seed[len(seed)//2:]
+
+    def placeip(self, board, placee):
+        for i,x in list(zip(self.coreseed, self.subseed)):
+            def cl():
+                random.seed(int(i))
+                return random.choice(fullcols[:gridsize])
+            def rc():
+                random.seed(int(x))
+                return random.choice(range(10))
+            r = rc()
+            c = cl()
+            board.at[r, c] = placee
+            placee.set_loc((r,c))
+        return r, c
+
+    def generate(self, board):
+        #placing units
+        #pla = [unit(i) for i in ["E", "E"]]
+        #[placeip(self.board, i) for i in pla]
+
+        #placing obstacles
+        #random.seed(int(self.coreseed))
+        plb = [building(i) for i in ["B" for i in range(random.randint(1,6))]]
+        #[self.placeip(board, i) for i in plb] 
+
+        #placing scenery
+        #random.seed(int(self.subseed))
+        pls = [scenery(i) for i in ["T" for i in range(random.randint(1,6))]]
+        [self.placeip(board, i) for i in pls]  
+        return board
 
 class manager:
     def __init__(self) -> None:
         self.board = grid().setup()
-        self.__setup()
+        #self.__setup()
 
     def show(self) -> DataFrame:
         return self.board
@@ -86,7 +123,7 @@ class unitcontroller:
                 if getattr(board.at[y, x], 'walkable'):
                     __moveandclean(y,x)
 
-        if direction == "down" and y != 9:
+        if direction == "down" and y != max(rows):
                 y += int(unit.steps)
                 if getattr(board.at[y, x], 'walkable'):
                     __moveandclean(y,x)
@@ -114,7 +151,7 @@ class unitcontroller:
                 if getattr(board.at[y, x], 'walkable'):
                     __break(y,x)
 
-        if direction == "down" and y != 9:
+        if direction == "down" and y != max(rows):
                 y += int(unit.steps)
                 if getattr(board.at[y, x], 'walkable'):
                     __break(y,x)
@@ -143,8 +180,8 @@ class unitcontroller:
         zp = [z,p]
         ll = [locx, locx1]
         subboard = board
-        if (y != 0 and y != 9) or (x != "A" and x != "J"):
-            if y != 0 and y != 9:
+        if (y != 0 and y != max(rows)) or (x != "A" and x != "J"):
+            if y != 0 and y != max(rows):
                 # Show to cells the unit can walk
                 for i in zp:
                     # top and bottom
@@ -157,7 +194,7 @@ class unitcontroller:
                         subboard.at[y, i] = cell(name="%")
             print(subboard)
             # clean up the cells
-            if y != 0 and y != 9:
+            if y != 0 and y != max(rows):
                 for i in zp:
                     if isinstance(subboard.at[i, x], cell):
                         subboard.at[i, x] = cell(name=".")

@@ -1,7 +1,7 @@
 import pandas as pd
 from pandas.core.frame import DataFrame
 
-from util import cols 
+from util import cols,gridsize,fullcols
 from objects import cell
 
 class grid:
@@ -10,10 +10,10 @@ class grid:
 
     def setup(self) -> DataFrame:
         grd = []
-        [grd.append(cell()) for i in range(10)]
-        [self.base_grid.append(grd) for i in range(10)]
+        [grd.append(cell()) for i in range(gridsize)]
+        [self.base_grid.append(grd) for i in range(gridsize)]
         
-        df = pd.DataFrame(self.base_grid, columns=cols)
+        df = pd.DataFrame(self.base_grid, columns=fullcols[:gridsize])
         return df
 
 

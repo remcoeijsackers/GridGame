@@ -2,19 +2,21 @@ import random
 import os
 
 from numpy.lib.shape_base import column_stack
+from settings import gridsize
 
 cols = ["A","B","C","D","E","F","G","H","I","J"]
+fullcols = [i for i in "abcdefghijklmnopqrstuvwxyz".upper()]
 
-colsc = dict(zip(cols, list(range(10)))) #for mapping colname to ints
+colsc = dict(zip(fullcols[:gridsize], list(range(gridsize)))) #for mapping colname to ints
 
-colsr = dict(zip(list(range(10)), cols)) # for mapping ints to colname
+colsr = dict(zip(list(range(gridsize)), fullcols[:gridsize])) # for mapping ints to colname
 
-rows = [i for i in range(10)]
+rows = [i for i in range(gridsize)]
 
 colsandrows = []
-for col in cols:
+for col in fullcols[:gridsize]:
     cl = []
-    for i in range(10):
+    for i in range(gridsize):
         cl.append(col)
     colsandrows.append(list(zip(rows, cl)))
 
@@ -22,11 +24,12 @@ def placeip(dataframe, placee):
     def cl():
         return random.choice(cols)
     def rc():
-        return random.choice(range(10))
+        return random.choice(range(gridsize))
     r = rc()
     c = cl()
     dataframe.at[r, c] = placee
     placee.set_loc((r,c))
+    print(r,c)
     return r, c
 
 def placeclus(dataframe, placee, count):
