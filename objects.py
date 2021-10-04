@@ -58,6 +58,9 @@ class building(blockspath):
         self.description = "A house"
     def __str__(self) -> str:
         return self.name
+    def set_loc(self, loc):
+        self.loc = loc
+        return self.loc
 
 class scenery(blockspath):
     def __init__(self, args) -> None:
@@ -67,6 +70,10 @@ class scenery(blockspath):
 
     def __str__(self) -> str:
         return self.name
+
+    def set_loc(self, loc):
+        self.loc = loc
+        return self.loc
 
 class water(scenery):
     def __init__(self, args) -> None:

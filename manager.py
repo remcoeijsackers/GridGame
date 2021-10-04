@@ -28,6 +28,7 @@ class placement:
             c = cl()
             board.at[r, c] = placee
             placee.set_loc((r,c))
+            print(r,c)
         return r, c
 
     def generate(self, board):
