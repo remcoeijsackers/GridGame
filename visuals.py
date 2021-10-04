@@ -236,6 +236,8 @@ class visual():
             self.canvas.delete("all")
             self.play_again()
             self.reset_board = False
+        return mappos
+        
     def place_on_map(self, map_postion, item):
         logical_position = self.convert_map_to_logical(map_postion)
         self.draw_Sq(logical_position)

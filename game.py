@@ -3,7 +3,7 @@ from manager import manager, unitcontroller, placement
 from util import placeip, cols, colsandrows, fullcols
 from state import state
 from objects import player, cell
-#from tur import visual
+from visuals import visual
 import random
 
 brd = manager()   
@@ -11,14 +11,14 @@ st = state()
 user = player("P")
 control = unitcontroller()
 gen = placement(str(random.randint(10000000000, 99999999999)))
-#vis = visual()
+vis = visual()
 
 
 placeip(brd.board, user)
 brd.board = gen.generate(brd.board)
 control.moverange(user, brd.board)
 
-while True:
+def get_input():
     action = input("Options:\nmove(up/down/left/right), attack(up/down/left/right).\ninspect(cell), place(cell), his, load(file), exit. \nwhat now?")
     #vis.mainloop()
     def cleaninput(action, ip):
@@ -62,6 +62,11 @@ while True:
         #for item in brd.board:
         #    item.set_loc(brd.search(item.name))
         print(brd.show())
-
+    vis.window.after(0, get_input)
+    
     if "exit" in action:
+        vis.window.quit()
         st.close()
+
+vis.window.after(0, get_input)
+vis.mainloop()
