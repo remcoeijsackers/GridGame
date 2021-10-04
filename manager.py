@@ -96,19 +96,28 @@ class unitcontroller:
         b = int(loc[0]), colsc.get(loc[1])
         outcome = abs(z[0] - b[0]) + abs(z[1] - b[1])
         return outcome
-       
+    
+    def possible_moves(self, unit, board: DataFrame):
+        for spot in colsandrows:
+            for coord in spot:
+                if self.count(unit, coord) <= unit.range and getattr(board.at[coord[0], coord[1]], 'walkable'):
+                    yield coord
 
     def place(self, unit, loc, board: DataFrame) -> DataFrame:
         pr = colsc.get(loc[1])
         ul = colsc.get(unit.loc[1])
         distance = self.count(unit, loc)
         if distance <= unit.range:
-            print("{} is walking {} steps".format(unit.name, distance))
-            newboard = board
-            newboard.iloc[int(unit.loc[0])][int(ul)] = cell() 
-            newboard.iloc[int(loc[0])][int(pr)] = unit 
-            unit.set_loc((int(loc[0]),loc[1]))
-            return newboard
+            if getattr(board.at[loc[0], loc[1]], 'walkable'):
+                print("{} is walking {} steps".format(unit.name, distance))
+                newboard = board
+                newboard.iloc[int(unit.loc[0])][int(ul)] = cell() 
+                newboard.iloc[int(loc[0])][int(pr)] = unit 
+                unit.set_loc((int(loc[0]),loc[1]))
+                return newboard
+            else:
+                print("{} can't move there".format(unit.name))
+                return board
         else:
             print("{} has max range of {}".format(unit.name, unit.range))
             return board

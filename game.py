@@ -12,7 +12,7 @@ number_of_col_squares = 9
 symbol_size = (size_of_board / number_of_col_squares - size_of_board / 8) / 2
 symbol_thickness = 40
 symbol_X_color = '#EE4035'
-symbol_O_color = '#0492CF'
+symbol_O_color = '#A999CC'
 symbol_Sq_color = '#9363FF'
 symbol_Pl_color = '#E0f9FF'
 Green_color = '#7BC043'
@@ -67,6 +67,7 @@ class visual():
         self.player_X_turns = True
         self.board_status = np.zeros(shape=(number_of_col_squares, number_of_col_squares))
         self.draw_scenery()
+        self.draw_possible_moves()
 
         self.player_X_starts = True
         self.reset_board = False
@@ -108,10 +109,14 @@ class visual():
         things = [enemy_pos, house_pos,tree_pos]
 
         self.draw_Pl(user_pos)
-        
+
         for i in things:
             self.draw_Sq(i)
             self.board_status[i[0]][i[1]] = 1
+    
+    def draw_possible_moves(self):
+        for i in control.possible_moves(user, brd.board):
+            self.draw_dot(self.convert_map_to_logical(i))
 
 
     def play_again(self):
@@ -155,6 +160,14 @@ class visual():
                                 grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
                                 fill=symbol_Pl_color)
     
+    def draw_dot(self, logical_position):
+        logical_position = np.array(logical_position)
+        # logical_position = grid value on the board
+        # grid_position = actual pixel values of the center of the grid
+        grid_position = self.convert_logical_to_grid_position(logical_position)
+        self.canvas.create_oval(grid_position[0] - 1, grid_position[1] - 1,
+                                grid_position[0] + 1, grid_position[1] + 1, width=40,
+                                outline=symbol_O_color)
     
     def clear_cell(self, widget_id):
         self.canvas.delete(widget_id)
@@ -336,6 +349,7 @@ class visual():
         self.canvas.delete("all")
         self.play_again()
         self.draw_scenery()
+        self.draw_possible_moves()
         return mappos
 
     def place_on_map(self, map_postion, item):
