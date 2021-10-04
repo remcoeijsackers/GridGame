@@ -36,7 +36,13 @@ class visual():
 
         self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
         self.canvas.pack(side='left',anchor='nw', fill='x')
+        
         self.ui = Canvas(self.window, bd=1, background='#0492CF')
+        
+        self.loc_label = tk.Label(self.ui, text="loc")
+        self.info_label = tk.Label(self.ui, text="info")
+        self.loc_label.pack(side="top")
+        self.info_label.pack()
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
 
         # Input from user in form of clicks
@@ -60,7 +66,11 @@ class visual():
 
     def mainloop(self):
         self.window.mainloop()
-        
+    
+    def show_loc(self, event):
+        self.loc_label['text'] = event
+        self.info_label['text'] = brd.inspect(event)
+        #tk.Label(self.ui, text = "{}".format(event)).pack(side="right")
 
     def initialize_board(self):
         for i in range(6):
@@ -242,6 +252,9 @@ class visual():
         mappos = self.convert_logical_to_map(logical_position)
         self.convert_map_to_logical(mappos)
         brd.board = control.place(user, mappos, brd.board)
+
+        self.show_loc(mappos)
+
         print(brd.show())
         if not self.reset_board:
             if self.player_X_turns:
