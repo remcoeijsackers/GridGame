@@ -146,7 +146,6 @@ class visual():
         print("logical to map pos: {}".format(map_position))
         return map_position
         
-
     def convert_map_to_logical(self, map_position):
         number = colsc.get(map_position[1])
         logical_position = [number, map_position[0]]
@@ -237,7 +236,7 @@ class visual():
             self.play_again()
             self.reset_board = False
         return mappos
-        
+
     def place_on_map(self, map_postion, item):
         logical_position = self.convert_map_to_logical(map_postion)
         self.draw_Sq(logical_position)
