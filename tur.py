@@ -1,6 +1,6 @@
 from tkinter import *
 import numpy as np
-from util import colsr
+from util import colsr, colsc
 
 size_of_board = 600
 number_of_col_squares = 6
@@ -8,6 +8,7 @@ symbol_size = (size_of_board / 6 - size_of_board / 8) / 2
 symbol_thickness = 50
 symbol_X_color = '#EE4035'
 symbol_O_color = '#0492CF'
+symbol_Sq_color = '#9363FF'
 Green_color = '#7BC043'
 
 
@@ -26,6 +27,7 @@ class visual():
         self.initialize_board()
         self.player_X_turns = True
         self.board_status = np.zeros(shape=(number_of_col_squares, number_of_col_squares))
+        self.draw_scenery()
 
         self.player_X_starts = True
         self.reset_board = False
@@ -40,6 +42,7 @@ class visual():
 
     def mainloop(self):
         self.window.mainloop()
+        
 
     def initialize_board(self):
         for i in range(6):
@@ -47,6 +50,11 @@ class visual():
 
         for i in range(6):
             self.canvas.create_line(0, (i + 1) * size_of_board / number_of_col_squares, size_of_board, (i + 1) * size_of_board / number_of_col_squares)
+
+    def draw_scenery(self):
+        logpos = self.convert_map_to_logical((0, 'A'))
+        self.draw_Sq(logpos)
+        self.board_status[logpos[0]][logpos[1]] = 1
 
     def play_again(self):
         self.initialize_board()
@@ -76,6 +84,12 @@ class visual():
         self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] + symbol_size,
                                 grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
                                 fill=symbol_X_color)
+
+    def draw_Sq(self, logical_position):
+        grid_position = self.convert_logical_to_grid_position(logical_position)
+        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
+                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
+                                fill=symbol_Sq_color)
 
     def display_gameover(self):
 
@@ -117,19 +131,29 @@ class visual():
 
     def convert_logical_to_grid_position(self, logical_position):
         logical_position = np.array(logical_position, dtype=int)
+        print("logical to grid pos: {}".format((size_of_board / 6) * logical_position + size_of_board / 12))
         return (size_of_board / 6) * logical_position + size_of_board / 12
 
     def convert_grid_to_logical_position(self, grid_position):
         grid_position = np.array(grid_position)
-        print(np.array(grid_position // (size_of_board / number_of_col_squares), dtype=int))
+        print("grid to logical pos: {}".format(np.array(grid_position // (size_of_board / number_of_col_squares), dtype=int)))
         return np.array(grid_position // (size_of_board / number_of_col_squares), dtype=int)
 
     def convert_logical_to_map(self, logical_postion):
         alp = [i for i in logical_postion]
         letter = colsr.get(alp[0])
         map_position = (alp[1], letter)
-        print(map_position)
+        print("logical to map pos: {}".format(map_position))
         return map_position
+        
+
+    def convert_map_to_logical(self, map_position):
+        number = colsc.get(map_position[1])
+        logical_position = [number, map_position[0]]
+        log_pos = np.array([number, map_position[0]], dtype=int)
+        print("map to logical pos: {}".format(log_pos))
+        return log_pos
+
 
     def is_grid_occupied(self, logical_position):
         if self.board_status[logical_position[0]][logical_position[1]] == 0:
@@ -186,14 +210,11 @@ class visual():
 
         return gameover
 
-
-
-
-
     def click(self, event):
         grid_position = [event.x, event.y]
         logical_position = self.convert_grid_to_logical_position(grid_position)
-        self.convert_logical_to_map(logical_position)
+        mappos = self.convert_logical_to_map(logical_position)
+        self.convert_map_to_logical(mappos)
 
         if not self.reset_board:
             if self.player_X_turns:
@@ -215,7 +236,21 @@ class visual():
             self.canvas.delete("all")
             self.play_again()
             self.reset_board = False
+    def place_on_map(self, map_postion, item):
+        logical_position = self.convert_map_to_logical(map_postion)
+        self.draw_Sq(logical_position)
+        self.board_status[logical_position[0]][logical_position[1]] = 1
+
+        if not self.reset_board:
+            # Check if game is concluded
+            if self.is_gameover():
+                self.display_gameover()
+                # print('Done')
+        else:  # Play Again
+            self.canvas.delete("all")
+            self.play_again()
+            self.reset_board = False
 
 
-game_instance = visual()
-game_instance.mainloop()
+#game_instance = visual()
+#game_instance.mainloop()
