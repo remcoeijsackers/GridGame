@@ -87,3 +87,9 @@ class player(unit):
         super().__init__(args)
         self.health = 10
         self.description = "The player"
+
+class enemy(unit):
+    def __init__(self, args) -> None:
+        super().__init__(args)
+        self.health = 10
+        self.description = "An Enemy"

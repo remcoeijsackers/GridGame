@@ -23,7 +23,7 @@ class placement:
                 return random.choice(fullcols[:gridsize])
             def rc():
                 random.seed(int(x))
-                return random.choice(range(10))
+                return random.choice(range(gridsize))
             r = rc()
             c = cl()
             board.at[r, c] = placee
@@ -74,8 +74,12 @@ class manager:
     def inspect(self, loc):
         pr = colsc.get(loc[1])
         contents = self.board.iloc[int(loc[0])][int(pr)]
-        print(contents.description)
         return contents
+
+    def explain(self, loc):
+        pr = colsc.get(loc[1])
+        contents = self.board.iloc[int(loc[0])][int(pr)]
+        return contents.description
     
     def search(self, item):
         # loop trough the entire dataframe until there is a match on name, then return the location

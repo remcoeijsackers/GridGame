@@ -1,47 +1,59 @@
 import numpy as np
-from manager import manager, unitcontroller, placement
-from util import placeip, cols, colsandrows, fullcols, colsr, colsc
-from state import state
-from objects import player, cell, scenery, unit, building
 import random
 from tkinter import *
 import tkinter as tk
 
+from manager import manager, unitcontroller, placement
+from util import placeip, cols, colsandrows, fullcols, colsr, colsc
+from state import state
+from objects import player, cell, scenery, unit, building, enemy
+
+from settings import gridsize
+
+
 size_of_board = 600
-number_of_col_squares = 9
+number_of_col_squares = gridsize
 symbol_size = (size_of_board / number_of_col_squares - size_of_board / 8) / 2
 symbol_thickness = 40
 symbol_X_color = '#EE4035'
-symbol_O_color = '#A999CC'
+symbol_O_color = '#A9CCCC'
+symbol_dot_color = '#A999CC'
 symbol_Sq_color = '#9363FF'
 symbol_Pl_color = '#E0f9FF'
+symbol_En_color = '#EE4035'
 Green_color = '#7BC043'
 
 brd = manager()   
 st = state()
 
 user = player("P")
-enemy = unit("E")
+foe = enemy("E")
 house = building("B")
 tree = scenery("T")
+tree2 = scenery("T")
+tree3 = scenery("T")
+tree4 = scenery("T")
 control = unitcontroller()
 gen = placement(str(random.randint(10000000000, 99999999999)))
 
 placeip(brd.board, user)
-placeip(brd.board, enemy)
+placeip(brd.board, foe)
 placeip(brd.board, house)
 placeip(brd.board, tree)
+placeip(brd.board, tree2)
+placeip(brd.board, tree3)
+placeip(brd.board, tree4)
 
 # random seed placement
 #brd.board = gen.generate(brd.board)
 
 control.moverange(user, brd.board)
+
 class visual():
     # ------------------------------------------------------------------
     # Initialization Functions:
     # ------------------------------------------------------------------
     def __init__(self):
-        self.mode = "moveclick"
         self.window = Tk()
         self.window.title('GridGame')
         self.window.minsize(width=1000, height=600)
@@ -50,18 +62,34 @@ class visual():
         self.canvas.pack(side='left',anchor='nw', fill='x')
         
         self.ui = Canvas(self.window, bd=1, background='#0492CF')
+        self.ui.columnconfigure(0, weight=0)
+        self.ui.columnconfigure(1, weight=3)
         
+        self.header_label = tk.Label(self.ui, text="Game Options", background='#EE5E51')
+
         self.loc_label = tk.Label(self.ui, text="loc")
         self.info_label = tk.Label(self.ui, text="info")
-        self.loc_label.pack(side="top")
-        self.info_label.pack()
+        self.desc_label = tk.Label(self.ui, text="description")
+        self.move_button = tk.Button(self.ui, text="Move")
+        self.click_button = tk.Button(self.ui, text="Interact")
+        self.inspect_button = tk.Button(self.ui, text="Inspect")
+    
+        self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = 4)
+        self.loc_label.grid(column=0, row=1, sticky=tk.E,padx=5, pady=5)
+        self.info_label.grid(column=1, row=1,sticky=tk.W, padx=5, pady=5)
+        self.desc_label.grid(column=2, row=1,sticky=tk.E, padx=5, pady=5)
+        self.move_button.grid(column=0, row=2,sticky=tk.EW, columnspan = 4)
+        self.click_button.grid(column=0, row=3,sticky=tk.EW, columnspan = 4)
+        self.inspect_button.grid(column=0, row=4,sticky=tk.EW, columnspan = 4)
+
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
 
+        self.move_button.bind('<Button-1>', self.switch_mode_move)
+        self.click_button.bind('<Button-1>', self.switch_mode_click)
+        self.inspect_button.bind('<Button-1>', self.switch_mode_inspect)
+
         # Input from user in form of clicks
-        if self.mode == "click":
-            self.canvas.bind('<Button-1>', self.click)
-        if self.mode == "moveclick":
-            self.canvas.bind('<Button-1>', self.moveclick)
+        self.canvas.bind('<Button-1>', self.moveclick)
 
         self.initialize_board()
         self.player_X_turns = True
@@ -83,9 +111,22 @@ class visual():
     def mainloop(self):
         self.window.mainloop()
     
+    def switch_mode_move(self, event):
+        print("moveclick")
+        #self.canvas.unbind('<Button-1>')
+        self.canvas.bind('<Button-1>', self.moveclick)
+    
+    def switch_mode_click(self, event):
+        #self.canvas.unbind('<Button-1>')
+        self.canvas.bind('<Button-1>', self.click)
+    
+    def switch_mode_inspect(self, event):
+        self.canvas.bind('<Button-1>', self.inspectclick)
+
     def show_loc(self, event):
         self.loc_label['text'] = event
         self.info_label['text'] = brd.inspect(event)
+        self.desc_label['text'] = brd.explain(event)
         #tk.Label(self.ui, text = "{}".format(event)).pack(side="right")
 
     def initialize_board(self):
@@ -103,15 +144,23 @@ class visual():
 
     def draw_scenery(self):
         user_pos = self.convert_map_to_logical(user.loc)
-        enemy_pos = self.convert_map_to_logical(enemy.loc)
+        enemy_pos = self.convert_map_to_logical(foe.loc)
         house_pos = self.convert_map_to_logical(house.loc)
         tree_pos = self.convert_map_to_logical(tree.loc)
-        things = [enemy_pos, house_pos,tree_pos]
+        tree2_pos = self.convert_map_to_logical(tree2.loc)
+        tree3_pos = self.convert_map_to_logical(tree3.loc)
+        tree4_pos = self.convert_map_to_logical(tree4.loc)
+        things = [user_pos, enemy_pos, house_pos,tree_pos, tree2_pos ,tree3_pos, tree4_pos]
 
         self.draw_Pl(user_pos)
+        self.draw_En(enemy_pos)
+        self.draw_Sq(house_pos)
+        self.draw_O(tree_pos)
+        self.draw_O(tree2_pos)
+        self.draw_O(tree3_pos)
+        self.draw_O(tree4_pos)
 
         for i in things:
-            self.draw_Sq(i)
             self.board_status[i[0]][i[1]] = 1
     
     def draw_possible_moves(self):
@@ -159,6 +208,12 @@ class visual():
         self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
                                 grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
                                 fill=symbol_Pl_color)
+
+    def draw_En(self, logical_position):
+        grid_position = self.convert_logical_to_grid_position(logical_position)
+        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
+                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
+                                fill=symbol_En_color)
     
     def draw_dot(self, logical_position):
         logical_position = np.array(logical_position)
@@ -167,7 +222,7 @@ class visual():
         grid_position = self.convert_logical_to_grid_position(logical_position)
         self.canvas.create_oval(grid_position[0] - 1, grid_position[1] - 1,
                                 grid_position[0] + 1, grid_position[1] + 1, width=40,
-                                outline=symbol_O_color)
+                                outline=symbol_dot_color)
     
     def clear_cell(self, widget_id):
         self.canvas.delete(widget_id)
@@ -212,26 +267,26 @@ class visual():
 
     def convert_logical_to_grid_position(self, logical_position):
         logical_position = np.array(logical_position, dtype=int)
-        print("logical to grid pos: {}".format((size_of_board / number_of_col_squares) * logical_position + size_of_board / 18))
-        return (size_of_board / number_of_col_squares) * logical_position + size_of_board / 18
+        #print("logical to grid pos: {}".format((size_of_board / number_of_col_squares) * logical_position + size_of_board / 18))
+        return (size_of_board / number_of_col_squares) * logical_position + size_of_board / (number_of_col_squares * 2)
 
     def convert_grid_to_logical_position(self, grid_position):
         grid_position = np.array(grid_position)
-        print("grid to logical pos: {}".format(np.array(grid_position // (size_of_board / number_of_col_squares), dtype=int)))
+        #print("grid to logical pos: {}".format(np.array(grid_position // (size_of_board / number_of_col_squares), dtype=int)))
         return np.array(grid_position // (size_of_board / number_of_col_squares), dtype=int)
 
     def convert_logical_to_map(self, logical_postion):
         alp = [i for i in logical_postion]
         letter = colsr.get(alp[0])
         map_position = (alp[1], letter)
-        print("logical to map pos: {}".format(map_position))
+        #print("logical to map pos: {}".format(map_position))
         return map_position
         
     def convert_map_to_logical(self, map_position):
         number = colsc.get(map_position[1])
         logical_position = [number, map_position[0]]
         log_pos = np.array([number, map_position[0]], dtype=int)
-        print("map to logical pos: {}".format(log_pos))
+        #print("map to logical pos: {}".format(log_pos))
         return log_pos
 
 
@@ -295,11 +350,11 @@ class visual():
         logical_position = self.convert_grid_to_logical_position(grid_position)
         mappos = self.convert_logical_to_map(logical_position)
         self.convert_map_to_logical(mappos)
-        brd.board = control.place(user, mappos, brd.board)
+        #brd.board = control.place(user, mappos, brd.board)
 
         self.show_loc(mappos)
 
-        print(brd.show())
+        #print(brd.show())
         if not self.reset_board:
             if self.player_X_turns:
                 if not self.is_grid_occupied(logical_position):
@@ -350,6 +405,15 @@ class visual():
         self.play_again()
         self.draw_scenery()
         self.draw_possible_moves()
+        return mappos
+
+    def inspectclick(self, event):
+        grid_position = [event.x, event.y]
+        logical_position = self.convert_grid_to_logical_position(grid_position)
+        mappos = self.convert_logical_to_map(logical_position)
+        self.convert_map_to_logical(mappos)
+
+        self.show_loc(mappos)
         return mappos
 
     def place_on_map(self, map_postion, item):
