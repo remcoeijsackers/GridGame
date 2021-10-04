@@ -5,6 +5,7 @@ from state import state
 from objects import player, cell
 import random
 from tkinter import *
+import tkinter as tk
 
 size_of_board = 600
 number_of_col_squares = 6
@@ -31,10 +32,15 @@ class visual():
     def __init__(self):
         self.window = Tk()
         self.window.title('GridGame')
+        self.window.minsize(width=1000, height=600)
+
         self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
-        self.canvas.pack()
+        self.canvas.pack(side='left',anchor='nw', fill='x')
+        self.ui = Canvas(self.window, bd=1, background='#0492CF')
+        self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
+
         # Input from user in form of clicks
-        self.window.bind('<Button-1>', self.click)
+        self.canvas.bind('<Button-1>', self.click)
 
         self.initialize_board()
         self.player_X_turns = True
@@ -62,6 +68,12 @@ class visual():
 
         for i in range(6):
             self.canvas.create_line(0, (i + 1) * size_of_board / number_of_col_squares, size_of_board, (i + 1) * size_of_board / number_of_col_squares)
+
+        # ui
+        #w2 = tk.Label(self.window, 
+        #      padx = 10, 
+        #      text="hello")
+        #w2.pack(side=RIGHT)
 
     def draw_scenery(self):
         logpos = self.convert_map_to_logical((0, 'A'))
