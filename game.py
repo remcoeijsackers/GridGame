@@ -8,7 +8,7 @@ from util import placeip, cols, colsandrows, fullcols, colsr, colsc
 from state import state
 from objects import player, cell, scenery, unit, building, enemy
 
-from settings import gridsize
+from settings import gridsize, debug
 
 
 size_of_board = 600
@@ -20,6 +20,7 @@ symbol_O_color = '#A9CCCC'
 symbol_dot_color = '#A999CC'
 symbol_Sq_color = '#9363FF'
 symbol_Pl_color = '#E0f9FF'
+symbol_Pl2_color = '#99f9CF'
 symbol_En_color = '#EE4035'
 Green_color = '#7BC043'
 
@@ -27,6 +28,8 @@ brd = manager()
 st = state()
 
 user = player("P")
+user2 = player("2")
+user2.range = 2
 foe = enemy("E")
 house = building("B")
 tree = scenery("T")
@@ -37,6 +40,7 @@ control = unitcontroller()
 gen = placement(str(random.randint(10000000000, 99999999999)))
 
 placeip(brd.board, user)
+placeip(brd.board, user2)
 placeip(brd.board, foe)
 placeip(brd.board, house)
 placeip(brd.board, tree)
@@ -70,23 +74,33 @@ class visual():
         self.loc_label = tk.Label(self.ui, text="loc")
         self.info_label = tk.Label(self.ui, text="info")
         self.desc_label = tk.Label(self.ui, text="description")
+        self.health_label = tk.Label(self.ui, text="health")
+
         self.move_button = tk.Button(self.ui, text="Move")
         self.click_button = tk.Button(self.ui, text="Interact")
         self.inspect_button = tk.Button(self.ui, text="Inspect")
+        self.select_to_move_button = tk.Button(self.ui, text="select and move")
+        self.select_unit_button = tk.Button(self.ui, text="select unit to control")
     
         self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = 4)
         self.loc_label.grid(column=0, row=1, sticky=tk.E,padx=5, pady=5)
         self.info_label.grid(column=1, row=1,sticky=tk.W, padx=5, pady=5)
         self.desc_label.grid(column=2, row=1,sticky=tk.E, padx=5, pady=5)
+        self.health_label.grid(column=3, row=1,sticky=tk.E, padx=5, pady=5)
+
         self.move_button.grid(column=0, row=2,sticky=tk.EW, columnspan = 4)
         self.click_button.grid(column=0, row=3,sticky=tk.EW, columnspan = 4)
         self.inspect_button.grid(column=0, row=4,sticky=tk.EW, columnspan = 4)
+        self.select_to_move_button.grid(column=0, row=5,sticky=tk.EW, columnspan = 4)
+        self.select_unit_button.grid(column=0, row=6,sticky=tk.EW, columnspan = 4)
 
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
 
         self.move_button.bind('<Button-1>', self.switch_mode_move)
         self.click_button.bind('<Button-1>', self.switch_mode_click)
         self.inspect_button.bind('<Button-1>', self.switch_mode_inspect)
+        self.select_to_move_button.bind('<Button-1>', self.switch_mode_selectmove)
+        self.select_unit_button.bind('<Button-1>', self.switch_mode_select_unit)
 
         # Input from user in form of clicks
         self.canvas.bind('<Button-1>', self.moveclick)
@@ -95,7 +109,10 @@ class visual():
         self.player_X_turns = True
         self.board_status = np.zeros(shape=(number_of_col_squares, number_of_col_squares))
         self.draw_scenery()
-        self.draw_possible_moves()
+        self.selected = False
+        self.cached_loc = any
+        self.selected_unit = user
+        self.draw_possible_moves(self.selected_unit)
 
         self.player_X_starts = True
         self.reset_board = False
@@ -107,6 +124,8 @@ class visual():
         self.X_score = 0
         self.O_score = 0
         self.tie_score = 0
+
+
 
     def mainloop(self):
         self.window.mainloop()
@@ -123,10 +142,17 @@ class visual():
     def switch_mode_inspect(self, event):
         self.canvas.bind('<Button-1>', self.inspectclick)
 
+    def switch_mode_selectmove(self, event):
+        self.canvas.bind('<Button-1>', self.select_move_click)
+    
+    def switch_mode_select_unit(self, event):
+        self.canvas.bind('<Button-1>', self.select_unit_click)
+
     def show_loc(self, event):
         self.loc_label['text'] = event
         self.info_label['text'] = brd.inspect(event)
         self.desc_label['text'] = brd.explain(event)
+        self.health_label['text'] = brd.getstats(event)
         #tk.Label(self.ui, text = "{}".format(event)).pack(side="right")
 
     def initialize_board(self):
@@ -144,6 +170,7 @@ class visual():
 
     def draw_scenery(self):
         user_pos = self.convert_map_to_logical(user.loc)
+        user2_pos = self.convert_map_to_logical(user2.loc)
         enemy_pos = self.convert_map_to_logical(foe.loc)
         house_pos = self.convert_map_to_logical(house.loc)
         tree_pos = self.convert_map_to_logical(tree.loc)
@@ -153,6 +180,7 @@ class visual():
         things = [user_pos, enemy_pos, house_pos,tree_pos, tree2_pos ,tree3_pos, tree4_pos]
 
         self.draw_Pl(user_pos)
+        self.draw_Pl2(user2_pos)
         self.draw_En(enemy_pos)
         self.draw_Sq(house_pos)
         self.draw_O(tree_pos)
@@ -163,8 +191,8 @@ class visual():
         for i in things:
             self.board_status[i[0]][i[1]] = 1
     
-    def draw_possible_moves(self):
-        for i in control.possible_moves(user, brd.board):
+    def draw_possible_moves(self, unit):
+        for i in control.possible_moves(unit, brd.board):
             self.draw_dot(self.convert_map_to_logical(i))
 
 
@@ -208,6 +236,11 @@ class visual():
         self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
                                 grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
                                 fill=symbol_Pl_color)
+    def draw_Pl2(self, logical_position):
+        grid_position = self.convert_logical_to_grid_position(logical_position)
+        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
+                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
+                                fill=symbol_Pl2_color)
 
     def draw_En(self, logical_position):
         grid_position = self.convert_logical_to_grid_position(logical_position)
@@ -364,7 +397,8 @@ class visual():
                 else:
                     # if position on grid has an icon, return the id
                     widget_id = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
-                    print(widget_id)
+                    if debug:
+                        print(widget_id)
                     self.clear_cell(widget_id)
                     self.board_status[logical_position[0]][logical_position[1]] = 0
                     return widget_id
@@ -376,7 +410,8 @@ class visual():
                 else:
                     # if position on grid has an icon, return the id
                     widget_id = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
-                    print(widget_id)
+                    if debug:
+                        print(widget_id)
                     self.clear_cell(widget_id)
                     self.board_status[logical_position[0]][logical_position[1]] = 0
                     return widget_id
@@ -396,16 +431,48 @@ class visual():
         logical_position = self.convert_grid_to_logical_position(grid_position)
         mappos = self.convert_logical_to_map(logical_position)
         self.convert_map_to_logical(mappos)
-        brd.board = control.place(user, mappos, brd.board)
+        brd.board = control.place(self.selected_unit, mappos, brd.board)
 
-        self.show_loc(mappos)
-
-        print(brd.show())
-        self.canvas.delete("all")
-        self.play_again()
-        self.draw_scenery()
-        self.draw_possible_moves()
+        self.reset(mappos)
         return mappos
+
+    def select_move_click(self, event):
+        grid_position = [event.x, event.y]
+        logical_position = self.convert_grid_to_logical_position(grid_position)
+        mappos = self.convert_logical_to_map(logical_position)
+        def movefunc():
+            logical_position = self.convert_grid_to_logical_position(grid_position)
+            mappos = self.convert_logical_to_map(logical_position)
+
+            self.show_loc(mappos)
+            if hasattr(brd.inspect(mappos), 'walkable' ):
+                brd.board = control.place(self.selected_unit, mappos, brd.board)
+
+            self.selected = False
+            self.reset(mappos)
+
+        if not self.selected and hasattr(brd.inspect(mappos), 'walkable'):
+            self.selected = True
+            movefunc()
+
+        if not self.selected: 
+            self.selected = True
+            self.select_unit_click(event)
+        
+        else: 
+            movefunc()
+
+
+    def select_unit_click(self, event):
+        global user
+        grid_position = [event.x, event.y]
+        logical_position = self.convert_grid_to_logical_position(grid_position)
+        mappos = self.convert_logical_to_map(logical_position)
+        #user = brd.inspect(mappos)
+        self.selected_unit = brd.inspect(mappos)
+        self.reset(mappos)
+        return user
+
 
     def inspectclick(self, event):
         grid_position = [event.x, event.y]
@@ -431,6 +498,15 @@ class visual():
             self.play_again()
             self.reset_board = False
 
+    def reset(self, mappos):
+        self.show_loc(mappos)
+        if debug:
+            print(brd.show())
+        self.canvas.delete("all")
+        self.play_again()
+        self.draw_scenery()
+        self.draw_possible_moves(self.selected_unit)
+
 def get_input():
     action = input("Options:\nmove(up/down/left/right), attack(up/down/left/right).\ninspect(cell), place(cell), his, load(file), exit. \nwhat now?")
     #vis.mainloop()
@@ -452,13 +528,15 @@ def get_input():
         action = cleaninput(action , "attack")
         brd.board = control.attack(action, user, brd.board)
         st.save(brd.board)
-        print(brd.show())
+        if debug:
+            print(brd.show())
         #control.moverange(user, brd.board)
 
     if "place" in action:
         action = cleaninput(action, "place")
         brd.board = control.place(user, action, brd.board)
-        print(brd.show())
+        if debug:
+            print(brd.show())
 
     if "inspect" in action:
         action = cleaninput(action, "inspect")
@@ -482,5 +560,5 @@ def get_input():
         st.close()
 
 vis = visual()
-vis.window.after(0, get_input)
+#vis.window.after(0, get_input)
 vis.mainloop()

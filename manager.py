@@ -8,7 +8,7 @@ from grid import grid
 from util import cols, fullcols, placeip, clearconsole, colsandrows, colsc, colsr, rows
 from state import state
 from objects import cell, unit, map_object, player, scenery, building, broken_cell
-from settings import gridsize
+from settings import gridsize, debug
 
 class placement:
     def __init__(self, seed: str) -> None:
@@ -26,9 +26,13 @@ class placement:
                 return random.choice(range(gridsize))
             r = rc()
             c = cl()
-            board.at[r, c] = placee
+            if hasattr(board.at[r, c], 'walkable'):
+                board.at[r, c] = placee
+            else: 
+                placeip(board, placee)
             placee.set_loc((r,c))
-            print(r,c)
+            if debug:
+                print(r,c)
         return r, c
 
     def generate(self, board):
@@ -89,6 +93,14 @@ class manager:
                 contents = self.board.iloc[int(loc[0])][int(pr)]
                 if item == str(contents):
                     return loc
+    def getstats(self, loc):
+        pr = colsc.get(loc[1])
+        contents = self.board.iloc[int(loc[0])][int(pr)]
+        if hasattr(contents, 'health'):
+            return str(contents.health)
+        else: 
+            return ""
+
 
 
 class unitcontroller:
