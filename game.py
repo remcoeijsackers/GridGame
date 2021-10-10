@@ -75,6 +75,8 @@ class visual():
         self.info_label = tk.Label(self.ui, text="info")
         self.desc_label = tk.Label(self.ui, text="description")
         self.health_label = tk.Label(self.ui, text="health")
+        self.mode_label = tk.Label(self.ui, text="Mode")
+
 
         self.move_button = tk.Button(self.ui, text="Move")
         self.click_button = tk.Button(self.ui, text="Interact")
@@ -87,12 +89,15 @@ class visual():
         self.info_label.grid(column=1, row=1,sticky=tk.W, padx=5, pady=5)
         self.desc_label.grid(column=2, row=1,sticky=tk.E, padx=5, pady=5)
         self.health_label.grid(column=3, row=1,sticky=tk.E, padx=5, pady=5)
+        self.mode_label.grid(column=3, row=1,sticky=tk.E, padx=5, pady=5)
 
-        self.move_button.grid(column=0, row=2,sticky=tk.EW, columnspan = 4)
-        self.click_button.grid(column=0, row=3,sticky=tk.EW, columnspan = 4)
-        self.inspect_button.grid(column=0, row=4,sticky=tk.EW, columnspan = 4)
-        self.select_to_move_button.grid(column=0, row=5,sticky=tk.EW, columnspan = 4)
-        self.select_unit_button.grid(column=0, row=6,sticky=tk.EW, columnspan = 4)
+        self.mode_label.grid(column=0, row=2,sticky=tk.EW, columnspan = 4)
+
+        self.move_button.grid(column=0, row=3,sticky=tk.EW, columnspan = 4)
+        self.click_button.grid(column=0, row=4,sticky=tk.EW, columnspan = 4)
+        self.inspect_button.grid(column=0, row=5,sticky=tk.EW, columnspan = 4)
+        self.select_to_move_button.grid(column=0, row=6,sticky=tk.EW, columnspan = 4)
+        self.select_unit_button.grid(column=0, row=7,sticky=tk.EW, columnspan = 4)
 
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
 
@@ -131,21 +136,23 @@ class visual():
         self.window.mainloop()
     
     def switch_mode_move(self, event):
-        print("moveclick")
-        #self.canvas.unbind('<Button-1>')
+        self.mode_label['text'] = "Move Mode"
         self.canvas.bind('<Button-1>', self.moveclick)
     
     def switch_mode_click(self, event):
-        #self.canvas.unbind('<Button-1>')
+        self.mode_label['text'] = "Click Mode"
         self.canvas.bind('<Button-1>', self.click)
     
     def switch_mode_inspect(self, event):
+        self.mode_label['text'] = "Inspect Mode"
         self.canvas.bind('<Button-1>', self.inspectclick)
 
     def switch_mode_selectmove(self, event):
+        self.mode_label['text'] = "Select and move Mode"
         self.canvas.bind('<Button-1>', self.select_move_click)
     
     def switch_mode_select_unit(self, event):
+        self.mode_label['text'] = "Select Unit Mode"
         self.canvas.bind('<Button-1>', self.select_unit_click)
 
     def show_loc(self, event):
@@ -445,7 +452,7 @@ class visual():
             mappos = self.convert_logical_to_map(logical_position)
 
             self.show_loc(mappos)
-            if hasattr(brd.inspect(mappos), 'walkable' ):
+            if hasattr(brd.inspect(mappos), 'walkable'):
                 brd.board = control.place(self.selected_unit, mappos, brd.board)
 
             self.selected = False
@@ -468,8 +475,8 @@ class visual():
         grid_position = [event.x, event.y]
         logical_position = self.convert_grid_to_logical_position(grid_position)
         mappos = self.convert_logical_to_map(logical_position)
-        #user = brd.inspect(mappos)
-        self.selected_unit = brd.inspect(mappos)
+        if isinstance(brd.inspect(mappos), player):
+            self.selected_unit = brd.inspect(mappos)
         self.reset(mappos)
         return user
 
