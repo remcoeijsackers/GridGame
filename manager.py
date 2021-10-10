@@ -93,6 +93,7 @@ class manager:
                 contents = self.board.iloc[int(loc[0])][int(pr)]
                 if item == str(contents):
                     return loc
+                    
     def getstats(self, loc):
         pr = colsc.get(loc[1])
         contents = self.board.iloc[int(loc[0])][int(pr)]
@@ -194,6 +195,18 @@ class unitcontroller:
                 x = colsr.get(loc)
                 if getattr(board.at[y, x], 'walkable'):
                     __break(y,x)
+        return board
+    
+    def attack_on_loc(self, loc, board):
+        pr = colsc.get(loc[1])
+        contents = board.iloc[int(loc[0])][int(pr)]
+        #y, x = unit.loc[0],unit.loc[1]
+        def __break():
+            board.iloc[int(loc[0])][int(pr)] = broken_cell()
+
+        if getattr(board.iloc[int(loc[0])][int(pr)], 'walkable'):
+            __break()
+
         return board
 
     def moverange(self, unit, board):

@@ -1,2 +1,2 @@
 gridsize = 10
-debug = False
+debug = True

@@ -6,7 +6,7 @@ import tkinter as tk
 from manager import manager, unitcontroller, placement
 from util import placeip, cols, colsandrows, fullcols, colsr, colsc
 from state import state
-from objects import player, cell, scenery, unit, building, enemy
+from objects import broken_cell, player, cell, scenery, unit, building, enemy
 
 from settings import gridsize, debug
 
@@ -75,7 +75,7 @@ class visual():
         self.info_label = tk.Label(self.ui, text="info")
         self.desc_label = tk.Label(self.ui, text="description")
         self.health_label = tk.Label(self.ui, text="health")
-        self.mode_label = tk.Label(self.ui, text="Mode")
+        self.mode_label = tk.Label(self.ui, text="Select and move Mode")
 
 
         self.move_button = tk.Button(self.ui, text="Move")
@@ -83,6 +83,7 @@ class visual():
         self.inspect_button = tk.Button(self.ui, text="Inspect")
         self.select_to_move_button = tk.Button(self.ui, text="select and move")
         self.select_unit_button = tk.Button(self.ui, text="select unit to control")
+        self.melee_attack_button = tk.Button(self.ui, text="Melee Attack")
     
         self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = 4)
         self.loc_label.grid(column=0, row=1, sticky=tk.E,padx=5, pady=5)
@@ -98,6 +99,7 @@ class visual():
         self.inspect_button.grid(column=0, row=5,sticky=tk.EW, columnspan = 4)
         self.select_to_move_button.grid(column=0, row=6,sticky=tk.EW, columnspan = 4)
         self.select_unit_button.grid(column=0, row=7,sticky=tk.EW, columnspan = 4)
+        self.melee_attack_button.grid(column=0, row=8,sticky=tk.EW, columnspan = 4)
 
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
 
@@ -106,9 +108,10 @@ class visual():
         self.inspect_button.bind('<Button-1>', self.switch_mode_inspect)
         self.select_to_move_button.bind('<Button-1>', self.switch_mode_selectmove)
         self.select_unit_button.bind('<Button-1>', self.switch_mode_select_unit)
+        self.melee_attack_button.bind('<Button-1>', self.switch_mode_melee_attack)
 
         # Input from user in form of clicks
-        self.canvas.bind('<Button-1>', self.moveclick)
+        self.canvas.bind('<Button-1>', self.select_move_click)
 
         self.initialize_board()
         self.player_X_turns = True
@@ -154,6 +157,11 @@ class visual():
     def switch_mode_select_unit(self, event):
         self.mode_label['text'] = "Select Unit Mode"
         self.canvas.bind('<Button-1>', self.select_unit_click)
+    
+    def switch_mode_melee_attack(self, event):
+        self.mode_label['text'] = "Melee Attack Mode"
+        self.canvas.bind('<Button-1>', self.melee_attack_click)
+
 
     def show_loc(self, event):
         self.loc_label['text'] = event
@@ -194,6 +202,13 @@ class visual():
         self.draw_O(tree2_pos)
         self.draw_O(tree3_pos)
         self.draw_O(tree4_pos)
+
+        if brd.search("x"):
+            if debug:
+                print("broken cells found")
+            for i in brd.search("x"):
+                logpos = self.convert_map_to_logical(i)
+                self.draw_X(logpos)
 
         for i in things:
             self.board_status[i[0]][i[1]] = 1
@@ -504,6 +519,15 @@ class visual():
             self.canvas.delete("all")
             self.play_again()
             self.reset_board = False
+    
+    def melee_attack_click(self, event):
+        grid_position = [event.x, event.y]
+        logical_position = self.convert_grid_to_logical_position(grid_position)
+        mappos = self.convert_logical_to_map(logical_position)
+        brd.board = control.attack_on_loc(mappos, brd.board)
+        self.reset(mappos)
+        return mappos
+
 
     def reset(self, mappos):
         self.show_loc(mappos)
@@ -513,6 +537,7 @@ class visual():
         self.play_again()
         self.draw_scenery()
         self.draw_possible_moves(self.selected_unit)
+
 
 def get_input():
     action = input("Options:\nmove(up/down/left/right), attack(up/down/left/right).\ninspect(cell), place(cell), his, load(file), exit. \nwhat now?")
