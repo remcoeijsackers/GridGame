@@ -2,7 +2,7 @@ import random
 import os
 
 from numpy.lib.shape_base import column_stack
-from settings import gridsize
+from settings import gridsize, debug
 
 cols = ["A","B","C","D","E","F","G","H","I","J"]
 fullcols = [i for i in "abcdefghijklmnopqrstuvwxyz".upper()]
@@ -27,9 +27,13 @@ def placeip(dataframe, placee):
         return random.choice(range(gridsize))
     r = rc()
     c = cl()
-    dataframe.at[r, c] = placee
+    if hasattr(dataframe.at[r, c], 'walkable'):
+        dataframe.at[r, c] = placee
+    else: 
+        placeip(dataframe, placee)
     placee.set_loc((r,c))
-    print(r,c)
+    if debug:
+        print(r,c)
     return r, c
 
 def placeclus(dataframe, placee, count):
