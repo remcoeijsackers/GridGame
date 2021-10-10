@@ -8,7 +8,7 @@ from grid import grid
 from util import cols, fullcols, placeip, clearconsole, colsandrows, colsc, colsr, rows
 from state import state
 from objects import cell, unit, map_object, player, scenery, building, broken_cell
-from settings import gridsize
+from settings import gridsize, debug
 
 class placement:
     def __init__(self, seed: str) -> None:
@@ -23,11 +23,16 @@ class placement:
                 return random.choice(fullcols[:gridsize])
             def rc():
                 random.seed(int(x))
-                return random.choice(range(10))
+                return random.choice(range(gridsize))
             r = rc()
             c = cl()
-            board.at[r, c] = placee
+            if hasattr(board.at[r, c], 'walkable'):
+                board.at[r, c] = placee
+            else: 
+                placeip(board, placee)
             placee.set_loc((r,c))
+            if debug:
+                print(r,c)
         return r, c
 
     def generate(self, board):
@@ -73,8 +78,12 @@ class manager:
     def inspect(self, loc):
         pr = colsc.get(loc[1])
         contents = self.board.iloc[int(loc[0])][int(pr)]
-        print(contents.description)
         return contents
+
+    def explain(self, loc):
+        pr = colsc.get(loc[1])
+        contents = self.board.iloc[int(loc[0])][int(pr)]
+        return contents.description
     
     def search(self, item):
         # loop trough the entire dataframe until there is a match on name, then return the location
@@ -84,6 +93,15 @@ class manager:
                 contents = self.board.iloc[int(loc[0])][int(pr)]
                 if item == str(contents):
                     return loc
+                    
+    def getstats(self, loc):
+        pr = colsc.get(loc[1])
+        contents = self.board.iloc[int(loc[0])][int(pr)]
+        if hasattr(contents, 'health'):
+            return str(contents.health)
+        else: 
+            return ""
+
 
 
 class unitcontroller:
@@ -95,19 +113,28 @@ class unitcontroller:
         b = int(loc[0]), colsc.get(loc[1])
         outcome = abs(z[0] - b[0]) + abs(z[1] - b[1])
         return outcome
-       
+    
+    def possible_moves(self, unit, board: DataFrame):
+        for spot in colsandrows:
+            for coord in spot:
+                if self.count(unit, coord) <= unit.range and getattr(board.at[coord[0], coord[1]], 'walkable'):
+                    yield coord
 
     def place(self, unit, loc, board: DataFrame) -> DataFrame:
         pr = colsc.get(loc[1])
         ul = colsc.get(unit.loc[1])
         distance = self.count(unit, loc)
         if distance <= unit.range:
-            print("{} is walking {} steps".format(unit.name, distance))
-            newboard = board
-            newboard.iloc[int(unit.loc[0])][int(ul)] = cell() 
-            newboard.iloc[int(loc[0])][int(pr)] = unit 
-            unit.set_loc((int(loc[0]),loc[1]))
-            return newboard
+            if getattr(board.at[loc[0], loc[1]], 'walkable'):
+                print("{} is walking {} steps".format(unit.name, distance))
+                newboard = board
+                newboard.iloc[int(unit.loc[0])][int(ul)] = cell() 
+                newboard.iloc[int(loc[0])][int(pr)] = unit 
+                unit.set_loc((int(loc[0]),loc[1]))
+                return newboard
+            else:
+                print("{} can't move there".format(unit.name))
+                return board
         else:
             print("{} has max range of {}".format(unit.name, unit.range))
             return board
@@ -168,6 +195,18 @@ class unitcontroller:
                 x = colsr.get(loc)
                 if getattr(board.at[y, x], 'walkable'):
                     __break(y,x)
+        return board
+    
+    def attack_on_loc(self, loc, board):
+        pr = colsc.get(loc[1])
+        contents = board.iloc[int(loc[0])][int(pr)]
+        #y, x = unit.loc[0],unit.loc[1]
+        def __break():
+            board.iloc[int(loc[0])][int(pr)] = broken_cell()
+
+        if getattr(board.iloc[int(loc[0])][int(pr)], 'walkable'):
+            __break()
+
         return board
 
     def moverange(self, unit, board):

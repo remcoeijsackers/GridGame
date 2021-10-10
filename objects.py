@@ -26,7 +26,7 @@ class unit:
     def __init__(self, args) -> None:
         self.name = args[0]
         self.description = "{}".format(self.name)
-        self.range = 5
+        self.range = 3
         self.steps = 1
         self.walkable = False
 
@@ -58,6 +58,9 @@ class building(blockspath):
         self.description = "A house"
     def __str__(self) -> str:
         return self.name
+    def set_loc(self, loc):
+        self.loc = loc
+        return self.loc
 
 class scenery(blockspath):
     def __init__(self, args) -> None:
@@ -67,6 +70,10 @@ class scenery(blockspath):
 
     def __str__(self) -> str:
         return self.name
+
+    def set_loc(self, loc):
+        self.loc = loc
+        return self.loc
 
 class water(scenery):
     def __init__(self, args) -> None:
@@ -80,3 +87,9 @@ class player(unit):
         super().__init__(args)
         self.health = 10
         self.description = "The player"
+
+class enemy(unit):
+    def __init__(self, args) -> None:
+        super().__init__(args)
+        self.health = 10
+        self.description = "An Enemy"
