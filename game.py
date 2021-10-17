@@ -22,6 +22,7 @@ symbol_Sq_color = '#9363FF'
 symbol_Pl_color = '#E0f9FF'
 symbol_Pl2_color = '#99f9CF'
 symbol_En_color = '#EE4035'
+symbol_attack_dot_color = '#ccc1CF'
 Green_color = '#7BC043'
 
 brd = manager()   
@@ -177,12 +178,6 @@ class visual():
         for i in range(number_of_col_squares):
             self.canvas.create_line(0, (i + 1) * size_of_board / number_of_col_squares, size_of_board, (i + 1) * size_of_board / number_of_col_squares)
 
-        # ui
-        #w2 = tk.Label(self.window, 
-        #      padx = 10, 
-        #      text="hello")
-        #w2.pack(side=RIGHT)
-
     def draw_scenery(self):
         user_pos = self.convert_map_to_logical(user.loc)
         user2_pos = self.convert_map_to_logical(user2.loc)
@@ -203,19 +198,21 @@ class visual():
         self.draw_O(tree3_pos)
         self.draw_O(tree4_pos)
 
-        if brd.search("x"):
-            if debug:
-                print("broken cells found")
-            for i in brd.search("x"):
-                logpos = self.convert_map_to_logical(i)
-                self.draw_X(logpos)
-
         for i in things:
             self.board_status[i[0]][i[1]] = 1
     
+    def draw_broken_tiles(self, board):
+        for i in brd.broken_tiles(board):
+            print(i)
+            self.draw_X(self.convert_map_to_logical(i))
+
     def draw_possible_moves(self, unit):
         for i in control.possible_moves(unit, brd.board):
             self.draw_dot(self.convert_map_to_logical(i))
+
+    def draw_possible_melee_attack(self, unit):
+        for i in control.possible_melee_moves(unit, brd.board):
+            self.draw_attack_dot(self.convert_map_to_logical(i))
 
 
     def play_again(self):
@@ -224,11 +221,7 @@ class visual():
         self.player_X_turns = self.player_X_starts
         self.board_status = np.zeros(shape=(number_of_col_squares, number_of_col_squares))
 
-    # ------------------------------------------------------------------
-    # Drawing Functions:
-    # The modules required to draw required game based object on canvas
-    # ------------------------------------------------------------------
-
+    # TODO: Refactor 
     def draw_O(self, logical_position):
         logical_position = np.array(logical_position)
         # logical_position = grid value on the board
@@ -278,6 +271,14 @@ class visual():
         self.canvas.create_oval(grid_position[0] - 1, grid_position[1] - 1,
                                 grid_position[0] + 1, grid_position[1] + 1, width=40,
                                 outline=symbol_dot_color)
+    def draw_attack_dot(self, logical_position):
+        logical_position = np.array(logical_position)
+        # logical_position = grid value on the board
+        # grid_position = actual pixel values of the center of the grid
+        grid_position = self.convert_logical_to_grid_position(logical_position)
+        self.canvas.create_oval(grid_position[0] - 1, grid_position[1] - 1,
+                                grid_position[0] + 1, grid_position[1] + 1, width=40,
+                                outline=symbol_attack_dot_color)
     
     def clear_cell(self, widget_id):
         self.canvas.delete(widget_id)
@@ -339,9 +340,7 @@ class visual():
         
     def convert_map_to_logical(self, map_position):
         number = colsc.get(map_position[1])
-        logical_position = [number, map_position[0]]
         log_pos = np.array([number, map_position[0]], dtype=int)
-        #print("map to logical pos: {}".format(log_pos))
         return log_pos
 
 
@@ -524,7 +523,11 @@ class visual():
         grid_position = [event.x, event.y]
         logical_position = self.convert_grid_to_logical_position(grid_position)
         mappos = self.convert_logical_to_map(logical_position)
-        brd.board = control.attack_on_loc(mappos, brd.board)
+        for i in control.possible_melee_moves(self.selected_unit, brd.board):
+            if i == mappos:
+                brd.board = control.attack(mappos, brd.board)
+            else:
+                print('{} has a melee range of {}'.format(self.selected_unit, self.selected_unit.melee_range))
         self.reset(mappos)
         return mappos
 
@@ -536,7 +539,9 @@ class visual():
         self.canvas.delete("all")
         self.play_again()
         self.draw_scenery()
+        self.draw_broken_tiles(brd.board)
         self.draw_possible_moves(self.selected_unit)
+        self.draw_possible_melee_attack(self.selected_unit)
 
 
 def get_input():
