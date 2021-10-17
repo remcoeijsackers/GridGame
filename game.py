@@ -29,8 +29,9 @@ brd = manager()
 st = state()
 
 user = player("P")
+user.range = 1
 user2 = player("2")
-user2.range = 2
+user2.range = 1
 foe = enemy("E")
 house = building("B")
 tree = scenery("T")
@@ -52,12 +53,7 @@ placeip(brd.board, tree4)
 # random seed placement
 #brd.board = gen.generate(brd.board)
 
-control.moverange(user, brd.board)
-
 class visual():
-    # ------------------------------------------------------------------
-    # Initialization Functions:
-    # ------------------------------------------------------------------
     def __init__(self):
         self.window = Tk()
         self.window.title('GridGame')
@@ -70,13 +66,17 @@ class visual():
         self.ui.columnconfigure(0, weight=0)
         self.ui.columnconfigure(1, weight=3)
         
-        self.header_label = tk.Label(self.ui, text="Game Options", background='#EE5E51')
+        self.header_label = tk.Label(self.ui, text="Controls", background='#EE5E51')
+        self.turn_label = tk.Label(self.ui, text="Player 1 is in control")
+        self.actions_label = tk.Label(self.ui, text="Actions remaining: 3")
+        self.placeholder_label = tk.Label(self.ui, text="")
 
         self.loc_label = tk.Label(self.ui, text="loc")
         self.info_label = tk.Label(self.ui, text="info")
         self.desc_label = tk.Label(self.ui, text="description")
         self.health_label = tk.Label(self.ui, text="health")
         self.mode_label = tk.Label(self.ui, text="Select and move Mode")
+        self.distance_label = tk.Label(self.ui, text="Distance")
 
 
         self.move_button = tk.Button(self.ui, text="Move")
@@ -87,20 +87,25 @@ class visual():
         self.melee_attack_button = tk.Button(self.ui, text="Melee Attack")
     
         self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = 4)
-        self.loc_label.grid(column=0, row=1, sticky=tk.E,padx=5, pady=5)
-        self.info_label.grid(column=1, row=1,sticky=tk.W, padx=5, pady=5)
-        self.desc_label.grid(column=2, row=1,sticky=tk.E, padx=5, pady=5)
-        self.health_label.grid(column=3, row=1,sticky=tk.E, padx=5, pady=5)
-        self.mode_label.grid(column=3, row=1,sticky=tk.E, padx=5, pady=5)
+        self.turn_label.grid(column=0, row=1, sticky=tk.EW, columnspan = 4)
+        self.actions_label.grid(column=0, row=2, sticky=tk.EW, columnspan = 4)
+        self.placeholder_label.grid(column=0, row=3, sticky=tk.EW, columnspan = 4)
 
-        self.mode_label.grid(column=0, row=2,sticky=tk.EW, columnspan = 4)
+        self.loc_label.grid(column=0, row=4, sticky=tk.E,padx=5, pady=5)
+        self.info_label.grid(column=1, row=4,sticky=tk.W, padx=5, pady=5)
+        self.desc_label.grid(column=2, row=4,sticky=tk.E, padx=5, pady=5)
+        self.health_label.grid(column=3, row=4,sticky=tk.E, padx=5, pady=5)
 
-        self.move_button.grid(column=0, row=3,sticky=tk.EW, columnspan = 4)
-        self.click_button.grid(column=0, row=4,sticky=tk.EW, columnspan = 4)
-        self.inspect_button.grid(column=0, row=5,sticky=tk.EW, columnspan = 4)
-        self.select_to_move_button.grid(column=0, row=6,sticky=tk.EW, columnspan = 4)
-        self.select_unit_button.grid(column=0, row=7,sticky=tk.EW, columnspan = 4)
-        self.melee_attack_button.grid(column=0, row=8,sticky=tk.EW, columnspan = 4)
+        self.distance_label.grid(column=0, row=5,sticky=tk.W, padx=5, pady=5,columnspan = 2)
+        
+        self.mode_label.grid(column=0, row=6,sticky=tk.EW, columnspan = 4)
+
+        self.move_button.grid(column=0, row=7,sticky=tk.EW, columnspan = 4)
+        self.click_button.grid(column=0, row=8,sticky=tk.EW, columnspan = 4)
+        self.inspect_button.grid(column=0, row=9,sticky=tk.EW, columnspan = 4)
+        self.select_to_move_button.grid(column=0, row=10,sticky=tk.EW, columnspan = 4)
+        self.select_unit_button.grid(column=0, row=11,sticky=tk.EW, columnspan = 4)
+        self.melee_attack_button.grid(column=0, row=12,sticky=tk.EW, columnspan = 4)
 
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
 
@@ -133,8 +138,6 @@ class visual():
         self.X_score = 0
         self.O_score = 0
         self.tie_score = 0
-
-
 
     def mainloop(self):
         self.window.mainloop()
@@ -169,6 +172,7 @@ class visual():
         self.info_label['text'] = brd.inspect(event)
         self.desc_label['text'] = brd.explain(event)
         self.health_label['text'] = brd.getstats(event)
+        self.distance_label['text'] = control.count(self.selected_unit, event)
         #tk.Label(self.ui, text = "{}".format(event)).pack(side="right")
 
     def initialize_board(self):

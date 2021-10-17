@@ -121,7 +121,16 @@ class unitcontroller:
     def count(self, unit, loc) -> int:
         z = unit.loc[0], colsc.get(unit.loc[1])
         b = int(loc[0]), colsc.get(loc[1])
-        outcome = abs(z[0] - b[0]) + abs(z[1] - b[1])
+        # for singular vertical moves
+        if abs(z[0] - b[0]) ==  1 and abs(z[1] - b[1]) == 1:
+            # both are one
+            outcome = 1
+        elif (abs(z[0] - b[0]) !=  1 and abs(z[1] - b[1]) != 1) and abs(z[0] - b[0]) == abs(z[1] - b[1]):
+            #both are the same, but not one
+            outcome = abs(z[0] - b[0])
+
+        else: 
+            outcome = abs(z[0] - b[0]) + abs(z[1] - b[1])
         return outcome
     
     def possible_moves(self, unit, board: DataFrame):
