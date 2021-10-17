@@ -181,6 +181,9 @@ class visual():
 
         for i in range(number_of_col_squares):
             self.canvas.create_line(0, (i + 1) * size_of_board / number_of_col_squares, size_of_board, (i + 1) * size_of_board / number_of_col_squares)
+        if debug:
+            for i in brd.get_all_items(brd.board):
+                print(i.name)
 
     def draw_scenery(self):
         user_pos = self.convert_map_to_logical(user.loc)

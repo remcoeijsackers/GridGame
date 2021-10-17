@@ -112,6 +112,26 @@ class manager:
         # check if something is adjacent to something else, in a square grid (including vertical)
         pass
 
+    def is_on_same_row(self, board, item1, item2):
+        if item1.loc[0] == item2.loc[0]:
+            return True
+        else:
+            return False
+
+    def is_on_same_col(self, item1, item2):
+        if item1.loc[1] == item2.loc[1]:
+            return True
+        else:
+            return False
+
+    def get_all_items(self, board: DataFrame):
+        all_items_on_board = board.to_numpy()
+        for row in all_items_on_board:
+            for item in row:
+                if not isinstance(item, cell):
+                    yield item
+
+
 
 
 class unitcontroller:
