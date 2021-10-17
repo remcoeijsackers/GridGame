@@ -101,6 +101,16 @@ class manager:
             return str(contents.health)
         else: 
             return ""
+    
+    def broken_tiles(self, board: DataFrame):
+        for spot in colsandrows:
+            for coord in spot:
+                if isinstance(board.at[coord[0], coord[1]], broken_cell):
+                    yield coord
+    
+    def is_adjacent(self, board: DataFrame, item1, item2):
+        # check if something is adjacent to something else, in a square grid (including vertical)
+        pass
 
 
 
@@ -118,6 +128,12 @@ class unitcontroller:
         for spot in colsandrows:
             for coord in spot:
                 if self.count(unit, coord) <= unit.range and getattr(board.at[coord[0], coord[1]], 'walkable'):
+                    yield coord
+    
+    def possible_melee_moves(self, unit, board: DataFrame):
+        for spot in colsandrows:
+            for coord in spot:
+                if self.count(unit, coord) <= unit.melee_range and getattr(board.at[coord[0], coord[1]], 'walkable'):
                     yield coord
 
     def place(self, unit, loc, board: DataFrame) -> DataFrame:
@@ -139,7 +155,7 @@ class unitcontroller:
             print("{} has max range of {}".format(unit.name, unit.range))
             return board
 
-    def move(self, direction, unit, board) -> DataFrame:
+    def move(self, direction, unit, board: DataFrame) -> DataFrame:
         y, x = unit.loc[0],unit.loc[1]
         def __moveandclean(y,x):
             board.at[unit.loc[0], unit.loc[1]] = cell() #clean old position
@@ -169,38 +185,18 @@ class unitcontroller:
                     __moveandclean(y,x)
         return board
     
-    def attack(self, direction, unit, board) -> DataFrame:
-        y, x = unit.loc[0],unit.loc[1]
-        def __break(y,x):
-            board.at[y, x] = broken_cell()
+    def attack(self, loc, board) -> DataFrame:
+        pr = colsc.get(loc[1])
+        def __break():
+            board.iloc[int(loc[0])][int(pr)] = broken_cell()
 
-        if direction == "up" and y != 0:
-                y -= int(unit.steps)
-                if getattr(board.at[y, x], 'walkable'):
-                    __break(y,x)
+        if getattr(board.iloc[int(loc[0])][int(pr)], 'walkable'):
+            __break()
 
-        if direction == "down" and y != max(rows):
-                y += int(unit.steps)
-                if getattr(board.at[y, x], 'walkable'):
-                    __break(y,x)
-
-        if direction == "left" and x != "A":
-                loc = colsc.get(x) - unit.steps
-                x = colsr.get(loc)
-                if getattr(board.at[y, x], 'walkable'):
-                    __break(y,x)
-
-        if direction == "right" and x != "J":
-                loc = colsc.get(x) + unit.steps
-                x = colsr.get(loc)
-                if getattr(board.at[y, x], 'walkable'):
-                    __break(y,x)
         return board
     
     def attack_on_loc(self, loc, board):
         pr = colsc.get(loc[1])
-        contents = board.iloc[int(loc[0])][int(pr)]
-        #y, x = unit.loc[0],unit.loc[1]
         def __break():
             board.iloc[int(loc[0])][int(pr)] = broken_cell()
 

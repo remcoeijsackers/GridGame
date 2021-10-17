@@ -28,6 +28,7 @@ class unit:
         self.description = "{}".format(self.name)
         self.range = 3
         self.steps = 1
+        self.melee_range = 1
         self.walkable = False
 
     def __str__(self) -> str:
