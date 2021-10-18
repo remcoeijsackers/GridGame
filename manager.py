@@ -107,32 +107,61 @@ class manager:
             for coord in spot:
                 if isinstance(board.at[coord[0], coord[1]], broken_cell):
                     yield coord
+
+    def iter_coords(self):
+        for spot in colsandrows:
+            for coord in spot:
+                yield coord
     
     def is_adjacent(self, board: DataFrame, item1, item2):
         # check if something is adjacent to something else, in a square grid (including vertical)
         pass
 
-    def is_on_same_row(self, board, item1, item2):
-        if item1.loc[0] == item2.loc[0]:
+    def is_on_same_row(self, unitloc0, itemloc0):
+        if unitloc0 == itemloc0:
             return True
         else:
             return False
 
-    def is_on_same_col(self, item1, item2):
-        if item1.loc[1] == item2.loc[1]:
+    def is_on_same_col(self, unitloc1, itemloc1):
+        if unitloc1 == itemloc1:
             return True
         else:
             return False
 
-    def get_all_items(self, board: DataFrame):
+    def get_all_objects(self, board: DataFrame):
         all_items_on_board = board.to_numpy()
         for row in all_items_on_board:
             for item in row:
                 if not isinstance(item, cell):
                     yield item
 
+    def get_items_in_row(self, board: DataFrame, row: int):
+        all_items_in_row = board.iloc[row]
+        for item in all_items_in_row:
+            if not isinstance(item, cell):
+                yield item
+    
+    def get_coords_of_items_in_row(self, board: DataFrame, row: int):
+        all_items_in_row = board.iloc[row]
+        for item in all_items_in_row:
+            if not isinstance(item, cell):
+                yield item.loc
 
+    def block_walk_behind_object_in_row(self, board: DataFrame, unit):
+        for i in self.get_coords_of_items_in_row(board, unit.loc[0]):
+            col_unit = colsc.get(unit.loc[1])
+            col_object = colsc.get(i[1])
+            if not isinstance(i, player):
+                if col_unit > col_object:
+                    # + if object is to the right of player
+                    if i[1] != 'J': 
+                        return (i[0], colsr.get(i[1] + 1))
 
+                elif col_unit < col_object:
+                    # - if object is to the left of player
+                    if i[1] != 'A': 
+                        return (i[0], colsr.get(i[1] - 1))
 
 class unitcontroller:
     def __init__(self) -> None:

@@ -29,9 +29,9 @@ brd = manager()
 st = state()
 
 user = player("P")
-user.range = 1
+user.range = 2
 user2 = player("2")
-user2.range = 1
+user2.range = 2
 foe = enemy("E")
 house = building("B")
 tree = scenery("T")
@@ -182,8 +182,11 @@ class visual():
         for i in range(number_of_col_squares):
             self.canvas.create_line(0, (i + 1) * size_of_board / number_of_col_squares, size_of_board, (i + 1) * size_of_board / number_of_col_squares)
         if debug:
-            for i in brd.get_all_items(brd.board):
+            for i in brd.get_all_objects(brd.board):
                 print(i.name)
+            print('here')
+            for i in brd.get_coords_of_items_in_row(brd.board, 3):
+                print(i)
 
     def draw_scenery(self):
         user_pos = self.convert_map_to_logical(user.loc)
@@ -215,7 +218,8 @@ class visual():
 
     def draw_possible_moves(self, unit):
         for i in control.possible_moves(unit, brd.board):
-            self.draw_dot(self.convert_map_to_logical(i))
+            if not brd.block_walk_behind_object_in_row(brd.board, unit):
+                self.draw_dot(self.convert_map_to_logical(i))
 
     def draw_possible_melee_attack(self, unit):
         for i in control.possible_melee_moves(unit, brd.board):
