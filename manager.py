@@ -147,21 +147,47 @@ class manager:
         for item in all_items_in_row:
             if not isinstance(item, cell):
                 yield item.loc
+    def get_coords_of_items_in_col(self, board: DataFrame, col: str):
+        all_items_in_col = board[col]
+        for item in all_items_in_col:
+            if not isinstance(item, cell):
+                yield item.loc
 
     def block_walk_behind_object_in_row(self, board: DataFrame, unit):
         for i in self.get_coords_of_items_in_row(board, unit.loc[0]):
             col_unit = colsc.get(unit.loc[1])
             col_object = colsc.get(i[1])
             if not isinstance(i, player):
-                if col_unit > col_object:
+                if col_unit < col_object:
                     # + if object is to the right of player
                     if i[1] != 'J': 
-                        return (i[0], colsr.get(i[1] + 1))
+                        x = col_object + 1
+                        yield (i[0], colsr.get(x))
 
-                elif col_unit < col_object:
+                elif col_unit > col_object:
                     # - if object is to the left of player
                     if i[1] != 'A': 
-                        return (i[0], colsr.get(i[1] - 1))
+                        x = col_object - 1
+                        yield (i[0], colsr.get(x))
+
+    def block_walk_behind_object_in_col(self, board: DataFrame, unit):
+        for i in self.get_coords_of_items_in_col(board, unit.loc[1]):
+            row_unit = unit.loc[0]
+            row_object = i[0]
+            if not isinstance(i, player):
+                if row_unit < row_object:
+                    # + if object is to the right of player
+                    if i[0] != 9: 
+                        x = row_object + 1
+                        z = (x, i[1])
+                        yield z
+
+                elif row_unit > row_object:
+                    # - if object is to the left of player
+                    if i[0] != 0: 
+                        x = row_object - 1
+                        z = (x, i[1])
+                        yield z
 
 class unitcontroller:
     def __init__(self) -> None:
@@ -182,10 +208,15 @@ class unitcontroller:
             outcome = abs(z[0] - b[0]) + abs(z[1] - b[1])
         return outcome
     
-    def possible_moves(self, unit, board: DataFrame):
+    def possible_moves(self, unit, boardmanager: manager):
+        filter_coords = []
+        for i in boardmanager.block_walk_behind_object_in_row(boardmanager.board, unit):
+            filter_coords.append(i)
+        for i in boardmanager.block_walk_behind_object_in_col(boardmanager.board, unit):
+            filter_coords.append(i)
         for spot in colsandrows:
             for coord in spot:
-                if self.count(unit, coord) <= unit.range and getattr(board.at[coord[0], coord[1]], 'walkable'):
+                if self.count(unit, coord) <= unit.range and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
                     yield coord
     
     def possible_melee_moves(self, unit, board: DataFrame):
@@ -198,7 +229,7 @@ class unitcontroller:
         pr = colsc.get(loc[1])
         ul = colsc.get(unit.loc[1])
         distance = self.count(unit, loc)
-        if distance <= unit.range:
+        if distance <= unit.range: #and loc not in self.possible_moves(unit, board):
             if getattr(board.at[loc[0], loc[1]], 'walkable'):
                 print("{} is walking {} steps".format(unit.name, distance))
                 newboard = board

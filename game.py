@@ -217,9 +217,11 @@ class visual():
             self.draw_X(self.convert_map_to_logical(i))
 
     def draw_possible_moves(self, unit):
-        for i in control.possible_moves(unit, brd.board):
-            if not brd.block_walk_behind_object_in_row(brd.board, unit):
+
+        for i in control.possible_moves(unit, brd):
+            #if i not in filter_coords:
                 self.draw_dot(self.convert_map_to_logical(i))
+            
 
     def draw_possible_melee_attack(self, unit):
         for i in control.possible_melee_moves(unit, brd.board):
