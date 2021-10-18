@@ -217,7 +217,6 @@ class visual():
             self.draw_X(self.convert_map_to_logical(i))
 
     def draw_possible_moves(self, unit):
-
         for i in control.possible_moves(unit, brd):
             #if i not in filter_coords:
                 self.draw_dot(self.convert_map_to_logical(i))
@@ -417,11 +416,8 @@ class visual():
         logical_position = self.convert_grid_to_logical_position(grid_position)
         mappos = self.convert_logical_to_map(logical_position)
         self.convert_map_to_logical(mappos)
-        #brd.board = control.place(user, mappos, brd.board)
-
         self.show_loc(mappos)
 
-        #print(brd.show())
         if not self.reset_board:
             if self.player_X_turns:
                 if not self.is_grid_occupied(logical_position):
@@ -465,7 +461,7 @@ class visual():
         logical_position = self.convert_grid_to_logical_position(grid_position)
         mappos = self.convert_logical_to_map(logical_position)
         self.convert_map_to_logical(mappos)
-        brd.board = control.place(self.selected_unit, mappos, brd.board)
+        brd.board = control.place(self.selected_unit, mappos, brd)
 
         self.reset(mappos)
         return mappos
@@ -480,7 +476,7 @@ class visual():
 
             self.show_loc(mappos)
             if hasattr(brd.inspect(mappos), 'walkable'):
-                brd.board = control.place(self.selected_unit, mappos, brd.board)
+                brd.board = control.place(self.selected_unit, mappos, brd)
 
             self.selected = False
             self.reset(mappos)
@@ -584,7 +580,7 @@ def get_input():
 
     if "place" in action:
         action = cleaninput(action, "place")
-        brd.board = control.place(user, action, brd.board)
+        brd.board = control.place(user, action, brd)
         if debug:
             print(brd.show())
 

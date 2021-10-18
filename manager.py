@@ -62,19 +62,6 @@ class manager:
     def modify(self, board) -> None:
         self.board = board 
 
-    def __setup(self):
-        #placing units
-        #pla = [unit(i) for i in ["E", "E"]]
-        #[placeip(self.board, i) for i in pla]
-
-        #placing obstacles
-        plb = [building(i) for i in ["B" for i in range(random.randint(1,6))]]
-        [placeip(self.board, i) for i in plb] 
-
-        #placing scenery
-        pls = [scenery(i) for i in ["T" for i in range(random.randint(1,6))]]
-        [placeip(self.board, i) for i in pls]  
-
     def inspect(self, loc):
         pr = colsc.get(loc[1])
         contents = self.board.iloc[int(loc[0])][int(pr)]
@@ -135,10 +122,23 @@ class manager:
             for item in row:
                 if not isinstance(item, cell):
                     yield item
+    
+    def get_coords_of_all_objects(self, board: DataFrame):
+        all_items_on_board = board.to_numpy()
+        for row in all_items_on_board:
+            for item in row:
+                if not isinstance(item, cell):
+                    yield item.loc
 
     def get_items_in_row(self, board: DataFrame, row: int):
         all_items_in_row = board.iloc[row]
         for item in all_items_in_row:
+            if not isinstance(item, cell):
+                yield item
+
+    def get_items_in_col(self, board: DataFrame, col: str):
+        all_items_in_col = board[col]
+        for item in all_items_in_col:
             if not isinstance(item, cell):
                 yield item
     
@@ -147,11 +147,48 @@ class manager:
         for item in all_items_in_row:
             if not isinstance(item, cell):
                 yield item.loc
+
     def get_coords_of_items_in_col(self, board: DataFrame, col: str):
         all_items_in_col = board[col]
         for item in all_items_in_col:
             if not isinstance(item, cell):
                 yield item.loc
+    
+    def get_coords_of_items_in_diagonal_topleft_to_bottomright(self, board: DataFrame, unit):
+        temploc = unit.loc
+        tt = temploc[0]
+        newloc0 = temploc[0]
+        newloc1 = colsc.get(temploc[1]) 
+        locs = []
+        while tt > 0:
+            newloc0 -= 1 
+            newloc1 -= 1
+            colcheck = colsr.get(newloc1)
+            if colcheck == 'A':
+                break
+            clcheck = board.iloc[int(newloc0)][int(colsc.get(colcheck))]
+            if not isinstance(clcheck.__class__, cell):
+                locs.append((newloc0, '{}'.format(colcheck)))
+            tt -= 1
+        tt = unit.loc[0]
+        newloc0 = temploc[0]
+        newloc1 = colsc.get(temploc[1]) 
+        colcheck = colsr.get(newloc1)
+        while tt < 9:
+            newloc0 += 1 
+            newloc1 += 1
+            colcheck = colsr.get(newloc1)
+            if colcheck == 'J':
+                break
+            clcheck = board.iloc[int(newloc0)][int(colsc.get(colcheck))]
+
+            if not isinstance(clcheck.__class__, cell):
+                locs.append((newloc0, '{}'.format(colcheck)))
+            tt += 1
+        for coord in locs:
+            yield coord
+
+            
 
     def block_walk_behind_object_in_row(self, board: DataFrame, unit):
         for i in self.get_coords_of_items_in_row(board, unit.loc[0]):
@@ -176,14 +213,14 @@ class manager:
             row_object = i[0]
             if not isinstance(i, player):
                 if row_unit < row_object:
-                    # + if object is to the right of player
+                    # + if object is below player
                     if i[0] != 9: 
                         x = row_object + 1
                         z = (x, i[1])
                         yield z
 
                 elif row_unit > row_object:
-                    # - if object is to the left of player
+                    # - if object is above player
                     if i[0] != 0: 
                         x = row_object - 1
                         z = (x, i[1])
@@ -214,6 +251,8 @@ class unitcontroller:
             filter_coords.append(i)
         for i in boardmanager.block_walk_behind_object_in_col(boardmanager.board, unit):
             filter_coords.append(i)
+        #for i in boardmanager.get_coords_of_items_in_diagonal_topleft_to_bottomright(boardmanager.board, unit):
+        #    filter_coords.append(i)
         for spot in colsandrows:
             for coord in spot:
                 if self.count(unit, coord) <= unit.range and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
@@ -225,24 +264,24 @@ class unitcontroller:
                 if self.count(unit, coord) <= unit.melee_range and getattr(board.at[coord[0], coord[1]], 'walkable'):
                     yield coord
 
-    def place(self, unit, loc, board: DataFrame) -> DataFrame:
+    def place(self, unit, loc, boardmanager: manager) -> DataFrame:
         pr = colsc.get(loc[1])
         ul = colsc.get(unit.loc[1])
         distance = self.count(unit, loc)
-        if distance <= unit.range: #and loc not in self.possible_moves(unit, board):
-            if getattr(board.at[loc[0], loc[1]], 'walkable'):
+        if distance <= unit.range:
+            if getattr(boardmanager.board.at[loc[0], loc[1]], 'walkable') and loc in self.possible_moves(unit, boardmanager):
                 print("{} is walking {} steps".format(unit.name, distance))
-                newboard = board
+                newboard = boardmanager.board
                 newboard.iloc[int(unit.loc[0])][int(ul)] = cell() 
                 newboard.iloc[int(loc[0])][int(pr)] = unit 
                 unit.set_loc((int(loc[0]),loc[1]))
                 return newboard
             else:
                 print("{} can't move there".format(unit.name))
-                return board
+                return boardmanager.board
         else:
             print("{} has max range of {}".format(unit.name, unit.range))
-            return board
+            return boardmanager.board
 
     def move(self, direction, unit, board: DataFrame) -> DataFrame:
         y, x = unit.loc[0],unit.loc[1]
