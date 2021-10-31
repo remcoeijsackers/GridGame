@@ -8,14 +8,17 @@ from util import placeip, cols, colsandrows, fullcols, colsr, colsc
 from state import state
 from objects import broken_cell, player, cell, scenery, unit, building, enemy
 
-from settings import gridsize, debug
+from settings import gridsize, debug, player_one_name, player_two_name, player_one_color, player_two_color
 
 from controller import controller, owner
 
+import time 
+
 size_of_board = 600
 number_of_col_squares = gridsize
-symbol_size = (size_of_board / number_of_col_squares - size_of_board / 8) / 2
+symbol_size = (size_of_board / number_of_col_squares - size_of_board / 8) / 4
 symbol_thickness = 40
+unit_thickness = 10
 symbol_X_color = '#EE4035'
 symbol_O_color = '#A9CCCC'
 symbol_dot_color = '#A999CC'
@@ -29,8 +32,8 @@ symbol_building_color = '#E0f9FF'
 black_color = '#120606'
 canvas_text_color = '#9363FF'
 
-player_one = owner("Player1")
-player_two = owner("Player2")
+player_one = owner(player_one_name, player_one_color)
+player_two = owner(player_two_name, player_two_color)
 game_controller = controller(player_one, player_two)
 
 brd = manager()   
@@ -38,9 +41,13 @@ st = state()
 
 user = player("P")
 user2 = player("P2")
+user3 = player("P3")
+user4 = player("P4")
 
 player_one.units.append(user)
-player_two.units.append(user2)
+player_one.units.append(user2)
+player_two.units.append(user3)
+player_two.units.append(user4)
 
 foe = enemy("E")
 house = building("B")
@@ -53,6 +60,8 @@ gen = placement(str(random.randint(10000000000, 99999999999)))
 
 placeip(brd.board, user)
 placeip(brd.board, user2)
+placeip(brd.board, user3)
+placeip(brd.board, user4)
 placeip(brd.board, foe)
 placeip(brd.board, house)
 placeip(brd.board, tree)
@@ -69,10 +78,25 @@ class visual():
         self.window.title('GridGame')
         self.window.minsize(width=1000, height=600)
 
-        self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
+        menubar = tk.Menu(self.window)
+
+        filemenu = tk.Menu(menubar)
+        filemenu.add_command(label="Open")
+        filemenu.add_command(label="Save")
+        filemenu.add_command(label="Exit")
+
+        menubar.add_cascade(label="File", menu=filemenu)
+
+        self.window.config(menu=menubar)
+
+        statusbar = tk.Label(self.window, text="on the way…", bd=1, relief=tk.SUNKEN, anchor=tk.W)
+
+        statusbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+        self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board, background='#2e1600')
         self.canvas.pack(side='left',anchor='nw', fill='x')
         
-        self.ui = Canvas(self.window, bd=1, background='#0492CF')
+        self.ui = Canvas(self.window, bd=1)
         self.ui.columnconfigure(0, weight=0)
         self.ui.columnconfigure(1, weight=3)
         self.max_ui_columns = 6
@@ -91,10 +115,10 @@ class visual():
         self.action_details_label = tk.Label(self.ui, text="Action details")
 
 
-        self.move_button = tk.Button(self.ui, text="Move")
+        self.move_button = tk.Button(self.ui, text="Select and move")
         self.click_button = tk.Button(self.ui, text="Interact")
         self.inspect_button = tk.Button(self.ui, text="Inspect")
-        self.select_to_move_button = tk.Button(self.ui, text="select and move")
+        #self.select_to_move_button = tk.Button(self.ui, text="select and move")
         self.select_unit_button = tk.Button(self.ui, text="select unit to control")
         self.melee_attack_button = tk.Button(self.ui, text="Melee Attack")
     
@@ -118,16 +142,16 @@ class visual():
 
         self.click_button.grid(column=0, row=8,sticky=tk.EW, columnspan = self.max_ui_columns)
 
-        self.select_to_move_button.grid(column=0, row=10,sticky=tk.EW, columnspan = self.max_ui_columns)
+        #self.select_to_move_button.grid(column=0, row=10,sticky=tk.EW, columnspan = self.max_ui_columns)
         self.select_unit_button.grid(column=0, row=11,sticky=tk.EW, columnspan = self.max_ui_columns)
         self.melee_attack_button.grid(column=0, row=12,sticky=tk.EW, columnspan = self.max_ui_columns)
 
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
 
-        self.move_button.bind('<Button-1>', self.switch_mode_move)
+        self.move_button.bind('<Button-1>', self.switch_mode_selectmove)
         self.click_button.bind('<Button-1>', self.switch_mode_click)
         self.inspect_button.bind('<Button-1>', self.switch_mode_inspect)
-        self.select_to_move_button.bind('<Button-1>', self.switch_mode_selectmove)
+        #self.select_to_move_button.bind('<Button-1>', self.switch_mode_selectmove)
         self.select_unit_button.bind('<Button-1>', self.switch_mode_select_unit)
         self.melee_attack_button.bind('<Button-1>', self.switch_mode_melee_attack)
 
@@ -135,16 +159,13 @@ class visual():
         self.canvas.bind('<Button-1>', self.select_move_click)
         self.controlling_player = player_one
         self.initialize_board()
-        self.player_X_turns = True
         self.board_status = np.zeros(shape=(number_of_col_squares, number_of_col_squares))
         self.draw_scenery()
         self.selected = False
-        self.cached_loc = any
         self.selected_unit = user
         self.draw_possible_moves(self.selected_unit)
         self.draw_possible_melee_attack(self.selected_unit)
 
-        self.reset_board = False
         self.gameover = False
 
     def mainloop(self):
@@ -174,15 +195,29 @@ class visual():
         self.mode_label['text'] = "Melee Attack Mode"
         self.canvas.bind('<Button-1>', self.melee_attack_click)
 
-
     def show_loc(self, event):
-        self.loc_label['text'] = event
-        self.info_label['text'] = brd.inspect(event)
-        self.desc_label['text'] = brd.explain(event)
-        self.health_label['text'] = brd.gethealth(event)
-        self.distance_label['text'] = control.count(self.selected_unit, event)
+        self.loc_label['text'] = "Location: {}".format(event)
+        self.info_label['text'] = "Unit: {}".format(brd.inspect(event))
+        self.desc_label['text'] = "Description: {}".format(brd.explain(event))
+        self.health_label['text'] = "Health: {}".format(brd.gethealth(event))
+        self.distance_label['text'] = "Steps: {}".format(control.count(self.selected_unit, event))
         #tk.Label(self.ui, text = "{}".format(event)).pack(side="right")
 
+    def restart(self):
+        self.canvas.delete("all")
+        self.initialize_board()
+        foe = enemy("E")
+        house = building("B")
+        tree = scenery("T")
+        tree2 = scenery("T")
+        tree3 = scenery("T")
+        tree4 = scenery("T")
+
+        objects = [foe, house, tree, tree2, tree3, tree4]
+        for i in objects:
+            placeip(brd.board, i)
+        self.draw_scenery()
+           
     def initialize_board(self):
         for i in range(number_of_col_squares):
             self.canvas.create_line((i + 1) * size_of_board / number_of_col_squares, 0, (i + 1) * size_of_board / number_of_col_squares, size_of_board)
@@ -190,16 +225,22 @@ class visual():
         for i in range(number_of_col_squares):
             self.canvas.create_line(0, (i + 1) * size_of_board / number_of_col_squares, size_of_board, (i + 1) * size_of_board / number_of_col_squares)
 
-
     def draw_scenery(self):
         def cleanup_func(obj):
             brd.board.at[obj.loc[0], obj.loc[1]] = cell()
+            if obj in player_one.units:
+                player_one.units.remove(obj)
+            if obj in player_two.units:
+                player_two.units.remove(obj)
 
         for obj in brd.get_all_objects(brd.board):
             if obj.destroyed:
                 cleanup_func(obj)
             if isinstance(obj, player) and not obj.destroyed:
-                self.draw_unit(self.convert_map_to_logical(obj.loc), symbol_Pl_color)
+                if obj in player_one.units:
+                    self.draw_unit(self.convert_map_to_logical(obj.loc), player_one.color)
+                if obj in player_two.units:
+                    self.draw_unit(self.convert_map_to_logical(obj.loc), player_two.color)
             if isinstance(obj, scenery)and not obj.destroyed:
                 self.draw_O(self.convert_map_to_logical(obj.loc))
             if isinstance(obj, building) and not obj.destroyed:
@@ -260,7 +301,7 @@ class visual():
         mappos = self.convert_logical_to_map(logical_position)
         health = brd.gethealth(mappos)
         self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
+                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=unit_thickness,
                                 fill=color)
         self.canvas.create_text(grid_position[0] - symbol_size,
                                 grid_position[1] + symbol_size, 
@@ -281,14 +322,17 @@ class visual():
 
     def display_gameover(self, winner: owner):
 
-        self.X_score += 1
         text = 'Winner: {}'.format(winner.name)
         color = symbol_X_color
 
-
         self.canvas.delete("all")
-        self.canvas.create_text(size_of_board / 2, size_of_board / 3, font="cmr 60 bold", fill=color, text=text)
+        self.ui.delete("all")
 
+        #textframe = tk.Frame(master=self.canvas, width=100, height=100, bg="red")
+        #header = tk.Label(master=textframe, text=text)
+        #textframe.pack()
+        #header.grid(row=0, column=0)    
+        self.canvas.create_text(size_of_board / 2, size_of_board / 3, font="cmr 60 bold", fill=color, text=text)
         score_text = 'Results \n'
         self.canvas.create_text(size_of_board / 2, 5 * size_of_board / 8, font="cmr 40 bold", fill=Green_color,
                                 text=score_text)
@@ -302,6 +346,10 @@ class visual():
         score_text = 'Click to play again \n'
         self.canvas.create_text(size_of_board / 2, 15 * size_of_board / 16, font="cmr 20 bold", fill="gray",
                                 text=score_text)
+        #self.restart_button = tk.Button(self.canvas, text="Restart", command = self.restart())
+        #self.restart_button.pack()
+        #self.select_to_move_button.grid(column=0, row=10,sticky=tk.EW, columnspan = self.max_ui_columns)
+        #self.restart_button.bind('<Button-2>', self.restart())                         
 
     def convert_logical_to_grid_position(self, logical_position):
         logical_position = np.array(logical_position, dtype=int)
@@ -333,7 +381,6 @@ class visual():
             if hasattr(logical_position, 'walkable'):
                 self.draw_X(logical_position)
                 self.board_status[logical_position[0]][logical_position[1]] = -1
-                self.player_X_turns = not self.player_X_turns
             else:
                 # if position on grid has an icon, return the id
                 widget_id = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
@@ -344,7 +391,6 @@ class visual():
             if hasattr(logical_position, 'walkable'):
                 self.draw_O(logical_position)
                 self.board_status[logical_position[0]][logical_position[1]] = 1
-                self.player_X_turns = not self.player_X_turns
             else:
                 # if position on grid has an icon, return the id
                 widget_id = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
@@ -416,7 +462,6 @@ class visual():
         self.soft_reset(mappos)
         return user
 
-
     def inspectclick(self, event):
         grid_position = [event.x, event.y]
         logical_position = self.convert_grid_to_logical_position(grid_position)
@@ -443,9 +488,18 @@ class visual():
         return mappos
 
     def monitor_state(self):
+        current_controlling_player = self.controlling_player
         self.controlling_player = game_controller.action_or_switch()
-        self.selected_unit = self.controlling_player.units[0]
+
+        # only force select the a unit of the other player, if the turn is over.
+        # also set the action to select and move 
+        if current_controlling_player != self.controlling_player:
+            self.mode_label['text'] = "Select and move Mode"
+            self.canvas.bind('<Button-1>', self.select_move_click)
+            self.selected_unit = self.controlling_player.units[0]
+
         self.turn_label['text'] = self.controlling_player.name
+        self.turn_label['background'] = self.controlling_player.color
         self.actions_label['text'] = self.controlling_player.available_actions + 1
 
     def set_impossible_action_text(self, text):
@@ -508,7 +562,6 @@ def get_input():
         st.save(brd.board)
         if debug:
             print(brd.show())
-        #control.moverange(user, brd.board)
 
     if "place" in action:
         action = cleaninput(action, "place")
