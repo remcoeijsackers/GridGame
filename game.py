@@ -12,6 +12,8 @@ from settings import gridsize, debug
 
 from controller import controller, owner
 
+import time 
+
 size_of_board = 600
 number_of_col_squares = gridsize
 symbol_size = (size_of_board / number_of_col_squares - size_of_board / 8) / 2
@@ -135,16 +137,13 @@ class visual():
         self.canvas.bind('<Button-1>', self.select_move_click)
         self.controlling_player = player_one
         self.initialize_board()
-        self.player_X_turns = True
         self.board_status = np.zeros(shape=(number_of_col_squares, number_of_col_squares))
         self.draw_scenery()
         self.selected = False
-        self.cached_loc = any
         self.selected_unit = user
         self.draw_possible_moves(self.selected_unit)
         self.draw_possible_melee_attack(self.selected_unit)
 
-        self.reset_board = False
         self.gameover = False
 
     def mainloop(self):
@@ -174,7 +173,6 @@ class visual():
         self.mode_label['text'] = "Melee Attack Mode"
         self.canvas.bind('<Button-1>', self.melee_attack_click)
 
-
     def show_loc(self, event):
         self.loc_label['text'] = event
         self.info_label['text'] = brd.inspect(event)
@@ -183,13 +181,29 @@ class visual():
         self.distance_label['text'] = control.count(self.selected_unit, event)
         #tk.Label(self.ui, text = "{}".format(event)).pack(side="right")
 
+    def restart(self):
+        self.canvas.delete("all")
+        self.initialize_board()
+        foe = enemy("E")
+        house = building("B")
+        tree = scenery("T")
+        tree2 = scenery("T")
+        tree3 = scenery("T")
+        tree4 = scenery("T")
+
+        objects = [foe, house, tree, tree2, tree3, tree4]
+        for i in objects:
+            placeip(brd.board, i)
+        self.draw_scenery()
+        
+        self.canvas.bind('<Button-1>', None)    
+
     def initialize_board(self):
         for i in range(number_of_col_squares):
             self.canvas.create_line((i + 1) * size_of_board / number_of_col_squares, 0, (i + 1) * size_of_board / number_of_col_squares, size_of_board)
 
         for i in range(number_of_col_squares):
             self.canvas.create_line(0, (i + 1) * size_of_board / number_of_col_squares, size_of_board, (i + 1) * size_of_board / number_of_col_squares)
-
 
     def draw_scenery(self):
         def cleanup_func(obj):
@@ -281,14 +295,16 @@ class visual():
 
     def display_gameover(self, winner: owner):
 
-        self.X_score += 1
         text = 'Winner: {}'.format(winner.name)
         color = symbol_X_color
 
-
         self.canvas.delete("all")
-        self.canvas.create_text(size_of_board / 2, size_of_board / 3, font="cmr 60 bold", fill=color, text=text)
 
+        textframe = tk.Frame(master=self.canvas, width=100, height=100, bg="red")
+        header = tk.Label(master=textframe, text=text)
+        textframe.pack()
+        header.grid(row=0, column=0)    
+        #textframe.create_text(size_of_board / 2, size_of_board / 3, font="cmr 60 bold", fill=color, text=text)
         score_text = 'Results \n'
         self.canvas.create_text(size_of_board / 2, 5 * size_of_board / 8, font="cmr 40 bold", fill=Green_color,
                                 text=score_text)
@@ -302,6 +318,10 @@ class visual():
         score_text = 'Click to play again \n'
         self.canvas.create_text(size_of_board / 2, 15 * size_of_board / 16, font="cmr 20 bold", fill="gray",
                                 text=score_text)
+        self.restart_button = tk.Button(self.canvas, text="Restart", command = self.restart())
+        self.restart_button.pack()
+        #self.select_to_move_button.grid(column=0, row=10,sticky=tk.EW, columnspan = self.max_ui_columns)
+        #self.restart_button.bind('<Button-2>', self.restart())                         
 
     def convert_logical_to_grid_position(self, logical_position):
         logical_position = np.array(logical_position, dtype=int)
@@ -333,7 +353,6 @@ class visual():
             if hasattr(logical_position, 'walkable'):
                 self.draw_X(logical_position)
                 self.board_status[logical_position[0]][logical_position[1]] = -1
-                self.player_X_turns = not self.player_X_turns
             else:
                 # if position on grid has an icon, return the id
                 widget_id = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
@@ -344,7 +363,6 @@ class visual():
             if hasattr(logical_position, 'walkable'):
                 self.draw_O(logical_position)
                 self.board_status[logical_position[0]][logical_position[1]] = 1
-                self.player_X_turns = not self.player_X_turns
             else:
                 # if position on grid has an icon, return the id
                 widget_id = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
@@ -415,7 +433,6 @@ class visual():
                 self.selected_unit = brd.inspect(mappos)
         self.soft_reset(mappos)
         return user
-
 
     def inspectclick(self, event):
         grid_position = [event.x, event.y]
@@ -508,7 +525,6 @@ def get_input():
         st.save(brd.board)
         if debug:
             print(brd.show())
-        #control.moverange(user, brd.board)
 
     if "place" in action:
         action = cleaninput(action, "place")
