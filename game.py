@@ -8,7 +8,7 @@ from util import placeip, cols, colsandrows, fullcols, colsr, colsc
 from state import state
 from objects import broken_cell, player, cell, scenery, unit, building, enemy
 
-from settings import gridsize, debug, player_one_name, player_two_name
+from settings import gridsize, debug, player_one_name, player_two_name, player_one_color, player_two_color
 
 from controller import controller, owner
 
@@ -32,8 +32,8 @@ symbol_building_color = '#E0f9FF'
 black_color = '#120606'
 canvas_text_color = '#9363FF'
 
-player_one = owner(player_one_name)
-player_two = owner(player_two_name)
+player_one = owner(player_one_name, player_one_color)
+player_two = owner(player_two_name, player_two_color)
 game_controller = controller(player_one, player_two)
 
 brd = manager()   
@@ -196,11 +196,11 @@ class visual():
         self.canvas.bind('<Button-1>', self.melee_attack_click)
 
     def show_loc(self, event):
-        self.loc_label['text'] = event
-        self.info_label['text'] = brd.inspect(event)
-        self.desc_label['text'] = brd.explain(event)
-        self.health_label['text'] = brd.gethealth(event)
-        self.distance_label['text'] = control.count(self.selected_unit, event)
+        self.loc_label['text'] = "Location: {}".format(event)
+        self.info_label['text'] = "Unit: {}".format(brd.inspect(event))
+        self.desc_label['text'] = "Description: {}".format(brd.explain(event))
+        self.health_label['text'] = "Health: {}".format(brd.gethealth(event))
+        self.distance_label['text'] = "Steps: {}".format(control.count(self.selected_unit, event))
         #tk.Label(self.ui, text = "{}".format(event)).pack(side="right")
 
     def restart(self):
@@ -237,7 +237,10 @@ class visual():
             if obj.destroyed:
                 cleanup_func(obj)
             if isinstance(obj, player) and not obj.destroyed:
-                self.draw_unit(self.convert_map_to_logical(obj.loc), symbol_Pl_color)
+                if obj in player_one.units:
+                    self.draw_unit(self.convert_map_to_logical(obj.loc), player_one.color)
+                if obj in player_two.units:
+                    self.draw_unit(self.convert_map_to_logical(obj.loc), player_two.color)
             if isinstance(obj, scenery)and not obj.destroyed:
                 self.draw_O(self.convert_map_to_logical(obj.loc))
             if isinstance(obj, building) and not obj.destroyed:
@@ -496,6 +499,7 @@ class visual():
             self.selected_unit = self.controlling_player.units[0]
 
         self.turn_label['text'] = self.controlling_player.name
+        self.turn_label['background'] = self.controlling_player.color
         self.actions_label['text'] = self.controlling_player.available_actions + 1
 
     def set_impossible_action_text(self, text):

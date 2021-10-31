@@ -99,7 +99,7 @@ class water(scenery):
 class player(unit):
     def __init__(self, args) -> None:
         super().__init__(args)
-        self.description = "The player"
+        self.description = "A unit"
 
 class enemy(unit):
     def __init__(self, args) -> None:

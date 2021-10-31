@@ -2,10 +2,11 @@
 
 
 class owner:
-    def __init__(self, name) -> None:
+    def __init__(self, name, color) -> None:
         self.name = name
         self.available_actions = 3
         self.units = []
+        self.color = color
 
     def action(self):
         self.available_actions -= 1
