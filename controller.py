@@ -43,7 +43,6 @@ class controller:
         for i in self.other_owner.units:
             if i.destroyed == True:
                 x += 1
-        print("{} . {} ".format(all_units_owner2, x))
         if all_units_owner2 == x:
             return self.current_owner
         

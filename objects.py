@@ -27,7 +27,7 @@ class unit:
     def __init__(self, args) -> None:
         self.name = args[0]
         self.description = "{}".format(self.name)
-        self.range = 1
+        self.range = 2
         self.steps = 1
         self.melee_range = 1
         self.walkable = False
