@@ -193,7 +193,7 @@ class manager:
             newloc0 += 1 
             newloc1 += 1
             colcheck = colsr.get(newloc1)
-            if colcheck == 'J' or colcheck == None:
+            if colcheck == fullcols[:gridsize][-1] or colcheck == None:
                 break
 
             clcheck = board.iloc[int(newloc0)][int(colsc.get(colcheck))]
@@ -213,9 +213,8 @@ class manager:
         while tt > 0:
             newloc0 -= 1 
             newloc1 -= 1
-
             colcheck = colsr.get(newloc1)
-            if colcheck == 'J' or colcheck == None:
+            if colcheck == fullcols[:gridsize][-1] or colcheck == None:
                 break
 
             clcheck = board.iloc[int(newloc0)][int(colsc.get(colcheck))]
@@ -225,7 +224,6 @@ class manager:
         tt = unit.loc[0]
         newloc0 = temploc[0]
         newloc1 = colsc.get(temploc[1]) 
-        colcheck = colsr.get(newloc1)
         while tt < 9:
             newloc0 += 1 
             newloc1 += 1
@@ -286,7 +284,6 @@ class manager:
             self.board.at[i[0], i[1]] = x
             x.set_loc((i[0], i[1]))
 
-
 class unitcontroller:
     def __init__(self) -> None:
         pass
@@ -338,49 +335,16 @@ class unitcontroller:
         distance = self.count(unit, loc)
         if distance <= unit.range:
             if getattr(boardmanager.board.at[loc[0], loc[1]], 'walkable') and loc in self.possible_moves(unit, boardmanager):
-                print("{} is walking {} steps".format(unit.name, distance))
                 newboard = boardmanager.board
                 newboard.iloc[int(unit.loc[0])][int(ul)] = cell() 
                 newboard.iloc[int(loc[0])][int(pr)] = unit 
                 unit.set_loc((int(loc[0]),loc[1]))
                 return newboard, True
             else:
-                print("{} can't move there".format(unit.name))
                 return boardmanager.board, False
         else:
-            print("{} has max range of {}".format(unit.name, unit.range))
             return boardmanager.board, False
 
-    def move(self, direction, unit, board: DataFrame) -> DataFrame:
-        y, x = unit.loc[0],unit.loc[1]
-        def __moveandclean(y,x):
-            board.at[unit.loc[0], unit.loc[1]] = cell() #clean old position
-            board.at[y, x] = unit
-            unit.set_loc((y,x))
-            
-        if direction == "up" and y != 0:
-                y -= int(unit.steps)
-                if getattr(board.at[y, x], 'walkable'):
-                    __moveandclean(y,x)
-
-        if direction == "down" and y != max(rows):
-                y += int(unit.steps)
-                if getattr(board.at[y, x], 'walkable'):
-                    __moveandclean(y,x)
-
-        if direction == "left" and x != "A":
-                loc = colsc.get(x) - unit.steps
-                x = colsr.get(loc)
-                if getattr(board.at[y, x], 'walkable'):
-                    __moveandclean(y,x)
-
-        if direction == "right" and x != "J":
-                loc = colsc.get(x) + unit.steps
-                x = colsr.get(loc)
-                if getattr(board.at[y, x], 'walkable'):
-                    __moveandclean(y,x)
-        return board
-    
     def attack(self, loc, board, damage) -> DataFrame:
         pr = colsc.get(loc[1])
         def __break():
@@ -417,42 +381,6 @@ class unitcontroller:
             _remove_object()
 
         return board
-
-    def moverange(self, unit, board):
-        y, x = unit.loc[0],unit.loc[1]
-        z = y - unit.steps
-        p = y + unit.steps
-        loc = colsc.get(x) - unit.steps
-        locx = colsr.get(loc)
-        loc1 = colsc.get(x) + unit.steps
-        locx1 = colsr.get(loc1)
-        zp = [z,p]
-        ll = [locx, locx1]
-        subboard = board
-        if (y != 0 and y != max(rows)) or (x != "A" and x != "J"):
-            if y != 0 and y != max(rows):
-                # Show to cells the unit can walk
-                for i in zp:
-                    # top and bottom
-                    if isinstance(subboard.at[i, x], cell):
-                        subboard.at[i, x] = cell(name="%")
-            if x != "A" and x != "J":
-                for i in ll:
-                    # left and right
-                    if isinstance(subboard.at[y, i], cell):
-                        subboard.at[y, i] = cell(name="%")
-            print(subboard)
-            # clean up the cells
-            if y != 0 and y != max(rows):
-                for i in zp:
-                    if isinstance(subboard.at[i, x], cell):
-                        subboard.at[i, x] = cell(name=".")
-            if x != "A" and x != "J":
-                for i in ll:
-                    if isinstance(subboard.at[y, i], cell):
-                        subboard.at[y, i] = cell(name=".")
-        else:
-            print(board)
 
 class unitbrain:
     def __init__(self) -> None:
