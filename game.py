@@ -1,3 +1,4 @@
+from math import nextafter
 import numpy as np
 import random
 from tkinter import *
@@ -59,6 +60,7 @@ tree2 = tree("T")
 tree3 = tree("T")
 tree4 = tree("T")
 water_clus = water("W")
+water_clus2 = water("W")
 
 control = unitcontroller()
 gen = placement(str(random.randint(10000000000, 99999999999)))
@@ -75,6 +77,7 @@ placeip(brd.board, tree2)
 placeip(brd.board, tree3)
 placeip(brd.board, tree4)
 brd.placeclus(brd, water_clus)
+brd.placeclus(brd, water_clus2)
 
 # random seed placement
 #brd.board = gen.generate(brd.board)
@@ -109,7 +112,7 @@ class visual():
         self.max_ui_columns = 6
         
         self.header_label = tk.Label(self.ui, text="Controls", background='#EE5E51')
-        self.turn_label = tk.Label(self.ui, text="Player 1 is in control")
+        self.turn_label = tk.Label(self.ui, text="{}".format(player_one.name), background=player_one.color)
         self.actions_label = tk.Label(self.ui, text="Actions remaining: 3")
         self.placeholder_label = tk.Label(self.ui, text="")
 
@@ -245,19 +248,26 @@ class visual():
                 cleanup_func(obj)
             if isinstance(obj, water):
                 self.draw_water(self.convert_map_to_logical(obj.loc))
+                
             if isinstance(obj, player) and not obj.destroyed:
                 if obj in player_one.units:
                     self.draw_unit(self.convert_map_to_logical(obj.loc), player_one.color)
+                    
                 if obj in player_two.units:
                     self.draw_unit(self.convert_map_to_logical(obj.loc), player_two.color)
+                    
             if isinstance(obj, tree)and not obj.destroyed:
                 self.draw_O(self.convert_map_to_logical(obj.loc))
+                
             if isinstance(obj, building) and not obj.destroyed:
                 self.draw_building(self.convert_map_to_logical(obj.loc))
+                
             if isinstance(obj, enemy) and not obj.destroyed:
                 self.draw_unit(self.convert_map_to_logical(obj.loc), symbol_En_color)
+                
             if isinstance(obj, broken_cell):
                 self.draw_X(self.convert_map_to_logical(obj.loc))
+                
 
     def draw_possible_moves(self, unit):
         for i in control.possible_moves(unit, brd):
