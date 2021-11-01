@@ -6,7 +6,7 @@ import tkinter as tk
 from manager import manager, unitcontroller, placement
 from util import placeip, cols, colsandrows, fullcols, colsr, colsc
 from state import state
-from objects import broken_cell, player, cell, scenery, unit, building, enemy
+from objects import broken_cell, player, cell, scenery, unit, building, enemy, water, tree
 
 from settings import gridsize, debug, player_one_name, player_two_name, player_one_color, player_two_color
 
@@ -20,7 +20,7 @@ symbol_size = (size_of_board / number_of_col_squares - size_of_board / 8) / 4
 symbol_thickness = 40
 unit_thickness = 10
 symbol_X_color = '#EE4035'
-symbol_O_color = '#A9CCCC'
+symbol_O_color = 'green'
 symbol_dot_color = '#A999CC'
 symbol_Sq_color = '#9363FF'
 symbol_Pl_color = '#E0f9FF'
@@ -29,6 +29,8 @@ symbol_En_color = '#EE4035'
 symbol_attack_dot_color = '#ccc1CF'
 Green_color = '#7BC043'
 symbol_building_color = '#E0f9FF'
+#symbol_water_color = '#0492EF'
+symbol_water_color = 'blue'
 black_color = '#120606'
 canvas_text_color = '#9363FF'
 
@@ -51,10 +53,13 @@ player_two.units.append(user4)
 
 foe = enemy("E")
 house = building("B")
-tree = scenery("T")
-tree2 = scenery("T")
-tree3 = scenery("T")
-tree4 = scenery("T")
+house2 = building("B")
+tree1 = tree("T")
+tree2 = tree("T")
+tree3 = tree("T")
+tree4 = tree("T")
+water_clus = water("W")
+
 control = unitcontroller()
 gen = placement(str(random.randint(10000000000, 99999999999)))
 
@@ -64,10 +69,12 @@ placeip(brd.board, user3)
 placeip(brd.board, user4)
 placeip(brd.board, foe)
 placeip(brd.board, house)
-placeip(brd.board, tree)
+placeip(brd.board, house2)
+placeip(brd.board, tree1)
 placeip(brd.board, tree2)
 placeip(brd.board, tree3)
 placeip(brd.board, tree4)
+brd.placeclus(brd, water_clus)
 
 # random seed placement
 #brd.board = gen.generate(brd.board)
@@ -208,12 +215,12 @@ class visual():
         self.initialize_board()
         foe = enemy("E")
         house = building("B")
-        tree = scenery("T")
-        tree2 = scenery("T")
-        tree3 = scenery("T")
-        tree4 = scenery("T")
+        tree1 = tree("T")
+        tree2 = tree("T")
+        tree3 = tree("T")
+        tree4 = tree("T")
 
-        objects = [foe, house, tree, tree2, tree3, tree4]
+        objects = [foe, house, tree1, tree2, tree3, tree4]
         for i in objects:
             placeip(brd.board, i)
         self.draw_scenery()
@@ -236,12 +243,14 @@ class visual():
         for obj in brd.get_all_objects(brd.board):
             if obj.destroyed:
                 cleanup_func(obj)
+            if isinstance(obj, water):
+                self.draw_water(self.convert_map_to_logical(obj.loc))
             if isinstance(obj, player) and not obj.destroyed:
                 if obj in player_one.units:
                     self.draw_unit(self.convert_map_to_logical(obj.loc), player_one.color)
                 if obj in player_two.units:
                     self.draw_unit(self.convert_map_to_logical(obj.loc), player_two.color)
-            if isinstance(obj, scenery)and not obj.destroyed:
+            if isinstance(obj, tree)and not obj.destroyed:
                 self.draw_O(self.convert_map_to_logical(obj.loc))
             if isinstance(obj, building) and not obj.destroyed:
                 self.draw_building(self.convert_map_to_logical(obj.loc))
@@ -267,7 +276,7 @@ class visual():
         logical_position = np.array(logical_position)
         grid_position = self.convert_logical_to_grid_position(logical_position)
         self.canvas.create_oval(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness,
+                                grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness -10,
                                 outline=symbol_O_color)
 
     def draw_X(self, logical_position):
@@ -286,15 +295,22 @@ class visual():
                                 fill=symbol_Sq_color)
     def draw_building(self, logical_position):
         grid_position = self.convert_logical_to_grid_position(logical_position)
-        self.canvas.create_rectangle(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
-                                fill=symbol_building_color)
-        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
+        self.canvas.create_rectangle(grid_position[0], grid_position[1],
+                                grid_position[0], grid_position[1], width=symbol_thickness,
+                                fill=symbol_building_color, outline=symbol_building_color)
+        self.canvas.create_line(grid_position[0], grid_position[1],
+                                grid_position[0], grid_position[1] - symbol_size, width=symbol_thickness,
                                 fill=black_color)
         self.canvas.create_text(grid_position[0] - symbol_size,
                                 grid_position[1] + symbol_size, 
-                                fill=canvas_text_color, text="hi")
+                                fill=canvas_text_color, text="Factory")
+
+    def draw_water(self, logical_position):
+        grid_position = self.convert_logical_to_grid_position(logical_position)
+        self.canvas.create_rectangle(grid_position[0] , grid_position[1],
+                                grid_position[0], grid_position[1], width=40,
+                                fill=symbol_water_color, outline=symbol_water_color)
+
 
     def draw_unit(self, logical_position, color, owner="", type=""):
         grid_position = self.convert_logical_to_grid_position(logical_position)

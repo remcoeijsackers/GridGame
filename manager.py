@@ -5,9 +5,9 @@ from pandas.core.frame import DataFrame
 
 
 from grid import grid
-from util import cols, fullcols, placeip, clearconsole, colsandrows, colsc, colsr, rows
+from util import cols, fullcols, placeip, clearconsole, colsandrows, colsc, colsr, rows, placeip_near_wall
 from state import state
-from objects import cell, unit, map_object, player, scenery, building, broken_cell
+from objects import cell, unit, map_object, player, scenery, building, broken_cell, water
 from settings import gridsize, debug
 
 from controller import owner
@@ -103,9 +103,17 @@ class manager:
             for coord in spot:
                 yield coord
     
-    def is_adjacent(self, board: DataFrame, item1, item2):
+    def get_adjacent_cells(self, loc, distance):
+        def __count(mainloc, otherloc) -> int:
+            z = mainloc[0], colsc.get(mainloc[1])
+            b = int(otherloc[0]), colsc.get(otherloc[1])
+            outcome = abs(z[0] - b[0]) + abs(z[1] - b[1])
+            return outcome
+
+        for i in self.iter_coords():
+            if __count(loc, i) <= distance:
+                yield i
         # check if something is adjacent to something else, in a square grid (including vertical)
-        pass
 
     def is_on_same_row(self, unitloc0, itemloc0):
         if unitloc0 == itemloc0:
@@ -269,6 +277,15 @@ class manager:
                         x = row_object - 1
                         z = (x, i[1])
                         yield z
+
+    def placeclus(self, boardmanager, placee):
+        #x = placee.get_class_r("W")
+        placeip_near_wall(self.board, placee)
+        for i in self.get_adjacent_cells(placee.loc, 2):
+            x = water("W")
+            self.board.at[i[0], i[1]] = x
+            x.set_loc((i[0], i[1]))
+
 
 class unitcontroller:
     def __init__(self) -> None:

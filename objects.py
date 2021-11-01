@@ -88,11 +88,22 @@ class scenery(blockspath):
     def set_loc(self, loc):
         self.loc = loc
         return self.loc
+    
+    def get_class_r(self, args):
+        return scenery(args[0])
 
+class tree(scenery):
+    def __init__(self, args) -> None:
+        super().__init__(args)
+        self.name = args[0]
+        self.destroyed = False
+    def __str__(self) -> str:
+        return self.name
 class water(scenery):
     def __init__(self, args) -> None:
         super().__init__(args)
         self.name = args[0]
+        self.destroyed = False
     def __str__(self) -> str:
         return self.name
 
