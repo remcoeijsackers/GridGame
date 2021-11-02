@@ -20,6 +20,7 @@ symbol_dot_color = '#A999CC'
 symbol_En_color = '#EE4035'
 symbol_attack_dot_color = '#ccc1CF'
 Green_color = '#7BC043'
+Red_color = '#EE4035'
 symbol_building_color = '#E0f9FF'
 symbol_water_color = 'blue'
 black_color = '#120606'
@@ -59,9 +60,9 @@ class game():
 
         self.window.config(menu=menubar)
 
-        statusbar = tk.Label(self.window, text="on the way…", bd=1, relief=tk.SUNKEN, anchor=tk.W)
+        self.statusbar = tk.Label(self.window, text="Cell info", bd=1, relief=tk.SUNKEN, anchor=tk.W)
 
-        statusbar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.statusbar.pack(side=tk.BOTTOM, fill=tk.X)
 
         self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board, background='#2e1600')
         self.canvas.pack(side='left',anchor='nw', fill='x')
@@ -72,20 +73,21 @@ class game():
         self.max_ui_columns = 6
         
         self.header_label = tk.Label(self.ui, text="Controls", background='#EE5E51')
+
         self.turn_label = tk.Label(self.ui, text="{}".format(player_one.name), background=player_one.color)
-        self.actions_label = tk.Label(self.ui, text="Actions remaining: 3")
+        self.actions_label = tk.Label(self.ui, text="Actions remaining: 4", background=player_one.color)
         self.placeholder_label = tk.Label(self.ui, text="")
 
-        self.loc_label = tk.Label(self.ui, text="loc")
+        #self.loc_label = tk.Label(self.ui, text="loc")
         self.info_label = tk.Label(self.ui, text="info")
         self.desc_label = tk.Label(self.ui, text="description")
         self.health_label = tk.Label(self.ui, text="health")
-        self.mode_label = tk.Label(self.ui, text="Select and move Mode")
-        self.distance_label = tk.Label(self.ui, text="Distance")
+        self.mode_label = tk.Label(self.ui, text="Select and move Mode", background=Green_color)
+        #self.distance_label = tk.Label(self.ui, text="Distance")
         self.action_details_label = tk.Label(self.ui, text="Action details")
 
-        self.move_button = tk.Button(self.ui, text="Select and move")
-        self.inspect_button = tk.Button(self.ui, text="Inspect")
+        self.move_button = tk.Button(self.ui, text="Select move")
+        self.inspect_button = tk.Button(self.ui, text="Inspect Cell")
         self.melee_attack_button = tk.Button(self.ui, text="Melee Attack")
     
         self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = self.max_ui_columns)
@@ -93,20 +95,20 @@ class game():
         self.actions_label.grid(column=0, row=2, sticky=tk.EW, columnspan = self.max_ui_columns)
         self.placeholder_label.grid(column=0, row=3, sticky=tk.EW, columnspan = self.max_ui_columns)
 
-        self.loc_label.grid(column=0, row=4, sticky=tk.E,padx=5, pady=5)
+        #self.loc_label.grid(column=0, row=4, sticky=tk.E,padx=5, pady=5)
         self.info_label.grid(column=1, row=4,sticky=tk.W, padx=5, pady=5)
         self.desc_label.grid(column=2, row=4,sticky=tk.E, padx=5, pady=5)
         self.health_label.grid(column=3, row=4,sticky=tk.E, padx=5, pady=5)
 
-        self.distance_label.grid(column=0, row=5,sticky=tk.W, padx=5, pady=5,columnspan = 2)
+        #self.distance_label.grid(column=0, row=5,sticky=tk.W, padx=5, pady=5,columnspan = 2)
         self.action_details_label.grid(column=2, row=5,sticky=tk.W, padx=5, pady=5,columnspan = 3)
         
         self.mode_label.grid(column=0, row=6,sticky=tk.EW, columnspan = self.max_ui_columns)
 
-        self.move_button.grid(column=0, row=7,sticky=tk.W, columnspan = 3)
-        self.inspect_button.grid(column=0, row=7,sticky=tk.E, columnspan = 3)
+        self.move_button.grid(column=0, row=7, sticky=tk.W, columnspan = 2)
+        self.inspect_button.grid(column=1, row=7, sticky=tk.S, columnspan = 2)
 
-        self.melee_attack_button.grid(column=0, row=12,sticky=tk.EW, columnspan = self.max_ui_columns)
+        self.melee_attack_button.grid(column=2,sticky=tk.E,  row=7, columnspan = 2)
 
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
 
@@ -153,6 +155,7 @@ class game():
         Switches the control mode to inspecting grid elements.
         """
         self.mode_label['text'] = "Inspect Mode"
+        self.mode_label['background'] = Green_color
         self.canvas.bind('<Button-1>', self.inspect_click)
 
     def switch_mode_selectmove(self, event):
@@ -160,6 +163,7 @@ class game():
         Switches the control mode to selecting and moving owned units.
         """
         self.mode_label['text'] = "Select and move Mode"
+        self.mode_label['background'] = Green_color
         self.canvas.bind('<Button-1>', self.select_move_click)
     
     def switch_mode_melee_attack(self, event):
@@ -167,17 +171,19 @@ class game():
         Switches the control mode to attacking with the selected unit.
         """
         self.mode_label['text'] = "Melee Attack Mode"
+        self.mode_label['background'] = Red_color
         self.canvas.bind('<Button-1>', self.melee_attack_click)
 
     def get_event_info(self, event):
         """
         Changes the labels text to reflect the selected unit/cell/action
         """
-        self.loc_label['text'] = "Location: {}".format(event)
+        #self.loc_label['text'] = "Location: {}".format(event)
+        self.statusbar['text'] = " Location: {} | Steps: {} |".format(event, control.count(self.selected_unit, event))
         self.info_label['text'] = "Unit: {}".format(brd.inspect(event))
         self.desc_label['text'] = "Description: {}".format(brd.explain(event))
         self.health_label['text'] = "Health: {}".format(brd.gethealth(event))
-        self.distance_label['text'] = "Steps: {}".format(control.count(self.selected_unit, event))
+        #self.distance_label['text'] = "Steps: {}".format(control.count(self.selected_unit, event))
 
     def draw_board_and_objects(self, boardmanager: manager):
         """
@@ -368,11 +374,13 @@ class game():
         if current_controlling_player != self.controlling_player:
             self.mode_label['text'] = "Select and move Mode"
             self.canvas.bind('<Button-1>', self.select_move_click)
+            self.mode_label['background'] = Green_color
             self.selected_unit = self.controlling_player.units[0]
 
         self.turn_label['text'] = self.controlling_player.name
         self.turn_label['background'] = self.controlling_player.color
-        self.actions_label['text'] = self.controlling_player.available_actions + 1
+        self.actions_label['text'] = "Actions remaining: {}".format(self.controlling_player.available_actions + 1)
+        self.actions_label['background'] = self.controlling_player.color
 
     def set_impossible_action_text(self, text):
         """
