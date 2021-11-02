@@ -14,6 +14,7 @@ from src.conversion import convert_coords
 
 from src.controller import controller, owner
 
+board_background = '#2e1600'
 symbol_X_color = '#EE4035'
 symbol_tree_color = 'green'
 symbol_dot_color = '#A999CC'
@@ -40,9 +41,27 @@ gen = placement(str(random.randint(10000000000, 99999999999)))
 # random seed placement
 #brd.board = gen.generate(brd.board)
 
+class popUp(tk.Toplevel):
+
+    def __init__(self, original):
+
+        self.original_frame = original
+        tk.Toplevel.__init__(self)
+        self.transient(self.original_frame.window)
+        self.geometry("260x210")
+        self.lift()
+        label = tk.Label(self, text = "This is Popup window")
+        label.grid()
+        btn = tk.Button(self, text ="Close", command= lambda : self.on_close())
+        btn.grid(row =1)
+
+    def on_close(self):
+    	self.destroy()
+    	self.original_frame.window.update()
+    	self.original_frame.window.deiconify()
 class game():
     """
-    Ties the pandas game backend to a visual frontend.
+    Ties the dataframe game backend to a visual frontend.
     """
     def __init__(self):
         self.window = Tk()
@@ -64,7 +83,7 @@ class game():
 
         self.statusbar.pack(side=tk.BOTTOM, fill=tk.X)
 
-        self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board, background='#2e1600')
+        self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board, background=board_background)
         self.canvas.pack(side='left',anchor='nw', fill='x')
         
         self.ui = Canvas(self.window, bd=1)
@@ -143,13 +162,28 @@ class game():
 
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
+        #self.display_gameover(self.controlling_player)
+        #self.popupmsg("hi")
+        self.pop_up()
 
     def mainloop(self):
         """
         Runs the tkinter application.
         """
         self.window.mainloop()
-            
+
+    def pop_up(self):
+    	popUp(self)
+
+    def popupmsg(self, msg):
+        popup = Tk()
+        popup.wm_title("!")
+        label = tk.Label(popup, text=msg)
+        label.pack(side="top", fill="x", pady=10)
+        B1 = tk.Button(popup, text="Okay", command = popup.destroy)
+        B1.pack()
+        popup.mainloop()
+
     def switch_mode_inspect(self, event):
         """
         Switches the control mode to inspecting grid elements.
@@ -306,7 +340,7 @@ class game():
 
             if isinstance(brd.inspect(mappos), player) and brd.inspect(mappos) in self.controlling_player.units:
                     self.selected_unit = brd.inspect(mappos)
-            self.soft_reset(mappos)
+            self.reset(mappos, type="soft")
   
         def _movefunc():
             logical_position = convert.convert_grid_to_logical_position(grid_position)
@@ -370,7 +404,7 @@ class game():
         self.controlling_player = game_controller.action_or_switch()
 
         # only force select the a unit of the other player, if the turn is over.
-        # also set the action to select and move 
+        # also set the action to select and move on player change.
         if current_controlling_player != self.controlling_player:
             self.mode_label['text'] = "Select and move Mode"
             self.canvas.bind('<Button-1>', self.select_move_click)
@@ -384,39 +418,23 @@ class game():
 
     def set_impossible_action_text(self, text):
         """
-        Let's the user now something is not possible
+        Lets the user now something is not possible
         """
         self.action_details_label['text'] = text
 
-    def reset(self, mappos):
+    def reset(self, mappos, type="hard"):
         """
-        Reset the board after an action, reflecting the new state
+        Reset the board after an action, reflecting the new state.
         """
         done = game_controller.check_game_state()
         if done:
-            self.canvas.delete("all")
+            self.draw_board_and_objects(brd)
             self.display_gameover(done)
             return
         self.set_impossible_action_text("")
         self.get_event_info(mappos)
-        self.monitor_state()
-        if debug:
-            print(brd.show())
-        self.canvas.delete("all")
-        self.draw_board_and_objects(brd)
-        self.draw_possible_moves(self.selected_unit)
-
-    def soft_reset(self, mappos):
-        """
-        To be able to reset the board, without counting an action
-        """
-        done = game_controller.check_game_state()
-        if done:
-            self.canvas.delete("all")
-            self.display_gameover(done)
-            return
-        self.set_impossible_action_text("")
-        self.get_event_info(mappos)
+        if type == "hard":
+            self.monitor_state()
         if debug:
             print(brd.show())
         self.canvas.delete("all")
@@ -425,27 +443,26 @@ class game():
 
     def display_gameover(self, winner: owner):
         """
-        Cleans the canvas and shows the winner and score
+        Cleans the canvas and shows the winner and score.
         """
         text = 'Winner: {}'.format(winner.name)
-        color = symbol_X_color
 
         self.canvas.delete("all")
-        self.ui.delete("all")
+        for widget in self.ui.winfo_children():
+            widget.destroy()
+        self.ui['background'] = board_background
+        self.canvas.unbind('<Button-1>')
+        self.statusbar['text'] = ""
 
-        self.canvas.create_text(size_of_board / 2, size_of_board / 3, font="cmr 60 bold", fill=color, text=text)
+        self.canvas.create_text(size_of_board / 2, size_of_board / 3, font="cmr 60 bold", fill=winner.color, text=text)
         score_text = 'Results \n'
         self.canvas.create_text(size_of_board / 2, 5 * size_of_board / 8, font="cmr 40 bold", fill=Green_color,
                                 text=score_text)
 
-        score_text = '{}: '.format(game_controller.current_owner.name) + "placeholder" + '\n'
-        score_text += '{}: '.format(game_controller.other_owner.name) + "placeholder" + '\n'
+        score_text = '{} Units Left: '.format(game_controller.current_owner.name) + "{}".format(len(game_controller.current_owner.units)) + '\n'
+        score_text += '{} Units Left: '.format(game_controller.other_owner.name) + "{}".format(len(game_controller.other_owner.units)) + '\n'
 
         self.canvas.create_text(size_of_board / 2, 3 * size_of_board / 4, font="cmr 30 bold", fill=Green_color,
-                                text=score_text)
-
-        score_text = 'Click to play again \n'
-        self.canvas.create_text(size_of_board / 2, 15 * size_of_board / 16, font="cmr 20 bold", fill="gray",
                                 text=score_text)
                 
 if __name__ == "__main__":
