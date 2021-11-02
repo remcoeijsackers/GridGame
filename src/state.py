@@ -5,6 +5,9 @@ import os
 import glob
 
 class state:
+    """
+    Handles game saves and loading.
+    """
     def __init__(self) -> None:
         self.his = []
         self.v = 0

@@ -1,10 +1,10 @@
 import random
 import os
 
-from numpy.lib.shape_base import column_stack
 from pandas.core.frame import DataFrame
-from settings import gridsize, debug
-from objects import cell
+
+from src.settings import gridsize
+from src.objects import cell
 
 cols = ["A","B","C","D","E","F","G","H","I","J"]
 fullcols = [i for i in "abcdefghijklmnopqrstuvwxyz".upper()]
@@ -31,9 +31,10 @@ def placeip(dataframe, placee):
     c = cl()
     if isinstance(dataframe.at[r, c], cell):
         dataframe.at[r, c] = placee
+        placee.set_loc((r,c))
     else: 
         placeip(dataframe, placee)
-    placee.set_loc((r,c))
+
 
     return r, c
 
@@ -47,10 +48,10 @@ def placeip_near_wall(dataframe: DataFrame, placee):
     c = cl()
     if isinstance(dataframe.at[r, c], cell):
         dataframe.at[r, c] = placee
+        placee.set_loc((r,c))
     else: 
         placeip_near_wall(dataframe, placee)
-    placee.set_loc((r,c))
-
+    
     return r, c
 
 def clearconsole():
