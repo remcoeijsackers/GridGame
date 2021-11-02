@@ -284,10 +284,7 @@ class game():
         self.canvas.create_oval(grid_position[0] - 1, grid_position[1] - 1,
                                 grid_position[0] + 1, grid_position[1] + 1, width=width,
                                 outline=color)
-    
-    def clear_cell(self, widget_id):
-        self.canvas.delete(widget_id)
-    
+
     def select_move_click(self, event):
         """
         Allows the user to either move a unit, or select another of their units
