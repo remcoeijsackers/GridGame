@@ -134,8 +134,8 @@ class game():
         things = [user, user2, user3, user4, foe, house, house2, tree1,tree2,tree3,tree4]
         for i in things:
             placeip(brd.board, i)
-        brd.placeclus(brd, water_clus)
-        brd.placeclus(brd, water_clus2)
+        brd.placeclus(water_clus)
+        brd.placeclus(water_clus2)
 
         self.controlling_player = player_one
         self.selected = False

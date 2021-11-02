@@ -324,14 +324,15 @@ class manager:
                         z = (x, i[1])
                         yield z
 
-    def placeclus(self, boardmanager, placee):
+    def placeclus(self, placee):
         """
         Place a cluster around an object.
         """
-        #x = placee.get_class_r("W")
+        classfromobject = placee.__class__
+        name = placee.name
         placeip_near_wall(self.board, placee)
         for i in self.get_adjacent_cells(placee.loc, 2):
-            x = water("W")
+            x = classfromobject(name)
             self.board.at[i[0], i[1]] = x
             x.set_loc((i[0], i[1]))
 
