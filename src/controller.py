@@ -1,7 +1,10 @@
-
+# Game state monitoring
 
 
 class owner:
+    """
+    Reflects the user controlling the units.
+    """
     def __init__(self, name, color) -> None:
         self.name = name
         self.available_actions = 3
@@ -13,6 +16,9 @@ class owner:
 
 
 class controller:
+    """
+    Handles game state monitoring.
+    """
     def __init__(self, first_player, second_player) -> None:
         self.other_owner : owner = second_player
         self.current_owner: owner = first_player

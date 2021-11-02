@@ -1,1 +1,1 @@
-# chessWTT
+# GridGame
