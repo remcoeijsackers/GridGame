@@ -5,9 +5,9 @@ from pandas.core.frame import DataFrame
 
 
 from src.grid import grid
-from src.util import cols, fullcols, placeip, clearconsole, colsandrows, colsc, colsr, rows, placeip_near_wall
+from src.util import fullcols, placeip, colsandrows, colsc, colsr, placeip_near_wall
 from src.state import state
-from src.objects import cell, unit, map_object, player, scenery, building, broken_cell, water
+from src.objects import cell, unit, player, scenery, building, broken_cell, water, tree
 from src.settings import gridsize, debug
 
 from src.controller import owner
@@ -39,16 +39,16 @@ class placement:
 
     def generate(self, board):
         #placing units
-        #pla = [unit(i) for i in ["E", "E"]]
-        #[placeip(self.board, i) for i in pla]
+        pla = [unit(i) for i in ["E", "E"]]
+        [self.placeip(self.board, i) for i in pla]
 
         #placing obstacles
-        #random.seed(int(self.coreseed))
+        random.seed(int(self.coreseed))
         plb = [building(i) for i in ["B" for i in range(random.randint(1,6))]]
-        #[self.placeip(board, i) for i in plb] 
+        [self.placeip(board, i) for i in plb] 
 
         #placing scenery
-        #random.seed(int(self.subseed))
+        random.seed(int(self.subseed))
         pls = [scenery(i) for i in ["T" for i in range(random.randint(1,6))]]
         [self.placeip(board, i) for i in pls]  
         return board
@@ -56,7 +56,6 @@ class placement:
 class manager:
     def __init__(self):
         self.board = grid().setup()
-        #self.__setup()
 
     def show(self) -> DataFrame:
         return self.board
@@ -103,11 +102,17 @@ class manager:
                     yield coord
 
     def iter_coords(self):
+        """
+        Return all coordinates in the board.
+        """
         for spot in colsandrows:
             for coord in spot:
                 yield coord
     
     def get_adjacent_cells(self, loc, distance):
+        """
+        check if something is adjacent to something else, in a square grid (including vertical)
+        """
         def __count(mainloc, otherloc) -> int:
             z = mainloc[0], colsc.get(mainloc[1])
             b = int(otherloc[0]), colsc.get(otherloc[1])
@@ -117,59 +122,86 @@ class manager:
         for i in self.iter_coords():
             if __count(loc, i) <= distance:
                 yield i
-        # check if something is adjacent to something else, in a square grid (including vertical)
+        
 
     def is_on_same_row(self, unitloc0, itemloc0):
+        """
+        check if something is on the same row with something else.
+        """
         if unitloc0 == itemloc0:
             return True
         else:
             return False
 
     def is_on_same_col(self, unitloc1, itemloc1):
+        """
+        check if something is on the same column with something else.
+        """
         if unitloc1 == itemloc1:
             return True
         else:
             return False
 
     def get_all_objects(self, board: DataFrame):
+        """
+        Get all (non cell) objects in the dataframe.
+        """
         all_items_on_board = board.to_numpy()
         for row in all_items_on_board:
             for item in row:
-                if not isinstance(item, cell): # and not isinstance(item, broken_cell):
+                if not isinstance(item, cell):
                     yield item
     
     def get_coords_of_all_objects(self, board: DataFrame):
+        """
+        Get the coordinates all (non cell) objects in the dataframe.
+        """
         all_items_on_board = board.to_numpy()
         for row in all_items_on_board:
             for item in row:
-                if not isinstance(item, cell): # and not isinstance(item, broken_cell):
+                if not isinstance(item, cell):
                     yield item.loc
 
     def get_items_in_row(self, board: DataFrame, row: int):
+        """
+        Get all items in a row in the dataframe.
+        """
         all_items_in_row = board.iloc[row]
         for item in all_items_in_row:
-            if not isinstance(item, cell): # and not isinstance(item, broken_cell):
+            if not isinstance(item, cell):
                 yield item
 
     def get_items_in_col(self, board: DataFrame, col: str):
+        """
+        Get all items in a column in the dataframe.
+        """
         all_items_in_col = board[col]
         for item in all_items_in_col:
-            if not isinstance(item, cell): # and not isinstance(item, broken_cell):
+            if not isinstance(item, cell):
                 yield item
     
     def get_coords_of_items_in_row(self, board: DataFrame, row: int):
+        """
+        Get the coordinates of all items in a row in the dataframe.
+        """
         all_items_in_row = board.iloc[row]
         for item in all_items_in_row:
-            if not isinstance(item, cell): # and not isinstance(item, broken_cell):
+            if not isinstance(item, cell):
                 yield item.loc
 
     def get_coords_of_items_in_col(self, board: DataFrame, col: str):
+        """
+        Get the coordinates of all items in a column in the dataframe.
+        """
         all_items_in_col = board[col]
         for item in all_items_in_col:
-            if not isinstance(item, cell): # and not isinstance(item, broken_cell):
+            if not isinstance(item, cell):
                 yield item.loc
     
     def get_coords_of_items_in_diagonal_topleft_to_bottomright(self, board: DataFrame, unit):
+        """
+        Get the coordinates of all items in a diagonal row in the dataframe.
+        """
         temploc = unit.loc
         tt = temploc[0]
         newloc0 = temploc[0]
@@ -209,6 +241,9 @@ class manager:
             yield coord
 
     def get_coords_of_items_in_diagonal_topright_to_bottomleft(self, board: DataFrame, unit):
+        """
+        Get the coordinates of all items in a diagonal row in the dataframe.
+        """
         temploc = unit.loc
         tt = temploc[0]
         newloc0 = temploc[0]
@@ -243,8 +278,10 @@ class manager:
         for coord in locs:
             yield coord
             
-
     def block_walk_behind_object_in_row(self, board: DataFrame, unit):
+        """
+        Get the coordinates of cells after items in a row in the dataframe.
+        """
         for i in self.get_coords_of_items_in_row(board, unit.loc[0]):
             col_unit = colsc.get(unit.loc[1])
             col_object = colsc.get(i[1])
@@ -262,6 +299,9 @@ class manager:
                         yield (i[0], colsr.get(x))
 
     def block_walk_behind_object_in_col(self, board: DataFrame, unit):
+        """
+        Get the coordinates of cells after items in a column in the dataframe.
+        """
         for i in self.get_coords_of_items_in_col(board, unit.loc[1]):
             row_unit = unit.loc[0]
             row_object = i[0]
@@ -281,6 +321,9 @@ class manager:
                         yield z
 
     def placeclus(self, boardmanager, placee):
+        """
+        Place a cluster around an object.
+        """
         #x = placee.get_class_r("W")
         placeip_near_wall(self.board, placee)
         for i in self.get_adjacent_cells(placee.loc, 2):
@@ -289,10 +332,10 @@ class manager:
             x.set_loc((i[0], i[1]))
 
 class unitcontroller:
-    def __init__(self) -> None:
-        pass
-
     def count(self, unit, loc) -> int:
+        """
+        Count how many steps an action would take.
+        """
         z = unit.loc[0], colsc.get(unit.loc[1])
         b = int(loc[0]), colsc.get(loc[1])
         # for singular vertical moves
@@ -308,6 +351,9 @@ class unitcontroller:
         return outcome
     
     def possible_moves(self, unit, boardmanager: manager):
+        """
+        Return the coordinates an unit can walk to.
+        """
         filter_coords = []
         for i in boardmanager.block_walk_behind_object_in_row(boardmanager.board, unit):
             filter_coords.append(i)
@@ -323,6 +369,9 @@ class unitcontroller:
                     yield coord
     
     def possible_melee_moves(self, selected_unit, board: DataFrame, controlling_player: owner):
+        """
+        Return the coordinates an unit can attack.
+        """
         for spot in colsandrows:
             for coord in spot:
                 # check if its a cell
@@ -333,7 +382,10 @@ class unitcontroller:
                     if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) and not board.at[coord[0], coord[1]] in controlling_player.units):
                         yield coord
 
-    def place(self, unit, loc, boardmanager: manager) -> DataFrame and bool:
+    def place(self, unit: unit, loc, boardmanager: manager) -> DataFrame and bool:
+        """
+        Place an unit to another spot in the dataframe.
+        """
         pr = colsc.get(loc[1])
         ul = colsc.get(unit.loc[1])
         distance = self.count(unit, loc)
@@ -350,6 +402,9 @@ class unitcontroller:
             return boardmanager.board, False
 
     def attack(self, loc, board, damage) -> DataFrame:
+        """
+        Attack a cell, scenery or another unit.
+        """
         pr = colsc.get(loc[1])
         def __break():
             broken_cell_object = broken_cell()
@@ -371,6 +426,9 @@ class unitcontroller:
         return board
     
     def attack_on_loc(self, loc, board):
+        """
+        Remote Attack a cell, scenery or another unit.
+        """
         pr = colsc.get(loc[1])
         def __break():
             broken_cell_object = broken_cell()
