@@ -21,9 +21,6 @@ unit_thickness = 10
 symbol_X_color = '#EE4035'
 symbol_tree_color = 'green'
 symbol_dot_color = '#A999CC'
-symbol_Sq_color = '#9363FF'
-symbol_Pl_color = '#E0f9FF'
-symbol_Pl2_color = '#99f9CF'
 symbol_En_color = '#EE4035'
 symbol_attack_dot_color = '#ccc1CF'
 Green_color = '#7BC043'
@@ -38,48 +35,14 @@ game_controller = controller(player_one, player_two)
 
 brd = manager()   
 st = state()
-
-user = player("P")
-user2 = player("P2")
-user3 = player("P3")
-user4 = player("P4")
-
-player_one.units.append(user)
-player_one.units.append(user2)
-player_two.units.append(user3)
-player_two.units.append(user4)
-
-foe = enemy("E")
-house = building("B")
-house2 = building("B")
-tree1 = tree("T")
-tree2 = tree("T")
-tree3 = tree("T")
-tree4 = tree("T")
-water_clus = water("W")
-water_clus2 = water("W")
-
 control = unitcontroller()
-gen = placement(str(random.randint(10000000000, 99999999999)))
 
-placeip(brd.board, user)
-placeip(brd.board, user2)
-placeip(brd.board, user3)
-placeip(brd.board, user4)
-placeip(brd.board, foe)
-placeip(brd.board, house)
-placeip(brd.board, house2)
-placeip(brd.board, tree1)
-placeip(brd.board, tree2)
-placeip(brd.board, tree3)
-placeip(brd.board, tree4)
-brd.placeclus(brd, water_clus)
-brd.placeclus(brd, water_clus2)
+gen = placement(str(random.randint(10000000000, 99999999999)))
 
 # random seed placement
 #brd.board = gen.generate(brd.board)
 
-class visual():
+class game():
     def __init__(self):
         self.window = Tk()
         self.window.title('GridGame')
@@ -123,7 +86,6 @@ class visual():
 
 
         self.move_button = tk.Button(self.ui, text="Select and move")
-        self.click_button = tk.Button(self.ui, text="Interact")
         self.inspect_button = tk.Button(self.ui, text="Inspect")
         self.melee_attack_button = tk.Button(self.ui, text="Melee Attack")
     
@@ -145,7 +107,6 @@ class visual():
         self.move_button.grid(column=0, row=7,sticky=tk.W, columnspan = 3)
         self.inspect_button.grid(column=0, row=7,sticky=tk.E, columnspan = 3)
 
-        self.click_button.grid(column=0, row=8,sticky=tk.EW, columnspan = self.max_ui_columns)
 
         self.melee_attack_button.grid(column=0, row=12,sticky=tk.EW, columnspan = self.max_ui_columns)
 
@@ -156,9 +117,30 @@ class visual():
         self.melee_attack_button.bind('<Button-1>', self.switch_mode_melee_attack)
 
         self.canvas.bind('<Button-1>', self.select_move_click)
+
+        user,user2 = player("P"), player("P2")
+        user3,user4 = player("P3"),player("P4") 
+
+        player_one.units.append(user)
+        player_one.units.append(user2)
+        player_two.units.append(user3)
+        player_two.units.append(user4)
+
+        foe = enemy("E")
+        house, house2 = building("B"),building("B")
+        tree1, tree2, tree3, tree4 = tree("T"),tree("T"),tree("T"),tree("T")
+        water_clus, water_clus2 = water("W"),water("W")
+
+        things = [user, user2, user3, user4, foe, house, house2, tree1,tree2,tree3,tree4]
+        for i in things:
+            placeip(brd.board, i)
+        brd.placeclus(brd, water_clus)
+        brd.placeclus(brd, water_clus2)
+
         self.controlling_player = player_one
         self.selected = False
         self.selected_unit = self.controlling_player.units[0]
+
         self.draw_board_and_objects()
         self.draw_possible_moves(self.selected_unit)
 
@@ -167,7 +149,7 @@ class visual():
             
     def switch_mode_inspect(self, event):
         self.mode_label['text'] = "Inspect Mode"
-        self.canvas.bind('<Button-1>', self.inspectclick)
+        self.canvas.bind('<Button-1>', self.inspect_click)
 
     def switch_mode_selectmove(self, event):
         self.mode_label['text'] = "Select and move Mode"
@@ -183,22 +165,7 @@ class visual():
         self.desc_label['text'] = "Description: {}".format(brd.explain(event))
         self.health_label['text'] = "Health: {}".format(brd.gethealth(event))
         self.distance_label['text'] = "Steps: {}".format(control.count(self.selected_unit, event))
-        #tk.Label(self.ui, text = "{}".format(event)).pack(side="right")
 
-    def restart(self):
-        self.canvas.delete("all")
-        foe = enemy("E")
-        house = building("B")
-        tree1 = tree("T")
-        tree2 = tree("T")
-        tree3 = tree("T")
-        tree4 = tree("T")
-
-        objects = [foe, house, tree1, tree2, tree3, tree4]
-        for i in objects:
-            placeip(brd.board, i)
-        self.draw_board_and_objects()
-           
     def draw_board_and_objects(self):
         def cleanup_func(obj):
             brd.board.at[obj.loc[0], obj.loc[1]] = cell()
@@ -236,7 +203,7 @@ class visual():
                 self.draw_unit(self.convert_map_to_logical(obj.loc), symbol_En_color)
                 
             if isinstance(obj, broken_cell):
-                self.draw_X(self.convert_map_to_logical(obj.loc))
+                self.draw_broken_cell(self.convert_map_to_logical(obj.loc))
                 
     def draw_possible_moves(self, unit):
         for i in control.possible_moves(unit, brd):
@@ -251,7 +218,7 @@ class visual():
                                 grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness -10,
                                 outline=symbol_tree_color)
 
-    def draw_X(self, logical_position):
+    def draw_broken_cell(self, logical_position):
         grid_position = self.convert_logical_to_grid_position(logical_position)
         self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
                                 grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness,
@@ -259,12 +226,6 @@ class visual():
         self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] + symbol_size,
                                 grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
                                 fill=symbol_X_color)
-
-    def draw_Sq(self, logical_position):
-        grid_position = self.convert_logical_to_grid_position(logical_position)
-        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
-                                fill=symbol_Sq_color)
 
     def draw_building(self, logical_position):
         grid_position = self.convert_logical_to_grid_position(logical_position)
@@ -332,7 +293,7 @@ class visual():
         logical_position = self.convert_grid_to_logical_position(grid_position)
         mappos = self.convert_logical_to_map(logical_position)
         
-        def select_unit_click(event):
+        def _select_unit_click(event):
             grid_position = [event.x, event.y]
             logical_position = self.convert_grid_to_logical_position(grid_position)
             mappos = self.convert_logical_to_map(logical_position)
@@ -341,7 +302,7 @@ class visual():
                     self.selected_unit = brd.inspect(mappos)
             self.soft_reset(mappos)
   
-        def movefunc():
+        def _movefunc():
             logical_position = self.convert_grid_to_logical_position(grid_position)
             mappos = self.convert_logical_to_map(logical_position)
 
@@ -358,16 +319,16 @@ class visual():
             
         if not self.selected and hasattr(brd.inspect(mappos), 'walkable'):
             self.selected = True
-            movefunc()
+            _movefunc()
 
         if not self.selected: 
             self.selected = True
-            select_unit_click(event)
+            _select_unit_click(event)
         
         else:
-            movefunc()
+            _movefunc()
 
-    def inspectclick(self, event):
+    def inspect_click(self, event):
         grid_position = [event.x, event.y]
         logical_position = self.convert_grid_to_logical_position(grid_position)
         mappos = self.convert_logical_to_map(logical_position)
@@ -377,6 +338,9 @@ class visual():
         return mappos
 
     def melee_attack_click(self, event):
+        """
+        Allows the current selected unit to attack objects and other units.
+        """
         grid_position = [event.x, event.y]
         logical_position = self.convert_grid_to_logical_position(grid_position)
         mappos = self.convert_logical_to_map(logical_position)
@@ -388,11 +352,11 @@ class visual():
                 self.set_impossible_action_text('{} has a melee range of {}'.format(self.selected_unit, self.selected_unit.melee_range))
         return mappos
 
-    def place_on_map(self, map_postion, item):
-        logical_position = self.convert_map_to_logical(map_postion)
-        self.draw_Sq(logical_position)
 
     def monitor_state(self):
+        """
+        Watch the current board status and monitor if a player has lost.
+        """
         current_controlling_player = self.controlling_player
         self.controlling_player = game_controller.action_or_switch()
 
@@ -408,9 +372,15 @@ class visual():
         self.actions_label['text'] = self.controlling_player.available_actions + 1
 
     def set_impossible_action_text(self, text):
+        """
+        Let's the user now something is not possible
+        """
         self.action_details_label['text'] = text
 
     def reset(self, mappos):
+        """
+        Reset the board after an action, reflecting the new state
+        """
         done = game_controller.check_game_state()
         if done:
             self.canvas.delete("all")
@@ -426,6 +396,9 @@ class visual():
         self.draw_possible_moves(self.selected_unit)
 
     def soft_reset(self, mappos):
+        """
+        To be able to reset the board, without counting an action
+        """
         done = game_controller.check_game_state()
         if done:
             self.canvas.delete("all")
@@ -440,7 +413,9 @@ class visual():
         self.draw_possible_moves(self.selected_unit)
 
     def display_gameover(self, winner: owner):
-
+        """
+        Cleans the canvas and shows the winner and score
+        """
         text = 'Winner: {}'.format(winner.name)
         color = symbol_X_color
 
@@ -463,5 +438,6 @@ class visual():
                                 text=score_text)
                 
 
-vis = visual()
-vis.mainloop()
+if __name__ == "__main__":
+    main = game()
+    main.mainloop()

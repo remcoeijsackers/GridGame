@@ -60,6 +60,10 @@ class manager:
 
     def show(self) -> DataFrame:
         return self.board
+
+    def reset_board(self):
+        self.board = grid().setup()
+        return self.board
     
     def modify(self, board) -> None:
         self.board = board 
