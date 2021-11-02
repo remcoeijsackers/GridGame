@@ -13,6 +13,9 @@ from src.settings import gridsize, debug
 from src.controller import owner
 
 class placement:
+    """
+    Handles seed generation, random placement of units
+    """
     def __init__(self, seed):
         self.seed = seed
         self.coreseed = seed[:len(seed)//2]
@@ -78,7 +81,9 @@ class manager:
         return contents.description
     
     def search(self, item):
-        # loop trough the entire dataframe until there is a match on name, then return the location
+        """
+        loop trough the entire dataframe until there is a match on name, then return the location
+        """
         for loclist in colsandrows:
             for loc in loclist:
                 pr = colsc.get(loc[1])
@@ -223,7 +228,6 @@ class manager:
         tt = unit.loc[0]
         newloc0 = temploc[0]
         newloc1 = colsc.get(temploc[1]) 
-        colcheck = colsr.get(newloc1)
         # check from unit to bottomright
         while tt < 9:
             newloc0 += 1 
