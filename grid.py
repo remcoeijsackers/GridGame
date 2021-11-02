@@ -5,6 +5,9 @@ from util import cols,gridsize,fullcols
 from objects import cell
 
 class grid:
+    """
+    Creates the dataframe to be used as game board.
+    """
     def __init__(self) -> None:
         self.base_grid = []
 

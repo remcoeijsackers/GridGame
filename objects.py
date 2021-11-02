@@ -47,8 +47,16 @@ class unit:
         if self.health <= 0:
             self.destroyed = True
 
-    
+class player(unit):
+    def __init__(self, args) -> None:
+        super().__init__(args)
+        self.description = "A unit"
 
+class enemy(unit):
+    def __init__(self, args) -> None:
+        super().__init__(args)
+        self.health = 10
+        self.description = "An Enemy"
 class map_object:
     def __init__(self) -> None:
         self.name = ""
@@ -107,13 +115,3 @@ class water(scenery):
     def __str__(self) -> str:
         return self.name
 
-class player(unit):
-    def __init__(self, args) -> None:
-        super().__init__(args)
-        self.description = "A unit"
-
-class enemy(unit):
-    def __init__(self, args) -> None:
-        super().__init__(args)
-        self.health = 10
-        self.description = "An Enemy"

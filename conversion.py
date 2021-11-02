@@ -3,7 +3,9 @@ import numpy as np
 from util import colsr, colsc
 
 class convert_coords:
-
+    """
+    Converts tkinter canvas coordinates to pandas grid coordinates, and vice versa.
+    """
     def convert_logical_to_grid_position(self, logical_position):
         logical_position = np.array(logical_position, dtype=int)
         return (size_of_board / number_of_col_squares) * logical_position + size_of_board / (number_of_col_squares * 2)

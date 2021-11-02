@@ -139,34 +139,52 @@ class game():
         self.selected = False
         self.selected_unit = self.controlling_player.units[0]
 
-        self.draw_board_and_objects()
+        self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
 
     def mainloop(self):
+        """
+        Runs the tkinter application.
+        """
         self.window.mainloop()
             
     def switch_mode_inspect(self, event):
+        """
+        Switches the control mode to inspecting grid elements.
+        """
         self.mode_label['text'] = "Inspect Mode"
         self.canvas.bind('<Button-1>', self.inspect_click)
 
     def switch_mode_selectmove(self, event):
+        """
+        Switches the control mode to selecting and moving owned units.
+        """
         self.mode_label['text'] = "Select and move Mode"
         self.canvas.bind('<Button-1>', self.select_move_click)
     
     def switch_mode_melee_attack(self, event):
+        """
+        Switches the control mode to attacking with the selected unit.
+        """
         self.mode_label['text'] = "Melee Attack Mode"
         self.canvas.bind('<Button-1>', self.melee_attack_click)
 
     def get_event_info(self, event):
+        """
+        Changes the labels text to reflect the selected unit/cell/action
+        """
         self.loc_label['text'] = "Location: {}".format(event)
         self.info_label['text'] = "Unit: {}".format(brd.inspect(event))
         self.desc_label['text'] = "Description: {}".format(brd.explain(event))
         self.health_label['text'] = "Health: {}".format(brd.gethealth(event))
         self.distance_label['text'] = "Steps: {}".format(control.count(self.selected_unit, event))
 
-    def draw_board_and_objects(self):
+    def draw_board_and_objects(self, boardmanager: manager):
+        """
+        Cleans the board, and draws are elements in the dataframe.
+        """
         def cleanup_func(obj):
-            brd.board.at[obj.loc[0], obj.loc[1]] = cell()
+            boardmanager.board.at[obj.loc[0], obj.loc[1]] = cell()
             if obj in player_one.units:
                 player_one.units.remove(obj)
             if obj in player_two.units:
@@ -178,7 +196,7 @@ class game():
         for i in range(number_of_col_squares):
             self.canvas.create_line(0, (i + 1) * size_of_board / number_of_col_squares, size_of_board, (i + 1) * size_of_board / number_of_col_squares)
 
-        for obj in brd.get_all_objects(brd.board):
+        for obj in boardmanager.get_all_objects(brd.board):
             if obj.destroyed:
                 cleanup_func(obj)
             if isinstance(obj, water):
@@ -204,6 +222,9 @@ class game():
                 self.draw_broken_cell(convert.convert_map_to_logical(obj.loc))
                 
     def draw_possible_moves(self, unit):
+        """
+        Draws the step / attack moves that are available to the selected unit.
+        """
         for i in control.possible_moves(unit, brd):
             self.draw_dot(convert.convert_map_to_logical(i), symbol_dot_color)
         for i in control.possible_melee_moves(unit, brd.board, self.controlling_player):
@@ -377,7 +398,7 @@ class game():
         if debug:
             print(brd.show())
         self.canvas.delete("all")
-        self.draw_board_and_objects()
+        self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
 
     def soft_reset(self, mappos):
@@ -394,7 +415,7 @@ class game():
         if debug:
             print(brd.show())
         self.canvas.delete("all")
-        self.draw_board_and_objects()
+        self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
 
     def display_gameover(self, winner: owner):
