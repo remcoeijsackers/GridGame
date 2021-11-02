@@ -1,14 +1,19 @@
 class cell:
-    def __init__(self, name = ".") -> None:
+    def __init__(self, name = ".", stepped_on=0) -> None:
         self.name = name
         self.walkable = True
         self.description = "a cell on the grid"
+        self.stepped_on = stepped_on
 
     def __repr__(self) -> str:
         return self.name
 
     def __str__(self) -> str:
         return self.name
+
+    def set_loc(self, loc):
+        self.loc = loc
+        return self.loc
 
 class broken_cell:
     def __init__(self, name = "x") -> None:

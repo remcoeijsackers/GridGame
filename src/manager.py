@@ -113,7 +113,28 @@ class manager:
         for spot in colsandrows:
             for coord in spot:
                 yield coord
-    
+
+    def give_all_cells_coords(self):
+        """
+        Give all cells a loc
+        """
+        for spot in colsandrows:
+            for coord in spot:
+                cl = self.inspect(coord)
+                if isinstance(cl, cell):
+                    cl.set_loc(coord)
+                
+    def get_all_cells(self, board: DataFrame):
+        """
+        Return all coordinates in the board.
+        """
+        self.give_all_cells_coords()
+        all_items_on_board = board.to_numpy()
+        for row in all_items_on_board:
+            for item in row:
+                if isinstance(item, cell) and item.stepped_on > 0:
+                    yield item
+
     def get_adjacent_cells(self, loc, distance):
         """
         check if something is adjacent to something else, in a square grid (including vertical)
@@ -398,7 +419,7 @@ class unitcontroller:
         if distance <= unit.range:
             if getattr(boardmanager.board.at[loc[0], loc[1]], 'walkable') and loc in self.possible_moves(unit, boardmanager):
                 newboard = boardmanager.board
-                newboard.iloc[int(unit.loc[0])][int(ul)] = cell() 
+                newboard.iloc[int(unit.loc[0])][int(ul)] = cell(stepped_on=1) 
                 newboard.iloc[int(loc[0])][int(pr)] = unit 
                 unit.set_loc((int(loc[0]),loc[1]))
                 return newboard, True
