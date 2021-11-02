@@ -327,6 +327,7 @@ class manager:
     def placeclus(self, placee):
         """
         Place a cluster around an object.
+        Creates new instances of the objects class.
         """
         classfromobject = placee.__class__
         name = placee.name
