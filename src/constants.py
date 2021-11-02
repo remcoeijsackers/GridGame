@@ -1,4 +1,4 @@
-from settings import gridsize
+from src.settings import gridsize
 
 size_of_board = 600
 number_of_col_squares = gridsize

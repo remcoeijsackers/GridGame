@@ -1,6 +1,7 @@
-from constants import size_of_board, number_of_col_squares, symbol_size, symbol_thickness, unit_thickness
 import numpy as np
-from util import colsr, colsc
+
+from src.constants import size_of_board, number_of_col_squares, symbol_size, symbol_thickness, unit_thickness
+from src.util import colsr, colsc
 
 class convert_coords:
     """

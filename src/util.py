@@ -1,10 +1,10 @@
 import random
 import os
 
-from numpy.lib.shape_base import column_stack
 from pandas.core.frame import DataFrame
-from settings import gridsize, debug
-from objects import cell
+
+from src.settings import gridsize
+from src.objects import cell
 
 cols = ["A","B","C","D","E","F","G","H","I","J"]
 fullcols = [i for i in "abcdefghijklmnopqrstuvwxyz".upper()]

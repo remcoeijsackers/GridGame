@@ -3,16 +3,16 @@ import random
 from tkinter import *
 import tkinter as tk
 
-from manager import manager, unitcontroller, placement
-from util import placeip, cols, colsandrows, fullcols, colsr, colsc
-from state import state
-from objects import broken_cell, player, cell, scenery, unit, building, enemy, water, tree
+from src.manager import manager, unitcontroller, placement
+from src.util import placeip, cols, colsandrows, fullcols, colsr, colsc
+from src.state import state
+from src.objects import broken_cell, player, cell, scenery, unit, building, enemy, water, tree
 
-from settings import gridsize, debug, player_one_name, player_two_name, player_one_color, player_two_color
-from constants import size_of_board, number_of_col_squares, symbol_size, symbol_thickness, unit_thickness
-from conversion import convert_coords
+from src.settings import gridsize, debug, player_one_name, player_two_name, player_one_color, player_two_color
+from src.constants import size_of_board, number_of_col_squares, symbol_size, symbol_thickness, unit_thickness
+from src.conversion import convert_coords
 
-from controller import controller, owner
+from src.controller import controller, owner
 
 symbol_X_color = '#EE4035'
 symbol_tree_color = 'green'
@@ -338,7 +338,7 @@ class game():
         grid_position = [event.x, event.y]
         logical_position = convert.convert_grid_to_logical_position(grid_position)
         mappos = convert.convert_logical_to_map(logical_position)
-        self.convert_map_to_logical(mappos)
+        convert.convert_map_to_logical(mappos)
 
         self.get_event_info(mappos)
         return mappos

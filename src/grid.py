@@ -1,8 +1,8 @@
 import pandas as pd
 from pandas.core.frame import DataFrame
 
-from util import cols,gridsize,fullcols
-from objects import cell
+from src.util import gridsize,fullcols
+from src.objects import cell
 
 class grid:
     """

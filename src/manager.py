@@ -4,13 +4,13 @@ import os
 from pandas.core.frame import DataFrame
 
 
-from grid import grid
-from util import cols, fullcols, placeip, clearconsole, colsandrows, colsc, colsr, rows, placeip_near_wall
-from state import state
-from objects import cell, unit, map_object, player, scenery, building, broken_cell, water
-from settings import gridsize, debug
+from src.grid import grid
+from src.util import cols, fullcols, placeip, clearconsole, colsandrows, colsc, colsr, rows, placeip_near_wall
+from src.state import state
+from src.objects import cell, unit, map_object, player, scenery, building, broken_cell, water
+from src.settings import gridsize, debug
 
-from controller import owner
+from src.controller import owner
 
 class placement:
     def __init__(self, seed):
