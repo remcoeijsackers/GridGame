@@ -9,14 +9,10 @@ from state import state
 from objects import broken_cell, player, cell, scenery, unit, building, enemy, water, tree
 
 from settings import gridsize, debug, player_one_name, player_two_name, player_one_color, player_two_color
+from constants import size_of_board, number_of_col_squares, symbol_size, symbol_thickness, unit_thickness
+from conversion import convert_coords
 
 from controller import controller, owner
-
-size_of_board = 600
-number_of_col_squares = gridsize
-symbol_size = (size_of_board / number_of_col_squares - size_of_board / 8) / 4
-symbol_thickness = 40
-unit_thickness = 10
 
 symbol_X_color = '#EE4035'
 symbol_tree_color = 'green'
@@ -36,6 +32,7 @@ game_controller = controller(player_one, player_two)
 brd = manager()   
 st = state()
 control = unitcontroller()
+convert = convert_coords()
 
 gen = placement(str(random.randint(10000000000, 99999999999)))
 
@@ -43,6 +40,9 @@ gen = placement(str(random.randint(10000000000, 99999999999)))
 #brd.board = gen.generate(brd.board)
 
 class game():
+    """
+    Ties the pandas game backend to a visual frontend.
+    """
     def __init__(self):
         self.window = Tk()
         self.window.title('GridGame')
@@ -84,7 +84,6 @@ class game():
         self.distance_label = tk.Label(self.ui, text="Distance")
         self.action_details_label = tk.Label(self.ui, text="Action details")
 
-
         self.move_button = tk.Button(self.ui, text="Select and move")
         self.inspect_button = tk.Button(self.ui, text="Inspect")
         self.melee_attack_button = tk.Button(self.ui, text="Melee Attack")
@@ -106,7 +105,6 @@ class game():
 
         self.move_button.grid(column=0, row=7,sticky=tk.W, columnspan = 3)
         self.inspect_button.grid(column=0, row=7,sticky=tk.E, columnspan = 3)
-
 
         self.melee_attack_button.grid(column=0, row=12,sticky=tk.EW, columnspan = self.max_ui_columns)
 
@@ -184,42 +182,42 @@ class game():
             if obj.destroyed:
                 cleanup_func(obj)
             if isinstance(obj, water):
-                self.draw_water(self.convert_map_to_logical(obj.loc))
+                self.draw_water(convert.convert_map_to_logical(obj.loc))
                 
             if isinstance(obj, player) and not obj.destroyed:
                 if obj in player_one.units:
-                    self.draw_unit(self.convert_map_to_logical(obj.loc), player_one.color)
+                    self.draw_unit(convert.convert_map_to_logical(obj.loc), player_one.color)
                     
                 if obj in player_two.units:
-                    self.draw_unit(self.convert_map_to_logical(obj.loc), player_two.color)
+                    self.draw_unit(convert.convert_map_to_logical(obj.loc), player_two.color)
                     
             if isinstance(obj, tree)and not obj.destroyed:
-                self.draw_tree(self.convert_map_to_logical(obj.loc))
+                self.draw_tree(convert.convert_map_to_logical(obj.loc))
                 
             if isinstance(obj, building) and not obj.destroyed:
-                self.draw_building(self.convert_map_to_logical(obj.loc))
+                self.draw_building(convert.convert_map_to_logical(obj.loc))
                 
             if isinstance(obj, enemy) and not obj.destroyed:
-                self.draw_unit(self.convert_map_to_logical(obj.loc), symbol_En_color)
+                self.draw_unit(convert.convert_map_to_logical(obj.loc), symbol_En_color)
                 
             if isinstance(obj, broken_cell):
-                self.draw_broken_cell(self.convert_map_to_logical(obj.loc))
+                self.draw_broken_cell(convert.convert_map_to_logical(obj.loc))
                 
     def draw_possible_moves(self, unit):
         for i in control.possible_moves(unit, brd):
-            self.draw_dot(self.convert_map_to_logical(i), symbol_dot_color)
+            self.draw_dot(convert.convert_map_to_logical(i), symbol_dot_color)
         for i in control.possible_melee_moves(unit, brd.board, self.controlling_player):
-            self.draw_dot(self.convert_map_to_logical(i), symbol_attack_dot_color)
+            self.draw_dot(convert.convert_map_to_logical(i), symbol_attack_dot_color)
             
     def draw_tree(self, logical_position):
         logical_position = np.array(logical_position)
-        grid_position = self.convert_logical_to_grid_position(logical_position)
+        grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_oval(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
                                 grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness -10,
                                 outline=symbol_tree_color)
 
     def draw_broken_cell(self, logical_position):
-        grid_position = self.convert_logical_to_grid_position(logical_position)
+        grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
                                 grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness,
                                 fill=symbol_X_color)
@@ -228,7 +226,7 @@ class game():
                                 fill=symbol_X_color)
 
     def draw_building(self, logical_position):
-        grid_position = self.convert_logical_to_grid_position(logical_position)
+        grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_rectangle(grid_position[0], grid_position[1],
                                 grid_position[0], grid_position[1], width=symbol_thickness,
                                 fill=symbol_building_color, outline=symbol_building_color)
@@ -240,14 +238,14 @@ class game():
                                 fill=canvas_text_color, text="Factory")
 
     def draw_water(self, logical_position):
-        grid_position = self.convert_logical_to_grid_position(logical_position)
+        grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_rectangle(grid_position[0] , grid_position[1],
                                 grid_position[0], grid_position[1], width=40,
                                 fill=symbol_water_color, outline=symbol_water_color)
 
     def draw_unit(self, logical_position, color):
-        grid_position = self.convert_logical_to_grid_position(logical_position)
-        mappos = self.convert_logical_to_map(logical_position)
+        grid_position = convert.convert_logical_to_grid_position(logical_position)
+        mappos = convert.convert_logical_to_map(logical_position)
         health = brd.gethealth(mappos)
         self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
                                 grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=unit_thickness,
@@ -261,50 +259,34 @@ class game():
         if color == symbol_attack_dot_color:
             width = 20
         logical_position = np.array(logical_position)
-        grid_position = self.convert_logical_to_grid_position(logical_position)
+        grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_oval(grid_position[0] - 1, grid_position[1] - 1,
                                 grid_position[0] + 1, grid_position[1] + 1, width=width,
                                 outline=color)
     
     def clear_cell(self, widget_id):
         self.canvas.delete(widget_id)
-
-    def convert_logical_to_grid_position(self, logical_position):
-        logical_position = np.array(logical_position, dtype=int)
-        return (size_of_board / number_of_col_squares) * logical_position + size_of_board / (number_of_col_squares * 2)
-
-    def convert_grid_to_logical_position(self, grid_position):
-        grid_position = np.array(grid_position)
-        return np.array(grid_position // (size_of_board / number_of_col_squares), dtype=int)
-
-    def convert_logical_to_map(self, logical_postion):
-        alp = [i for i in logical_postion]
-        letter = colsr.get(alp[0])
-        map_position = (alp[1], letter)
-        return map_position
-        
-    def convert_map_to_logical(self, map_position):
-        number = colsc.get(map_position[1])
-        log_pos = np.array([number, map_position[0]], dtype=int)
-        return log_pos
     
     def select_move_click(self, event):
+        """
+        Allows the user to either move a unit, or select another of their units
+        """
         grid_position = [event.x, event.y]
-        logical_position = self.convert_grid_to_logical_position(grid_position)
-        mappos = self.convert_logical_to_map(logical_position)
+        logical_position = convert.convert_grid_to_logical_position(grid_position)
+        mappos = convert.convert_logical_to_map(logical_position)
         
         def _select_unit_click(event):
             grid_position = [event.x, event.y]
-            logical_position = self.convert_grid_to_logical_position(grid_position)
-            mappos = self.convert_logical_to_map(logical_position)
+            logical_position = convert.convert_grid_to_logical_position(grid_position)
+            mappos = convert.convert_logical_to_map(logical_position)
 
             if isinstance(brd.inspect(mappos), player) and brd.inspect(mappos) in self.controlling_player.units:
                     self.selected_unit = brd.inspect(mappos)
             self.soft_reset(mappos)
   
         def _movefunc():
-            logical_position = self.convert_grid_to_logical_position(grid_position)
-            mappos = self.convert_logical_to_map(logical_position)
+            logical_position = convert.convert_grid_to_logical_position(grid_position)
+            mappos = convert.convert_logical_to_map(logical_position)
 
             self.get_event_info(mappos)
             if hasattr(brd.inspect(mappos), 'walkable'):
@@ -329,9 +311,12 @@ class game():
             _movefunc()
 
     def inspect_click(self, event):
+        """
+        Allows the user to get info about what is on a certain tile.
+        """
         grid_position = [event.x, event.y]
-        logical_position = self.convert_grid_to_logical_position(grid_position)
-        mappos = self.convert_logical_to_map(logical_position)
+        logical_position = convert.convert_grid_to_logical_position(grid_position)
+        mappos = convert.convert_logical_to_map(logical_position)
         self.convert_map_to_logical(mappos)
 
         self.get_event_info(mappos)
@@ -342,8 +327,8 @@ class game():
         Allows the current selected unit to attack objects and other units.
         """
         grid_position = [event.x, event.y]
-        logical_position = self.convert_grid_to_logical_position(grid_position)
-        mappos = self.convert_logical_to_map(logical_position)
+        logical_position = convert.convert_grid_to_logical_position(grid_position)
+        mappos = convert.convert_logical_to_map(logical_position)
         for i in control.possible_melee_moves(self.selected_unit, brd.board, self.controlling_player):
             if i == mappos:
                 brd.board = control.attack(mappos, brd.board, self.selected_unit.strength)
@@ -437,7 +422,6 @@ class game():
         self.canvas.create_text(size_of_board / 2, 15 * size_of_board / 16, font="cmr 20 bold", fill="gray",
                                 text=score_text)
                 
-
 if __name__ == "__main__":
     main = game()
     main.mainloop()
