@@ -1,7 +1,12 @@
-# User Changeable settings
-gridsize = 14
 debug = True
-player_one_name="Remco"
-player_one_color = '#7BC043'
-player_two_name="Miri"
-player_two_color = '#EE0EEE'
+class gridsizing:
+    def __init__(self) -> None:
+        self.gridsize = 10
+
+    def set_gridsize(self, size):
+        self.gridsize = size
+
+    def get_gridsize(self) -> int:
+        return self.gridsize 
+
+gridsize = gridsizing()
