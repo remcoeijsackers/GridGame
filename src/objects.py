@@ -60,8 +60,8 @@ class player(unit):
 class enemy(unit):
     def __init__(self, args) -> None:
         super().__init__(args)
-        self.health = 10
-        self.description = "An Enemy"
+        self.health = 4
+        self.description = "An NPC, hostile"
 class map_object:
     def __init__(self) -> None:
         self.name = ""

@@ -3,13 +3,16 @@ import random
 from tkinter import *
 import tkinter as tk
 from tkinter.colorchooser import askcolor
+from tkinter.filedialog import askopenfilename
+import fileinput
 
 from src.manager import manager, unitcontroller, placement
-from src.util import placeip, cols, colsandrows, fullcols, colsr, colsc
+from src.util import placeip, cols, fullcols, colsr, colsc
 from src.state import state
 from src.objects import broken_cell, player, cell, scenery, unit, building, enemy, water, tree
+from src.grid import grid
 
-from src.settings import gridsize, debug
+from src.settings import debug, gridsize
 from src.constants import size_of_board, symbol_size, symbol_thickness, unit_thickness
 from src.conversion import convert_coords
 
@@ -27,6 +30,7 @@ symbol_building_color = '#E0f9FF'
 symbol_water_color = 'blue'
 black_color = '#120606'
 canvas_text_color = '#9363FF'
+gray_color = 'gray'
 
 brd = manager()   
 st = state()
@@ -69,23 +73,60 @@ class game():
         menubar = tk.Menu(self.window)
 
         filemenu = tk.Menu(menubar)
-        filemenu.add_command(label="Open")
+
+        filemenu.add_command(label="Open", command=askopenfilename)
         filemenu.add_command(label="Save")
         filemenu.add_command(label="Exit")
 
         menubar.add_cascade(label="File", menu=filemenu)
 
         self.window.config(menu=menubar)
-        self.home_frame = tk.Frame(self.window, background=board_background, padx= 10, pady=10)
+        self.home_frame = tk.Frame(self.window, background=board_background, padx= 100, pady=100, relief=RIDGE)
 
         entry_player_one = tk.Entry(self.home_frame)
         entry_player_one.insert(0, 'player one')
+        entry_player_one['background'] = 'orange'
 
         entry_player_two = tk.Entry(self.home_frame)
         entry_player_two.insert(0, 'player two')
-        entry_player_one['background'] = 'blue'
+        entry_player_two['background'] = 'blue'
 
-        tiles = Scale(self.home_frame, from_=10, to=14, orient=HORIZONTAL)
+        seed_entry = tk.Entry(self.home_frame, width=15)
+        seed_entry.insert(0, '{}'.format(random.randint(0, 9438132)))
+        seed_entry_label = tk.Label(self.home_frame, text="Seed", width=15)
+
+        header_label = Label(self.home_frame, text="GridGame", font=("Courier", 44), background=board_background)
+
+        tiles = Scale(self.home_frame, from_=6, to=20, orient=HORIZONTAL, length=400, label="size of the game board", background=board_background)
+        tiles.set(14)
+
+        total_tiles_label = tk.Label(self.home_frame, text="total tiles: {}".format(tiles.get() * tiles.get()), width=15)
+        
+        water_clusters = Scale(self.home_frame, from_=0, to=3, orient=HORIZONTAL, length=150, label="count of lakes", background=board_background)
+        water_clusters.set(2)
+        trees = Scale(self.home_frame, from_=0, to=10, orient=HORIZONTAL, length=150, label="count of trees", background=board_background)
+        trees.set(6)
+        factories = Scale(self.home_frame, from_=1, to=5, orient=HORIZONTAL, length=150, label="count of factories", background=board_background)
+        factories.set(2)
+        npcs = Scale(self.home_frame, from_=0, to=5, orient=HORIZONTAL, length=150, label="count of NPC's", background=board_background)
+        npcs.set(1)
+        units1 = Scale(self.home_frame, from_=1, to=10, orient=HORIZONTAL, length=150, label="Units p1", background=board_background)
+        units1.set(2)
+        units2 = Scale(self.home_frame, from_=1, to=10, orient=HORIZONTAL, length=150, label="Units p2", background=board_background)
+        units2.set(2)
+
+        min_size_needed = tiles.get() + water_clusters.get() * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 10
+
+        total_objects_label = tk.Label(self.home_frame, text="total objects: {}".format(min_size_needed), width=15)
+
+        def check_settings_possible():
+            watr = int(water_clusters.get())
+            total_tiles = tiles.get() * tiles.get()
+            min_size_needed = tiles.get() + watr * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 5
+            if min_size_needed > total_tiles:
+                tiles.set(min_size_needed)
+                total_tiles_label['text'] = "total tiles: {}".format(total_tiles)
+                return min_size_needed
 
 
         def change_color_p1():
@@ -105,35 +146,59 @@ class game():
         
         def start_game():
             global convert
+            if check_settings_possible():
+                return
             p = get_input()
             pl1 = owner(p[0], entry_player_one['background'])
             pl2 = owner(p[1], entry_player_two['background'])
             self.gridsize = tiles.get()
+
+            gridsize.set_gridsize(self.gridsize)
             convert = convert_coords(self.gridsize)
-            self.initialise_game(pl1,pl2)
+            brd.set_board(grid(self.gridsize).setup())
+            self.initialise_game(pl1,pl2, trees.get(), units1.get(), units2.get(), water_clusters.get(), factories.get(), npcs.get())
             self.home_frame.destroy()
 
         b0 = tk.Button(
             self.home_frame,
             text='Select a Color for p1',
-            command=change_color_p1)
+            command=change_color_p1, background=board_background)
         b1 = tk.Button(
             self.home_frame,
             text='Select a Color for p2',
-            command=change_color_p2)
+            command=change_color_p2, background=board_background)
 
-        b2 = tk.Button(self.home_frame, text="Start Game", command=start_game)
+        b2 = tk.Button(self.home_frame, text="Start Game", command=start_game, background=board_background)
 
-        entry_player_one.pack()
-        entry_player_two.pack()
-        b0.pack(expand=True)
-        b1.pack(expand=True)
-        tiles.pack()
-        b2.pack()
+        header_label.grid(column=0, row=0, columnspan=3)
+        entry_player_one.grid(column=0, row=1)
+        entry_player_two.grid(column=0, row=2)
+
+        b0.grid(column=1, row=1)
+        b1.grid(column=1, row=2)
+
+        units1.grid(column=2, row=1,pady=10, padx=10)
+        units2.grid(column=2, row=2,pady=10, padx=10)
+
+        tiles.grid(column=0, row=3, columnspan=4, pady=10, padx=10)
+
+        trees.grid(column=0, row=4, columnspan=2, pady=10, padx=10)
+        water_clusters.grid(column=1, row=4, columnspan=2, pady=10, padx=10)
+
+        factories.grid(column=0, row=5, columnspan=2, pady=10, padx=10)
+        npcs.grid(column=1, row=5, columnspan=2, pady=10, padx=10)
+
+        total_tiles_label.grid(column=0, row=6, columnspan=2, pady=10, padx=10)
+        total_objects_label.grid(column=1, row=6, columnspan=2, pady=10, padx=10)
+
+        seed_entry_label.grid(column=0, row=7, columnspan=2, pady=10, padx=10)
+        seed_entry.grid(column=1, row=7, columnspan=2, pady=10, padx=10)
+
+        b2.grid(column=0, columnspan=3, pady=10, padx=10)
         self.home_frame.pack()
         
     
-    def initialise_game(self, player_one, player_two):
+    def initialise_game(self, player_one, player_two, tree_count, starting_units_p1, starting_units_p2, water_clusters, factories, npc_enemies):
 
         self.player_one = player_one
         self.player_two = player_two
@@ -200,24 +265,31 @@ class game():
 
         self.canvas.bind('<Button-1>', self.select_move_click)
 
-        user,user2 = player("P"), player("P2")
-        user3,user4 = player("P3"),player("P4") 
+        for i in range(starting_units_p1):
+            soldier = player("P1-{}".format(i))
+            self.player_one.units.append(soldier)
+            placeip(brd.board, soldier)
 
-        self.player_one.units.append(user)
-        self.player_one.units.append(user2)
-        self.player_two.units.append(user3)
-        self.player_two.units.append(user4)
+        for i in range(starting_units_p2):
+            soldier = player("P2-{}".format(i))
+            self.player_two.units.append(soldier)
+            placeip(brd.board, soldier)
+        
+        for i in range(water_clusters):
+            water_clustr = water("W")
+            brd.placeclus(water_clustr)
 
-        foe = enemy("E")
-        house, house2 = building("B"),building("B")
-        tree1, tree2, tree3, tree4 = tree("T"),tree("T"),tree("T"),tree("T")
-        water_clus, water_clus2 = water("W"),water("W")
+        for i in range(factories):
+            fct = building("F")
+            placeip(brd.board, fct)
 
-        things = [user, user2, user3, user4, foe, house, house2, tree1,tree2,tree3,tree4]
-        for i in things:
-            placeip(brd.board, i)
-        brd.placeclus(water_clus)
-        brd.placeclus(water_clus2)
+        for i in range(npc_enemies):
+            npc = enemy("NPC")
+            placeip(brd.board, npc)
+ 
+        for i in range(tree_count):
+            makore = tree("T")
+            placeip(brd.board, makore)
 
         self.controlling_player = self.player_one
         self.selected = False
@@ -240,6 +312,7 @@ class game():
             self.show_stepped_on_tiles = True
         else:
             self.show_stepped_on_tiles = False
+            self.reset(self.selected_unit.loc,type="soft")
 
     def pop_up(self):
     	popUp(self)
@@ -327,14 +400,14 @@ class game():
         
 
                 
-    def draw_possible_moves(self, unit):
+    def draw_possible_moves(self, unit, movecolor=symbol_dot_color, attackcolor=symbol_attack_dot_color):
         """
         Draws the step / attack moves that are available to the selected unit.
         """
         for i in control.possible_moves(unit, brd):
-            self.draw_dot(convert.convert_map_to_logical(i), symbol_dot_color)
+            self.draw_dot(convert.convert_map_to_logical(i), movecolor)
         for i in control.possible_melee_moves(unit, brd.board, self.controlling_player):
-            self.draw_dot(convert.convert_map_to_logical(i), symbol_attack_dot_color)
+            self.draw_dot(convert.convert_map_to_logical(i), attackcolor)
             
     def draw_tree(self, logical_position):
         logical_position = np.array(logical_position)
@@ -383,10 +456,8 @@ class game():
     
     def draw_dot(self, logical_position, color):
         width = 10
-        if color == symbol_attack_dot_color:
+        if color == symbol_attack_dot_color or color == gray_color:
             width = 20
-        if color == Green_color:
-            width = 40
         logical_position = np.array(logical_position)
         grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_oval(grid_position[0] - 1, grid_position[1] - 1,
@@ -445,7 +516,14 @@ class game():
         mappos = convert.convert_logical_to_map(logical_position)
         convert.convert_map_to_logical(mappos)
 
-        self.get_event_info(mappos)
+        un = brd.inspect(mappos)
+
+        if isinstance(un, player) or isinstance(un, enemy):
+            self.reset(mappos, type="soft")
+            self.draw_possible_moves(un, movecolor=Green_color, attackcolor=gray_color)
+        else: 
+            self.reset(mappos, type="soft")
+            self.get_event_info(mappos)
         return mappos
 
     def melee_attack_click(self, event):
