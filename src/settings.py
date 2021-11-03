@@ -1,4 +1,4 @@
-debug = True
+debug = False
 class gridsizing:
     def __init__(self) -> None:
         self.gridsize = 10

@@ -435,7 +435,7 @@ class game():
                                 fill=black_color)
         self.canvas.create_text(grid_position[0] - symbol_size,
                                 grid_position[1] + symbol_size, 
-                                fill=canvas_text_color, text="Factory")
+                                fill=canvas_text_color)
 
     def draw_square(self, logical_position, color):
         grid_position = convert.convert_logical_to_grid_position(logical_position)
@@ -611,6 +611,6 @@ class game():
         self.canvas.create_text(size_of_board / 2, 3 * size_of_board / 4, font="cmr 30 bold", fill=Green_color,
                                 text=score_text)
                 
-if __name__ == "__main__":
-    main = game()
-    main.mainloop()
+
+main = game()
+main.mainloop()
