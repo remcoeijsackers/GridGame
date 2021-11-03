@@ -1,14 +1,19 @@
 class cell:
-    def __init__(self, name = ".") -> None:
+    def __init__(self, name = ".", stepped_on=0) -> None:
         self.name = name
         self.walkable = True
         self.description = "a cell on the grid"
+        self.stepped_on = stepped_on
 
     def __repr__(self) -> str:
         return self.name
 
     def __str__(self) -> str:
         return self.name
+
+    def set_loc(self, loc):
+        self.loc = loc
+        return self.loc
 
 class broken_cell:
     def __init__(self, name = "x") -> None:
@@ -55,8 +60,8 @@ class player(unit):
 class enemy(unit):
     def __init__(self, args) -> None:
         super().__init__(args)
-        self.health = 10
-        self.description = "An Enemy"
+        self.health = 4
+        self.description = "An NPC, hostile"
 class map_object:
     def __init__(self) -> None:
         self.name = ""
