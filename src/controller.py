@@ -9,6 +9,7 @@ class owner:
         self.name = name
         self.available_actions = 3
         self.units = []
+        self.buildings = []
         self.color = color
 
     def action(self):

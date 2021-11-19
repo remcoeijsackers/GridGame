@@ -235,8 +235,9 @@ class game():
         self.move_button = tk.Button(self.ui, text="Select move")
         self.inspect_button = tk.Button(self.ui, text="Inspect Cell")
         self.melee_attack_button = tk.Button(self.ui, text="Melee Attack")
+        self.capture_button = tk.Button(self.ui, text="Capture Mode")
         self.show_stepped_tiles_button = tk.Button(self.ui, text="show stepped tiles", command=self.show_stepped_tiles)
-    
+
         self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = self.max_ui_columns)
         self.turn_label.grid(column=0, row=1, sticky=tk.EW, columnspan = self.max_ui_columns)
         self.actions_label.grid(column=0, row=2, sticky=tk.EW, columnspan = self.max_ui_columns)
@@ -252,17 +253,19 @@ class game():
         
         self.mode_label.grid(column=0, row=6,sticky=tk.EW, columnspan = self.max_ui_columns)
 
-        self.move_button.grid(column=0, row=7, sticky=tk.W, columnspan = 2)
-        self.inspect_button.grid(column=1, row=7, sticky=tk.S, columnspan = 2)
+        self.move_button.grid(column=0, row=7, sticky=tk.W, columnspan = 4)
+        self.inspect_button.grid(column=1, row=7, sticky=tk.E, columnspan = 4)
 
-        self.melee_attack_button.grid(column=2,sticky=tk.E,  row=7, columnspan = 2)
-        self.show_stepped_tiles_button.grid(column=0,sticky=tk.EW,  row=8, columnspan = self.max_ui_columns)
+        self.melee_attack_button.grid(column=0, row=8, sticky=tk.W, columnspan = 4)
+        self.capture_button.grid(column=1, row=8, sticky=tk.E,   columnspan = 4)
+
+        self.show_stepped_tiles_button.grid(column=0,sticky=tk.EW,  row=9, columnspan = self.max_ui_columns)
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
 
         self.move_button.bind('<Button-1>', self.switch_mode_selectmove)
         self.inspect_button.bind('<Button-1>', self.switch_mode_inspect)
         self.melee_attack_button.bind('<Button-1>', self.switch_mode_melee_attack)
-
+        self.capture_button.bind('<Button-1>', self.switch_mode_capture)
         self.canvas.bind('<Button-1>', self.select_move_click)
 
         for i in range(starting_units_p1):
@@ -332,7 +335,15 @@ class game():
         self.mode_label['text'] = "Select and move Mode"
         self.mode_label['background'] = Green_color
         self.canvas.bind('<Button-1>', self.select_move_click)
-    
+
+    def switch_mode_capture(self, event):
+        """
+        Switches the control mode to capturing.
+        """
+        self.mode_label['text'] = "Capture Mode"
+        self.mode_label['background'] = Green_color
+        self.canvas.bind('<Button-1>', self.capture_click)
+
     def switch_mode_melee_attack(self, event):
         """
         Switches the control mode to attacking with the selected unit.
@@ -386,7 +397,7 @@ class game():
                 self.draw_tree(convert.convert_map_to_logical(obj.loc))
                 
             if isinstance(obj, building) and not obj.destroyed:
-                self.draw_building(convert.convert_map_to_logical(obj.loc))
+                self.draw_building(convert.convert_map_to_logical(obj.loc), obj.color)
                 
             if isinstance(obj, enemy) and not obj.destroyed:
                 self.draw_unit(convert.convert_map_to_logical(obj.loc), symbol_En_color)
@@ -425,11 +436,11 @@ class game():
                                 grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
                                 fill=symbol_X_color)
 
-    def draw_building(self, logical_position):
+    def draw_building(self, logical_position, color=symbol_building_color):
         grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_rectangle(grid_position[0], grid_position[1],
                                 grid_position[0], grid_position[1], width=symbol_thickness,
-                                fill=symbol_building_color, outline=symbol_building_color)
+                                fill=color, outline=color)
         self.canvas.create_line(grid_position[0], grid_position[1],
                                 grid_position[0], grid_position[1] - symbol_size, width=symbol_thickness,
                                 fill=black_color)
@@ -539,6 +550,26 @@ class game():
                 self.reset(mappos)
             else:
                 self.set_impossible_action_text('{} has a melee range of {}'.format(self.selected_unit, self.selected_unit.melee_range))
+        return mappos
+        
+    def capture_click(self, event):
+        """
+        Allows the current selected unit to capture buildings.
+        """
+        grid_position = [event.x, event.y]
+        logical_position = convert.convert_grid_to_logical_position(grid_position)
+        mappos = convert.convert_logical_to_map(logical_position)
+        for i in control.possible_melee_moves(self.selected_unit, brd.board, self.controlling_player):
+            if i == mappos:
+                structure = brd.inspect(i)
+                if isinstance(structure, building):
+                    structure.set_color(self.controlling_player.color)
+                    self.controlling_player.buildings.append(structure)
+                    self.reset(mappos)
+                else:
+                    self.set_impossible_action_text('{} can only capture factories.'.format(self.selected_unit))
+            else:
+                self.set_impossible_action_text('{} has a capture range of {}'.format(self.selected_unit, self.selected_unit.melee_range))
         return mappos
 
 

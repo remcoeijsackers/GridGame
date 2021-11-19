@@ -398,7 +398,7 @@ class unitcontroller:
                     yield coord
                 else:
                     # if its not a cell, but a piece of scenery or a unit, melee is posible
-                    if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) and not board.at[coord[0], coord[1]] in controlling_player.units):
+                    if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
                         yield coord
 
     def place(self, unit: unit, loc, boardmanager: manager) -> DataFrame and bool:
@@ -443,7 +443,7 @@ class unitcontroller:
                 attacked_unit: unit = board.iloc[int(loc[0])][int(pr)]
                 attacked_unit.take_damage(damage)
         return board
-    
+
     def attack_on_loc(self, loc, board):
         """
         Remote Attack a cell, scenery or another unit.
