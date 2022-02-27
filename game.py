@@ -1,3 +1,4 @@
+from distutils.command.build import build
 import numpy as np
 import random
 from tkinter import *
@@ -106,7 +107,7 @@ class game():
         water_clusters.set(2)
         trees = Scale(self.home_frame, from_=0, to=10, orient=HORIZONTAL, length=150, label="count of trees", background=board_background)
         trees.set(6)
-        factories = Scale(self.home_frame, from_=1, to=5, orient=HORIZONTAL, length=150, label="count of factories", background=board_background)
+        factories = Scale(self.home_frame, from_=0, to=5, orient=HORIZONTAL, length=150, label="count of factories", background=board_background)
         factories.set(2)
         npcs = Scale(self.home_frame, from_=0, to=5, orient=HORIZONTAL, length=150, label="count of NPC's", background=board_background)
         npcs.set(1)
@@ -521,6 +522,11 @@ class game():
         if isinstance(un, player) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
             self.draw_possible_moves(un, movecolor=Green_color, attackcolor=gray_color)
+        elif isinstance(un, building):
+            self.reset(mappos, type="soft")
+            self.get_event_info(mappos)
+            self.pop_up()
+
         else: 
             self.reset(mappos, type="soft")
             self.get_event_info(mappos)
