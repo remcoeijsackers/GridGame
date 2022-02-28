@@ -1,3 +1,5 @@
+from shutil import move
+from numpy import broadcast_arrays
 import pandas as pd
 import random
 from pandas.core.frame import DataFrame
@@ -140,7 +142,28 @@ class manager:
         for i in self.iter_coords():
             if __count(loc, i) <= distance:
                 yield i
-        
+
+    def get_right_and_left_cells(self, coord):
+        """
+        get the type of cell right and left
+        """
+        def __check(coord):
+            left = coord[0], colsr().get(colsc().get(coord[1])  - 1)
+            right = int(coord[0]), colsr().get(colsc().get(coord[1]) + 1)
+            return left, right
+
+        return __check(coord)
+
+    def get_top_and_bottom_cells(self, coord):
+        """
+        get the type of cell right and left
+        """
+        def __check(coord):
+            top = coord[0] -1, coord[1]
+            bottom = int(coord[0]) +1, coord[1]
+            return top, bottom
+
+        return __check(coord)
 
     def is_on_same_row(self, unitloc0, itemloc0):
         """
@@ -369,7 +392,7 @@ class unitcontroller:
             outcome = abs(z[0] - b[0]) + abs(z[1] - b[1])
         return outcome
     
-    def possible_moves(self, unit, boardmanager: manager):
+    def sub_possible_moves(self, unit, boardmanager: manager, total=False, turns=1):
         """
         Return the coordinates an unit can walk to.
         """
@@ -384,8 +407,53 @@ class unitcontroller:
         #    filter_coords.append(i)
         for spot in colsandrows():
             for coord in spot:
-                if self.count(unit, coord) <= unit.range and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
-                    yield coord
+                if not total:
+                    if self.count(unit, coord) <= unit.range and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
+                        yield coord
+                else: 
+                    if turns > 0:
+                        if self.count(unit, coord) <= unit.range * (turns + 1) and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
+                            yield coord
+                    else:
+                        if self.count(unit, coord) <= unit.range * turns  and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
+                            yield coord
+
+
+    def possible_moves(self, unit, boardmanager: manager, total=False, turns=1):
+        tmpcords = []
+        retcords = []
+        movecords = []
+
+        for spot in colsandrows():
+            for coord in spot:
+                tmpcords.append(coord)
+        
+        for coord in self.sub_possible_moves(unit, boardmanager, total, turns):
+            movecords.append(coord)
+
+        for i in tmpcords:
+            subcords = []
+            topsubcords = []
+            for crd in boardmanager.get_right_and_left_cells(i):
+                subcords.append(crd)
+            for crd in boardmanager.get_top_and_bottom_cells(i):
+                topsubcords.append(crd)
+
+            if subcords[0] in movecords and subcords[1] in movecords and not i == unit.loc:
+                retcords.append(i)
+            if topsubcords[0] in movecords and topsubcords[1] in movecords and not i == unit.loc: 
+                retcords.append(i)
+            subcords = []
+            topsubcords = []
+        
+        for i in movecords:
+            retcords.append(i)
+
+        for i in retcords:
+            yield i
+
+        retcords = []
+        movecords = []
     
     def possible_melee_moves(self, selected_unit, board: DataFrame, controlling_player: owner):
         """
@@ -407,18 +475,15 @@ class unitcontroller:
         """
         pr = colsc().get(loc[1])
         ul = colsc().get(unit.loc[1])
-        distance = self.count(unit, loc)
-        if distance <= unit.range:
-            if getattr(boardmanager.board.at[loc[0], loc[1]], 'walkable') and loc in self.possible_moves(unit, boardmanager):
-                newboard = boardmanager.board
-                newboard.iloc[int(unit.loc[0])][int(ul)] = cell(stepped_on=1) 
-                newboard.iloc[int(loc[0])][int(pr)] = unit 
-                unit.set_loc((int(loc[0]),loc[1]))
-                return newboard, True
-            else:
-                return boardmanager.board, False
+        if getattr(boardmanager.board.at[loc[0], loc[1]], 'walkable') and loc in self.possible_moves(unit, boardmanager):
+            newboard = boardmanager.board
+            newboard.iloc[int(unit.loc[0])][int(ul)] = cell(stepped_on=1) 
+            newboard.iloc[int(loc[0])][int(pr)] = unit 
+            unit.set_loc((int(loc[0]),loc[1]))
+            return newboard, True
         else:
             return boardmanager.board, False
+
 
     def attack(self, loc, board, damage) -> DataFrame:
         """
