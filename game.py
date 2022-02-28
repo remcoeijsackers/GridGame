@@ -77,15 +77,31 @@ class game():
         menubar = tk.Menu(self.window)
 
         filemenu = tk.Menu(menubar)
+        optionsmenu = tk.Menu(menubar)
 
-        filemenu.add_command(label="Open", command=askopenfilename)
-        filemenu.add_command(label="Save")
-        filemenu.add_command(label="Exit")
+        filemenu.add_command(label="Open", command=self.open_file)
+        filemenu.add_command(label="Save", command=self.save_game)
+
+        optionsmenu.add_command(label="Exit")
+
+        menubar.add_cascade(label="Game", menu=optionsmenu)
 
         menubar.add_cascade(label="File", menu=filemenu)
 
         self.window.config(menu=menubar)
         self.initialise_home()
+    
+    def open_file(self):
+        global convert
+        gameboard = st.load_file(askopenfilename())
+        brd.set_board(gameboard)
+        pl1 = owner("player1", symbol_tree_color)
+        pl2 = owner("player2", symbol_water_color)
+        self.gridsize = 14
+        gridsize.set_gridsize(self.gridsize)
+        convert = convert_coords(self.gridsize)
+        self.initialise_old_game(pl1, pl2)
+        self.home_frame.destroy()
 
     def initilise_settings(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=1, var_units1=2, var_units2=2):
         self.settings_frame = tk.Frame(self.window, padx= 100, pady=100, relief=RIDGE)
@@ -225,10 +241,10 @@ class game():
         self.settings_frame.destroy()
         self.initialise_home(var_tiles, var_water_clusters, var_trees, var_factories, var_npcs, var_units1, var_units2)
 
-    def initialise_game(self, player_one, player_two, tree_count, starting_units_p1, starting_units_p2, water_clusters, factories, npc_enemies):
-
+    def initialise_game(self, player_one, player_two, tree_count, starting_units_p1, starting_units_p2, water_clusters, factories, npc_enemies, newgame=True, board=None):
         self.player_one = player_one
         self.player_two = player_two
+
         self.show_stepped_on_tiles = False
 
         self.game_controller = controller(player_one, player_two)
@@ -292,16 +308,20 @@ class game():
 
         self.canvas.bind('<Button-1>', self.select_move_click)
 
+
         for i in range(starting_units_p1):
             soldier = player("P1-{}".format(i))
+            soldier.owner = "p1"
             self.player_one.units.append(soldier)
             placeip(brd.board, soldier)
 
         for i in range(starting_units_p2):
             soldier = player("P2-{}".format(i))
+            soldier.owner = "p2"
             self.player_two.units.append(soldier)
+
             placeip(brd.board, soldier)
-        
+
         for i in range(water_clusters):
             water_clustr = water("W")
             brd.placeclus(water_clustr)
@@ -309,11 +329,10 @@ class game():
         for i in range(factories):
             fct = building("F")
             placeip(brd.board, fct)
-
         for i in range(npc_enemies):
             npc = enemy("NPC")
             placeip(brd.board, npc)
- 
+
         for i in range(tree_count):
             makore = tree("T")
             placeip(brd.board, makore)
@@ -321,9 +340,93 @@ class game():
         self.controlling_player = self.player_one
         self.selected = False
         self.selected_unit = self.controlling_player.units[0]
+        if newgame:
+            self.draw_board_and_objects(brd)
+            self.draw_possible_moves(self.selected_unit)
+        else:
+            self.draw_board_and_objects(board)
+
+    def initialise_old_game(self, player_one, player_two):
+
+        self.show_stepped_on_tiles = False
+
+        self.game_controller = controller(player_one, player_two)
+        self.player_one = player_one
+        self.player_two = player_two
+
+        self.statusbar = tk.Label(self.window, text="Cell info", bd=1, relief=tk.SUNKEN, anchor=tk.W)
+
+        self.statusbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+        self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board, background=board_background)
+        self.canvas.pack(side='left',anchor='nw', fill='x')
+        
+        self.ui = Canvas(self.window, bd=1)
+        self.ui.columnconfigure(0, weight=0)
+        self.ui.columnconfigure(1, weight=3)
+        self.max_ui_columns = 6
+        
+        self.header_label = tk.Label(self.ui, text="Controls", background='#EE5E51')
+
+        self.turn_label = tk.Label(self.ui, text="{}".format(self.player_one.name), background=self.player_one.color)
+        self.actions_label = tk.Label(self.ui, text="Actions remaining: 4", background=self.player_one.color)
+        self.placeholder_label = tk.Label(self.ui, text="")
+
+        #self.loc_label = tk.Label(self.ui, text="loc")
+        self.info_label = tk.Label(self.ui, text="info")
+        #self.desc_label = tk.Label(self.ui, text="description")
+        self.health_label = tk.Label(self.ui, text="health")
+        self.mode_label = tk.Label(self.ui, text="Select and move Mode", background=Green_color)
+        #self.distance_label = tk.Label(self.ui, text="Distance")
+        self.action_details_label = tk.Label(self.ui, text="Action details")
+
+        self.move_button = tk.Button(self.ui, text="Select move")
+        self.inspect_button = tk.Button(self.ui, text="Inspect Cell")
+        self.melee_attack_button = tk.Button(self.ui, text="Melee Attack")
+        self.show_stepped_tiles_button = tk.Button(self.ui, text="show stepped tiles", command=self.show_stepped_tiles)
+    
+        self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = self.max_ui_columns)
+        self.turn_label.grid(column=0, row=1, sticky=tk.EW, columnspan = self.max_ui_columns)
+        self.actions_label.grid(column=0, row=2, sticky=tk.EW, columnspan = self.max_ui_columns)
+        self.placeholder_label.grid(column=0, row=3, sticky=tk.EW, columnspan = self.max_ui_columns)
+
+        #self.loc_label.grid(column=0, row=4, sticky=tk.E,padx=5, pady=5)
+        self.info_label.grid(column=1, row=4,sticky=tk.W, padx=5, pady=5)
+        #self.desc_label.grid(column=2, row=4,sticky=tk.E, padx=5, pady=5)
+        self.health_label.grid(column=2, row=4,sticky=tk.N, padx=5, pady=5)
+
+        #self.distance_label.grid(column=0, row=5,sticky=tk.W, padx=5, pady=5,columnspan = 2)
+        self.action_details_label.grid(column=2, row=5,sticky=tk.W, padx=5, pady=5,columnspan = 3)
+        
+        self.mode_label.grid(column=0, row=6,sticky=tk.EW, columnspan = self.max_ui_columns)
+
+        self.move_button.grid(column=0, row=7, sticky=tk.W, columnspan = 2)
+        self.inspect_button.grid(column=1, row=7, sticky=tk.S, columnspan = 2)
+
+        self.melee_attack_button.grid(column=2,sticky=tk.E,  row=7, columnspan = 2)
+        self.show_stepped_tiles_button.grid(column=0,sticky=tk.EW,  row=8, columnspan = self.max_ui_columns)
+        self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
+
+        self.move_button.bind('<Button-1>', self.switch_mode_selectmove)
+        self.inspect_button.bind('<Button-1>', self.switch_mode_inspect)
+        self.melee_attack_button.bind('<Button-1>', self.switch_mode_melee_attack)
+
+        self.canvas.bind('<Button-1>', self.select_move_click)
+
+        self.controlling_player = self.player_one
+        self.selected = False
+
+        for i in brd.get_all_objects(brd.board):
+            if isinstance(i, player) and i.owner == "p1":
+                self.player_one.units.append(i)
+            if isinstance(i, player) and i.owner == "p2":
+                self.player_two.units.append(i)
+
+        self.selected_unit = self.controlling_player.units[0]
 
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
+
 
     def mainloop(self):
         """
@@ -617,11 +720,15 @@ class game():
         self.get_event_info(mappos)
         if type == "hard":
             self.monitor_state()
+            #st.save(brd.board)
         if debug:
             print(brd.show())
         self.canvas.delete("all")
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
+    
+    def save_game(self):
+        st.save(brd.board)
 
     def display_gameover(self, winner: owner):
         """
