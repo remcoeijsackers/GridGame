@@ -1,4 +1,5 @@
 from distutils.command.build import build
+import enum
 import numpy as np
 import random
 from tkinter import *
@@ -31,6 +32,7 @@ symbol_building_color = '#E0f9FF'
 symbol_water_color = 'blue'
 black_color = '#120606'
 canvas_text_color = '#9363FF'
+range_move_color = '#93631F'
 gray_color = 'gray'
 
 brd = manager()   
@@ -407,6 +409,8 @@ class game():
         """
         for i in control.possible_moves(unit, brd):
             self.draw_dot(convert.convert_map_to_logical(i), movecolor)
+        for i in control.possible_moves(unit, brd, total=True, turns=self.controlling_player.available_actions):
+            self.draw_dot(convert.convert_map_to_logical(i), range_move_color)
         for i in control.possible_melee_moves(unit, brd.board, self.controlling_player):
             self.draw_dot(convert.convert_map_to_logical(i), attackcolor)
             
@@ -459,6 +463,8 @@ class game():
         width = 10
         if color == symbol_attack_dot_color or color == gray_color:
             width = 20
+        if color == range_move_color:
+            width = 15
         logical_position = np.array(logical_position)
         grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_oval(grid_position[0] - 1, grid_position[1] - 1,
@@ -561,7 +567,10 @@ class game():
             self.mode_label['text'] = "Select and move Mode"
             self.canvas.bind('<Button-1>', self.select_move_click)
             self.mode_label['background'] = Green_color
-            self.selected_unit = self.controlling_player.units[0]
+            #self.selected_unit = self.controlling_player.units[0]
+            for p, unit in enumerate(self.controlling_player.units):
+                if unit.health > 0:
+                    self.selected_unit = self.controlling_player.units[p]
 
         self.turn_label['text'] = self.controlling_player.name
         self.turn_label['background'] = self.controlling_player.color
