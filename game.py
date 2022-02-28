@@ -1,3 +1,6 @@
+from cgi import test
+from distutils.command.build import build
+import enum
 import numpy as np
 import random
 from tkinter import *
@@ -30,6 +33,7 @@ symbol_building_color = '#E0f9FF'
 symbol_water_color = 'blue'
 black_color = '#120606'
 canvas_text_color = '#9363FF'
+range_move_color = '#93631F'
 gray_color = 'gray'
 
 brd = manager()   
@@ -81,123 +85,146 @@ class game():
         menubar.add_cascade(label="File", menu=filemenu)
 
         self.window.config(menu=menubar)
-        self.home_frame = tk.Frame(self.window, background=board_background, padx= 100, pady=100, relief=RIDGE)
+        self.initialise_home()
 
-        entry_player_one = tk.Entry(self.home_frame)
-        entry_player_one.insert(0, 'player one')
-        entry_player_one['background'] = 'orange'
-
-        entry_player_two = tk.Entry(self.home_frame)
-        entry_player_two.insert(0, 'player two')
-        entry_player_two['background'] = 'blue'
-
-        seed_entry = tk.Entry(self.home_frame, width=15)
+    def initilise_settings(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=1, var_units1=2, var_units2=2):
+        self.settings_frame = tk.Frame(self.window, padx= 100, pady=100, relief=RIDGE)
+        header_label_settings = Label(self.settings_frame, text="Settings", font=("Courier", 44))
+        seed_entry = tk.Entry(self.settings_frame, width=15)
         seed_entry.insert(0, '{}'.format(random.randint(0, 9438132)))
-        seed_entry_label = tk.Label(self.home_frame, text="Seed", width=15)
-
-        header_label = Label(self.home_frame, text="GridGame", font=("Courier", 44), background=board_background)
-
-        tiles = Scale(self.home_frame, from_=6, to=20, orient=HORIZONTAL, length=400, label="size of the game board", background=board_background)
-        tiles.set(14)
-
-        total_tiles_label = tk.Label(self.home_frame, text="total tiles: {}".format(tiles.get() * tiles.get()), width=15)
+        seed_entry_label = tk.Label(self.settings_frame, text="Seed", width=15)
+        tiles = Scale(self.settings_frame, from_=6, to=20, orient=HORIZONTAL, length=300, label="size of the game board")
+        tiles.set(var_tiles)
+        total_tiles_label = tk.Label(self.settings_frame, text="total tiles: {}".format(tiles.get() * tiles.get()), width=15)
+        water_clusters = Scale(self.settings_frame, from_=0, to=3, orient=HORIZONTAL, length=150, label="count of lakes")
+        water_clusters.set(var_water_clusters)
+        trees = Scale(self.settings_frame, from_=0, to=10, orient=HORIZONTAL, length=150, label="count of trees")
+        trees.set(var_trees)
+        factories = Scale(self.settings_frame, from_=0, to=5, orient=HORIZONTAL, length=150, label="count of factories")
+        factories.set(var_factories)
+        npcs = Scale(self.settings_frame, from_=0, to=5, orient=HORIZONTAL, length=150, label="count of NPC's")
+        npcs.set(var_npcs)
+        units1 = Scale(self.settings_frame, from_=1, to=10, orient=HORIZONTAL, length=300, label="Units p1")
+        units1.set(var_units1)
+        units2 = Scale(self.settings_frame, from_=1, to=10, orient=HORIZONTAL, length=300, label="Units p2")
+        units2.set(var_units2)
         
-        water_clusters = Scale(self.home_frame, from_=0, to=3, orient=HORIZONTAL, length=150, label="count of lakes", background=board_background)
-        water_clusters.set(2)
-        trees = Scale(self.home_frame, from_=0, to=10, orient=HORIZONTAL, length=150, label="count of trees", background=board_background)
-        trees.set(6)
-        factories = Scale(self.home_frame, from_=1, to=5, orient=HORIZONTAL, length=150, label="count of factories", background=board_background)
-        factories.set(2)
-        npcs = Scale(self.home_frame, from_=0, to=5, orient=HORIZONTAL, length=150, label="count of NPC's", background=board_background)
-        npcs.set(1)
-        units1 = Scale(self.home_frame, from_=1, to=10, orient=HORIZONTAL, length=150, label="Units p1", background=board_background)
-        units1.set(2)
-        units2 = Scale(self.home_frame, from_=1, to=10, orient=HORIZONTAL, length=150, label="Units p2", background=board_background)
-        units2.set(2)
-
         min_size_needed = tiles.get() + water_clusters.get() * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 10
 
-        total_objects_label = tk.Label(self.home_frame, text="total objects: {}".format(min_size_needed), width=15)
+        total_objects_label = tk.Label(self.settings_frame, text="total objects: {}".format(min_size_needed), width=15)
 
         def check_settings_possible():
-            watr = int(water_clusters.get())
-            total_tiles = tiles.get() * tiles.get()
-            min_size_needed = tiles.get() + watr * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 5
-            if min_size_needed > total_tiles:
-                tiles.set(min_size_needed)
-                total_tiles_label['text'] = "total tiles: {}".format(total_tiles)
-                return min_size_needed
+                watr = int(water_clusters.get())
+                total_tiles = tiles.get() * tiles.get()
+                min_size_needed = tiles.get() + watr * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 5
+                if min_size_needed > total_tiles:
+                    tiles.set(min_size_needed)
+                    total_tiles_label['text'] = "total tiles: {}".format(total_tiles)
+                    return min_size_needed
+        def validate():
+            check_settings_possible()
+            self.reinit(tiles.get(),water_clusters.get(),trees.get(),factories.get(),npcs.get(),units1.get(),units2.get())
 
+        header_label_settings.grid(column=0, row=0, columnspan=4)
 
-        def change_color_p1():
-            colors = askcolor(title="Tkinter Color Chooser")
-            entry_player_one.configure(bg=colors[1])
-            return colors[1]
+        units1.grid(column=0, row=1,pady=10, padx=10, columnspan=4)
+        units2.grid(column=0, row=2,pady=10, padx=10, columnspan=4)
 
-        def change_color_p2():
-            colors = askcolor(title="Tkinter Color Chooser")
-            entry_player_two.configure(bg=colors[1])
-            return colors[1]
+        tiles.grid(column=0, row=4, columnspan=4, pady=10, padx=10)
 
-        def get_input():
-            p1name = entry_player_one.get()
-            p2name = entry_player_two.get()
-            return p1name, p2name 
+        trees.grid(column=0, row=5, pady=10, padx=10)
+        water_clusters.grid(column=1, row=5, pady=10, padx=10)
+
+        factories.grid(column=0, row=6,  pady=10, padx=10)
+        npcs.grid(column=1, row=6, pady=10, padx=10)
+
+        total_tiles_label.grid(column=0, row=7,  pady=10, padx=10)
+        total_objects_label.grid(column=1, row=7,  pady=10, padx=10)
+        seed_entry_label.grid(column=0, row=8,  pady=10, padx=10)
+        seed_entry.grid(column=1, row=8, pady=10, padx=10)
+
+        back_home_button = tk.Button(
+                self.settings_frame,
+                text='back home',
+                command=validate, background=board_background)
+
+        back_home_button.grid(column=0, row=9, columnspan=4)
         
-        def start_game():
-            global convert
-            if check_settings_possible():
-                return
-            p = get_input()
-            pl1 = owner(p[0], entry_player_one['background'])
-            pl2 = owner(p[1], entry_player_two['background'])
-            self.gridsize = tiles.get()
 
-            gridsize.set_gridsize(self.gridsize)
-            convert = convert_coords(self.gridsize)
-            brd.set_board(grid(self.gridsize).setup())
-            self.initialise_game(pl1,pl2, trees.get(), units1.get(), units2.get(), water_clusters.get(), factories.get(), npcs.get())
-            self.home_frame.destroy()
+        self.settings_frame.pack()
 
-        b0 = tk.Button(
-            self.home_frame,
-            text='Select a Color for p1',
-            command=change_color_p1, background=board_background)
-        b1 = tk.Button(
-            self.home_frame,
-            text='Select a Color for p2',
-            command=change_color_p2, background=board_background)
+    def initialise_home(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=1, var_units1=2, var_units2=2):
+            self.home_frame = tk.Frame(self.window, padx= 100, pady=100, relief=RIDGE, width=1000, height=600)
+            header_label = Label(self.home_frame, text="GridGame", font=("Courier", 44))
 
-        b2 = tk.Button(self.home_frame, text="Start Game", command=start_game, background=board_background)
+            entry_player_one = tk.Entry(self.home_frame)
+            entry_player_one.insert(0, 'player one')
+            entry_player_one['background'] = 'orange'
 
-        header_label.grid(column=0, row=0, columnspan=3)
-        entry_player_one.grid(column=0, row=1)
-        entry_player_two.grid(column=0, row=2)
+            entry_player_two = tk.Entry(self.home_frame)
+            entry_player_two.insert(0, 'player two')
+            entry_player_two['background'] = 'blue'
 
-        b0.grid(column=1, row=1)
-        b1.grid(column=1, row=2)
-
-        units1.grid(column=2, row=1,pady=10, padx=10)
-        units2.grid(column=2, row=2,pady=10, padx=10)
-
-        tiles.grid(column=0, row=3, columnspan=4, pady=10, padx=10)
-
-        trees.grid(column=0, row=4, columnspan=2, pady=10, padx=10)
-        water_clusters.grid(column=1, row=4, columnspan=2, pady=10, padx=10)
-
-        factories.grid(column=0, row=5, columnspan=2, pady=10, padx=10)
-        npcs.grid(column=1, row=5, columnspan=2, pady=10, padx=10)
-
-        total_tiles_label.grid(column=0, row=6, columnspan=2, pady=10, padx=10)
-        total_objects_label.grid(column=1, row=6, columnspan=2, pady=10, padx=10)
-
-        seed_entry_label.grid(column=0, row=7, columnspan=2, pady=10, padx=10)
-        seed_entry.grid(column=1, row=7, columnspan=2, pady=10, padx=10)
-
-        b2.grid(column=0, columnspan=3, pady=10, padx=10)
-        self.home_frame.pack()
-        
+            def change_color_p1():
+                colors = askcolor(title="Tkinter Color Chooser")
+                entry_player_one.configure(bg=colors[1])
+                return colors[1]
     
+            def change_color_p2():
+                colors = askcolor(title="Tkinter Color Chooser")
+                entry_player_two.configure(bg=colors[1])
+                return colors[1]
+    
+            def get_input():
+                p1name = entry_player_one.get()
+                p2name = entry_player_two.get()
+                return p1name, p2name 
+            
+            def start_game():
+                global convert
+                p = get_input()
+                pl1 = owner(p[0], entry_player_one['background'])
+                pl2 = owner(p[1], entry_player_two['background'])
+                self.gridsize = var_tiles
+    
+                gridsize.set_gridsize(self.gridsize)
+                convert = convert_coords(self.gridsize)
+                brd.set_board(grid(self.gridsize).setup())
+                self.initialise_game(pl1,pl2, var_trees, var_units1, var_units2, var_water_clusters, var_factories, var_npcs)
+                self.home_frame.destroy()
+            
+            def open_settings():
+                self.initilise_settings()
+                self.home_frame.destroy()
+            
+
+            b0 = tk.Button(
+                self.home_frame,
+                text='Select a Color for p1',
+                command=change_color_p1, background=board_background)
+            b1 = tk.Button(
+                self.home_frame,
+                text='Select a Color for p2',
+                command=change_color_p2, background=board_background)
+
+            b2 = tk.Button(self.home_frame, text="Start Game", command=start_game, background=board_background)
+            settings_button = tk.Button(self.home_frame, text="Settings",command=open_settings,background=board_background)
+
+            header_label.grid(column=0, row=0, columnspan=3)
+            entry_player_one.grid(column=0, row=1)
+            entry_player_two.grid(column=0, row=2)
+
+            b0.grid(column=1, row=1)
+            b1.grid(column=1, row=2)
+            settings_button.grid(column=0, row=3, columnspan=3)
+
+            b2.grid(column=0, columnspan=3, pady=10, padx=10)
+            self.home_frame.pack()
+
+    def reinit(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=1, var_units1=2, var_units2=2):
+        self.settings_frame.destroy()
+        self.initialise_home(var_tiles, var_water_clusters, var_trees, var_factories, var_npcs, var_units1, var_units2)
+
     def initialise_game(self, player_one, player_two, tree_count, starting_units_p1, starting_units_p2, water_clusters, factories, npc_enemies):
 
         self.player_one = player_one
@@ -297,9 +324,6 @@ class game():
 
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
-        #self.display_gameover(self.controlling_player)
-        #self.popupmsg("hi")
-        #self.pop_up()
 
     def mainloop(self):
         """
@@ -406,6 +430,8 @@ class game():
         """
         for i in control.possible_moves(unit, brd):
             self.draw_dot(convert.convert_map_to_logical(i), movecolor)
+        for i in control.possible_moves(unit, brd, total=True, turns=self.controlling_player.available_actions):
+            self.draw_dot(convert.convert_map_to_logical(i), range_move_color)
         for i in control.possible_melee_moves(unit, brd.board, self.controlling_player):
             self.draw_dot(convert.convert_map_to_logical(i), attackcolor)
             
@@ -458,6 +484,8 @@ class game():
         width = 10
         if color == symbol_attack_dot_color or color == gray_color:
             width = 20
+        if color == range_move_color:
+            width = 15
         logical_position = np.array(logical_position)
         grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_oval(grid_position[0] - 1, grid_position[1] - 1,
@@ -521,6 +549,11 @@ class game():
         if isinstance(un, player) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
             self.draw_possible_moves(un, movecolor=Green_color, attackcolor=gray_color)
+        elif isinstance(un, building):
+            self.reset(mappos, type="soft")
+            self.get_event_info(mappos)
+            self.pop_up()
+
         else: 
             self.reset(mappos, type="soft")
             self.get_event_info(mappos)
@@ -555,7 +588,10 @@ class game():
             self.mode_label['text'] = "Select and move Mode"
             self.canvas.bind('<Button-1>', self.select_move_click)
             self.mode_label['background'] = Green_color
-            self.selected_unit = self.controlling_player.units[0]
+            #self.selected_unit = self.controlling_player.units[0]
+            for p, unit in enumerate(self.controlling_player.units):
+                if unit.health > 0:
+                    self.selected_unit = self.controlling_player.units[p]
 
         self.turn_label['text'] = self.controlling_player.name
         self.turn_label['background'] = self.controlling_player.color
