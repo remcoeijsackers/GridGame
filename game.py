@@ -21,6 +21,8 @@ from src.conversion import convert_coords
 
 from src.controller import controller, owner
 
+from src.context import modal_context
+
 board_background = '#2e1600'
 symbol_X_color = '#EE4035'
 symbol_tree_color = 'green'
@@ -48,22 +50,25 @@ gen = placement(str(random.randint(10000000000, 99999999999)))
 
 class popUp(tk.Toplevel):
 
-    def __init__(self, original):
+    def __init__(self, original, context):
 
         self.original_frame = original
         tk.Toplevel.__init__(self)
         self.transient(self.original_frame.window)
         self.geometry("260x210")
-        self.lift()
-        label = tk.Label(self, text = "This is Popup window")
-        label.grid()
+        self.lift()  
         btn = tk.Button(self, text ="Close", command= lambda : self.on_close())
-        btn.grid(row =1)
+        context_btn = tk.Button(self, text=context.type, command=context.command)
+        context_btn.grid(row=2, column=0)
+        btn.grid(row=0, column=0)
+        label = tk.Label(self, text = context.title)
+        label.grid(row=0, column=1)
+
 
     def on_close(self):
-    	self.destroy()
-    	self.original_frame.window.update()
-    	self.original_frame.window.deiconify()
+        self.destroy()
+        self.original_frame.window.update()
+        self.original_frame.window.deiconify()
 
 class game():
     """
@@ -338,8 +343,8 @@ class game():
             self.show_stepped_on_tiles = False
             self.reset(self.selected_unit.loc,type="soft")
 
-    def pop_up(self):
-    	popUp(self)
+    def pop_up(self, context: modal_context):
+    	popUp(self, context)
 
     def switch_mode_inspect(self, event):
         """
@@ -546,13 +551,16 @@ class game():
 
         un = brd.inspect(mappos)
 
+        def __button_action():
+            self.display_gameover(self.controlling_player)
+
         if isinstance(un, player) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
             self.draw_possible_moves(un, movecolor=Green_color, attackcolor=gray_color)
         elif isinstance(un, building):
             self.reset(mappos, type="soft")
             self.get_event_info(mappos)
-            self.pop_up()
+            self.pop_up(modal_context("capture", "123", "capture", __button_action))
 
         else: 
             self.reset(mappos, type="soft")
