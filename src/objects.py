@@ -82,11 +82,15 @@ class building(blockspath):
         self.name = args[0]
         self.description = "A house"
         self.destroyed = False
+        self.color = '#E0f9FF'
     def __str__(self) -> str:
         return self.name
     def set_loc(self, loc):
         self.loc = loc
         return self.loc
+    def set_color(self, color):
+        self.color = color
+        return self.color
 
 class scenery(blockspath):
     def __init__(self, args) -> None:
