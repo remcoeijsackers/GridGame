@@ -48,22 +48,24 @@ gen = placement(str(random.randint(10000000000, 99999999999)))
 # random seed placement
 #brd.board = gen.generate(brd.board)
 
-class popUp(tk.Toplevel):
+class modal_popup(tk.Toplevel):
 
-    def __init__(self, original, context):
+    def __init__(self, original, context: modal_context):
 
         self.original_frame = original
         tk.Toplevel.__init__(self)
+
         self.transient(self.original_frame.window)
         self.geometry("260x210")
-        self.lift()  
-        btn = tk.Button(self, text ="Close", command= lambda : self.on_close())
-        context_btn = tk.Button(self, text=context.type, command=context.command)
-        context_btn.grid(row=2, column=0)
-        btn.grid(row=0, column=0)
-        label = tk.Label(self, text = context.title)
-        label.grid(row=0, column=1)
+        self.lift()
 
+        title = tk.Label(self, text = context.title)
+        title.grid(row=0, column=0)
+        description = tk.Label(self, text=context.description)
+        description.grid(row=1, column=0)
+
+        context_btn = tk.Button(self, text=context.ctype, command=context.command)
+        context_btn.grid(row=3, column=0)
 
     def on_close(self):
         self.destroy()
@@ -267,7 +269,6 @@ class game():
         self.move_button = tk.Button(self.ui, text="Select move")
         self.inspect_button = tk.Button(self.ui, text="Inspect Cell")
         self.melee_attack_button = tk.Button(self.ui, text="Melee Attack")
-        self.capture_button = tk.Button(self.ui, text="Capture Mode")
         self.show_stepped_tiles_button = tk.Button(self.ui, text="show stepped tiles", command=self.show_stepped_tiles)
 
         self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = self.max_ui_columns)
@@ -289,7 +290,6 @@ class game():
         self.inspect_button.grid(column=1, row=7, sticky=tk.E, columnspan = 4)
 
         self.melee_attack_button.grid(column=0, row=8, sticky=tk.W, columnspan = 4)
-        self.capture_button.grid(column=1, row=8, sticky=tk.E,   columnspan = 4)
 
         self.show_stepped_tiles_button.grid(column=0,sticky=tk.EW,  row=9, columnspan = self.max_ui_columns)
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
@@ -297,7 +297,6 @@ class game():
         self.move_button.bind('<Button-1>', self.switch_mode_selectmove)
         self.inspect_button.bind('<Button-1>', self.switch_mode_inspect)
         self.melee_attack_button.bind('<Button-1>', self.switch_mode_melee_attack)
-        self.capture_button.bind('<Button-1>', self.switch_mode_capture)
         self.canvas.bind('<Button-1>', self.select_move_click)
 
         for i in range(starting_units_p1):
@@ -347,7 +346,7 @@ class game():
             self.reset(self.selected_unit.loc,type="soft")
 
     def pop_up(self, context: modal_context):
-    	popUp(self, context)
+    	modal_popup(self, context)
 
     def switch_mode_inspect(self, event):
         """
@@ -365,13 +364,6 @@ class game():
         self.mode_label['background'] = Green_color
         self.canvas.bind('<Button-1>', self.select_move_click)
 
-    def switch_mode_capture(self, event):
-        """
-        Switches the control mode to capturing.
-        """
-        self.mode_label['text'] = "Capture Mode"
-        self.mode_label['background'] = Green_color
-        self.canvas.bind('<Button-1>', self.capture_click)
 
     def switch_mode_melee_attack(self, event):
         """
@@ -563,7 +555,11 @@ class game():
         un = brd.inspect(mappos)
 
         def __button_action():
-            self.display_gameover(self.controlling_player)
+            structure = brd.inspect(mappos)
+            if isinstance(structure, building) and not structure.owner:
+                self.__capture_click(event)
+            if isinstance(structure, building) and structure.owner:
+                self.__capture_click(event, "empty")
 
         if isinstance(un, player) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
@@ -571,8 +567,7 @@ class game():
         elif isinstance(un, building):
             self.reset(mappos, type="soft")
             self.get_event_info(mappos)
-            self.pop_up(modal_context("capture", "123", "capture", __button_action))
-
+            self.pop_up(modal_context("capture", "Capture the building", "capture_building", __button_action))
         else: 
             self.reset(mappos, type="soft")
             self.get_event_info(mappos)
@@ -593,7 +588,7 @@ class game():
                 self.set_impossible_action_text('{} has a melee range of {}'.format(self.selected_unit, self.selected_unit.melee_range))
         return mappos
         
-    def capture_click(self, event):
+    def __capture_click(self, event, ctype="normal"):
         """
         Allows the current selected unit to capture buildings.
         """
@@ -603,10 +598,16 @@ class game():
         for i in control.possible_melee_moves(self.selected_unit, brd.board, self.controlling_player):
             if i == mappos:
                 structure = brd.inspect(i)
-                if isinstance(structure, building):
+                if isinstance(structure, building) and ctype == "normal":
                     structure.set_color(self.controlling_player.color)
                     self.controlling_player.buildings.append(structure)
+                    structure.set_owner(self.controlling_player)
                     self.reset(mappos)
+                elif isinstance(structure, building) and ctype == "empty":
+                    structure.set_color(symbol_building_color)
+                    structure.owner = None 
+                    #TODO: Make this remove the buildings from the other owner
+                    self.game_controller.other_owner.buildings.pop(structure)
                 else:
                     self.set_impossible_action_text('{} can only capture factories.'.format(self.selected_unit))
             else:

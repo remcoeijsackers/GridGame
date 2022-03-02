@@ -1,5 +1,5 @@
 # Game state monitoring
-from .objects import unit
+from .objects import building, unit
 
 class owner:
     """
@@ -10,10 +10,9 @@ class owner:
         self.available_actions = 3
         self.units:list(unit) = []
         self.color = color
-
+        self.buildings: list(building) = []
     def action(self):
         self.available_actions -= 1
-
 
 class controller:
     """

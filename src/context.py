@@ -1,7 +1,7 @@
 
 class modal_context:
-    def __init__(self, title, options, ctype, command) -> None:
+    def __init__(self, title, description, ctype, command) -> None:
         self.title: str = title
-        self.options: str = options
-        self.type: str = ctype
+        self.description: str = description
+        self.ctype: str = ctype
         self.command: function = command
