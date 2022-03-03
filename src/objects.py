@@ -39,6 +39,7 @@ class unit:
         self.health = 3
         self.destroyed = False
         self.strength = 1
+        self.fullname = None
 
     def __str__(self) -> str:
         return self.name
@@ -82,11 +83,21 @@ class building(blockspath):
         self.name = args[0]
         self.description = "A house"
         self.destroyed = False
+        self.color = '#E0f9FF'
+        self.owner = None
     def __str__(self) -> str:
         return self.name
     def set_loc(self, loc):
         self.loc = loc
         return self.loc
+
+    def set_owner(self, owner):
+        self.owner = owner
+        return self.owner
+
+    def set_color(self, color):
+        self.color = color
+        return self.color
 
 class scenery(blockspath):
     def __init__(self, args) -> None:

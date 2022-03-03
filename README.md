@@ -15,9 +15,8 @@ Option 2: create a excecutable using pyinstaller
 pyinstaller --onefile --noconsole game.py
 ```
 
-Or use the excecutable in the dist folder
-
 ## Screenshots
 ![Game Screenshot](assets/gridgame.png?raw=true "GridGame")
-![Game Homescreen](assets/homescreen.png?raw=true "GridGame")
+![Game Screenshot](assets/settings.png?raw=true "GridGame")
+![Game Homescreen](assets/home.png?raw=true "GridGame")
 
