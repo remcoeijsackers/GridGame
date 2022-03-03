@@ -1,28 +1,19 @@
-from cgi import test
-from distutils.command.build import build
-import enum
 import numpy as np
 import random
-from tkinter import *
+
 import tkinter as tk
 from tkinter.colorchooser import askcolor
 from tkinter.filedialog import askopenfilename
-import fileinput
 
 from src.namegenerator import namegen
-
 from src.manager import manager, unitcontroller, placement
-from src.util import placeip, cols, fullcols, colsr, colsc
+from src.util import placeip, cols, fullcols, colsr, colsc, symbol_thickness, unit_thickness
 from src.state import state
 from src.objects import broken_cell, player, cell, scenery, unit, building, enemy, water, tree
 from src.grid import grid
-
 from src.settings import debug, gridsize, symbolsize
-from src.constants import symbol_thickness, unit_thickness
 from src.conversion import convert_coords
-
 from src.controller import controller, owner
-
 from src.context import modal_context
 
 board_background = '#2e1600'
@@ -85,7 +76,7 @@ class game():
     Ties the dataframe game backend to a visual frontend.
     """
     def __init__(self):
-        self.window = Tk()
+        self.window = tk.Tk()
         self.window.title('GridGame')
         self.window.minsize(width=1000, height=600)
 
@@ -103,27 +94,27 @@ class game():
         self.initialise_home()
 
     def initilise_settings(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=0, var_units1=2, var_units2=2, var_boardsize=600):
-        self.settings_frame = tk.Frame(self.window, padx= 100, pady=100, relief=RIDGE)
-        header_label_settings = Label(self.settings_frame, text="Settings", font=("Courier", 44))
+        self.settings_frame = tk.Frame(self.window, padx= 100, pady=100, relief=tk.RIDGE)
+        header_label_settings = tk.Label(self.settings_frame, text="Settings", font=("Courier", 44))
         seed_entry = tk.Entry(self.settings_frame, width=15)
         seed_entry.insert(0, '{}'.format(random.randint(0, 9438132)))
         seed_entry_label = tk.Label(self.settings_frame, text="Seed", width=15)
-        tiles = Scale(self.settings_frame, from_=6, to=20, orient=HORIZONTAL, length=300, label="tiles in the game board (value x2)")
+        tiles = tk.Scale(self.settings_frame, from_=6, to=20, orient=tk.HORIZONTAL, length=300, label="tiles in the game board (value x2)")
         tiles.set(var_tiles)
-        boardsize = Scale(self.settings_frame, from_=300, to=1200, orient=HORIZONTAL, length=300, label="size of the game board (value x2)")
+        boardsize = tk.Scale(self.settings_frame, from_=300, to=1200, orient=tk.HORIZONTAL, length=300, label="size of the game board (value x2)")
         boardsize.set(var_boardsize)
         total_tiles_label = tk.Label(self.settings_frame, text="total tiles: {}".format(tiles.get() * tiles.get()), width=15)
-        water_clusters = Scale(self.settings_frame, from_=0, to=3, orient=HORIZONTAL, length=150, label="count of lakes")
+        water_clusters = tk.Scale(self.settings_frame, from_=0, to=3, orient=tk.HORIZONTAL, length=150, label="count of lakes")
         water_clusters.set(var_water_clusters)
-        trees = Scale(self.settings_frame, from_=0, to=10, orient=HORIZONTAL, length=150, label="count of trees")
+        trees = tk.Scale(self.settings_frame, from_=0, to=10, orient=tk.HORIZONTAL, length=150, label="count of trees")
         trees.set(var_trees)
-        factories = Scale(self.settings_frame, from_=0, to=5, orient=HORIZONTAL, length=150, label="count of factories")
+        factories = tk.Scale(self.settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of factories")
         factories.set(var_factories)
-        npcs = Scale(self.settings_frame, from_=0, to=5, orient=HORIZONTAL, length=150, label="count of NPC's")
+        npcs = tk.Scale(self.settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of NPC's")
         npcs.set(var_npcs)
-        units1 = Scale(self.settings_frame, from_=1, to=10, orient=HORIZONTAL, length=300, label="Units p1")
+        units1 = tk.Scale(self.settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p1")
         units1.set(var_units1)
-        units2 = Scale(self.settings_frame, from_=1, to=10, orient=HORIZONTAL, length=300, label="Units p2")
+        units2 = tk.Scale(self.settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p2")
         units2.set(var_units2)
         
         min_size_needed = tiles.get() + water_clusters.get() * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 10
@@ -172,8 +163,8 @@ class game():
         self.settings_frame.pack()
 
     def initialise_home(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=0, var_units1=2, var_units2=2, var_boardsize=600):
-            self.home_frame = tk.Frame(self.window, padx= 100, pady=100, relief=RIDGE, width=1000, height=600)
-            header_label = Label(self.home_frame, text="GridGame", font=("Courier", 44))
+            self.home_frame = tk.Frame(self.window, padx= 100, pady=100, relief=tk.RIDGE, width=1000, height=600)
+            header_label = tk.Label(self.home_frame, text="GridGame", font=("Courier", 44))
 
             entry_player_one = tk.Entry(self.home_frame)
             entry_player_one.insert(0, 'player one')
@@ -257,10 +248,10 @@ class game():
 
         self.statusbar.pack(side=tk.BOTTOM, fill=tk.X)
 
-        self.canvas = Canvas(self.window, width=var_boardsize, height=var_boardsize, background=board_background)
+        self.canvas = tk.Canvas(self.window, width=var_boardsize, height=var_boardsize, background=board_background)
         self.canvas.pack(side='left',anchor='nw', fill='x')
         
-        self.ui = Canvas(self.window, bd=1)
+        self.ui = tk.Canvas(self.window, bd=1)
         self.ui.columnconfigure(0, weight=0)
         self.ui.columnconfigure(1, weight=3)
         self.max_ui_columns = 6
@@ -318,8 +309,8 @@ class game():
         self.unit_health_label.grid(column=3, row=14, sticky=tk.E, columnspan = 2)
 
         #placeholder for unit picture in ui 
-        img = PhotoImage(file="assets/home.png")      
-        self.ui.create_image(20,20, anchor=NW, image=img) 
+        #img = PhotoImage(file="assets/home.png")      
+        #self.ui.create_image(20,20, anchor=NW, image=img) 
 
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
 

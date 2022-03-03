@@ -5,6 +5,8 @@ from pandas.core.frame import DataFrame
 from src.objects import cell
 from src.settings import gridsize
 
+symbol_thickness = 40
+unit_thickness = 10
 
 cols = ["A","B","C","D","E","F","G","H","I","J"]
 fullcols = [i for i in "abcdefghijklmnopqrstuvwxyz".upper()]

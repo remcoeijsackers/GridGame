@@ -1,5 +1,3 @@
-from shutil import move
-from numpy import broadcast_arrays
 import pandas as pd
 import random
 from pandas.core.frame import DataFrame
