@@ -47,6 +47,10 @@ class unit:
     def set_loc(self, loc):
         self.loc = loc
         return self.loc
+
+    def set_image(self, image):
+        self.image = image
+        return self.image
     
     def take_damage(self, damage):
         self.health -= damage

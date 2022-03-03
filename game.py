@@ -1,11 +1,12 @@
 import numpy as np
 import random
+from PIL import ImageTk, Image
 
 import tkinter as tk
 from tkinter.colorchooser import askcolor
 from tkinter.filedialog import askopenfilename
 
-from src.namegenerator import namegen
+from src.unitgen import unitgenerator
 from src.manager import manager, unitcontroller, placement
 from src.util import placeip, cols, fullcols, colsr, colsc, symbol_thickness, unit_thickness
 from src.state import state
@@ -35,7 +36,7 @@ brd = manager()
 st = state()
 control = unitcontroller()
 convert = any
-namehandler = namegen()
+unithandler = unitgenerator()
 
 gen = placement(str(random.randint(10000000000, 99999999999)))
 
@@ -308,12 +309,8 @@ class game():
         self.unit_name_label.grid(column=0, row=14, sticky=tk.W, columnspan = 3)
         self.unit_health_label.grid(column=3, row=14, sticky=tk.E, columnspan = 2)
 
-        #placeholder for unit picture in ui 
-        #img = PhotoImage(file="assets/home.png")      
-        #self.ui.create_image(20,20, anchor=NW, image=img) 
-
-        self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
-
+        self.ui.pack(side='right',anchor=tk.NW,expand=True,fill='both')
+        
         self.move_button.bind('<Button-1>', self.switch_mode_selectmove)
         self.inspect_button.bind('<Button-1>', self.switch_mode_inspect)
         self.melee_attack_button.bind('<Button-1>', self.switch_mode_melee_attack)
@@ -321,13 +318,15 @@ class game():
 
         for i in range(starting_units_p1):
             soldier = player("P1-{}".format(i))
-            soldier.fullname = namehandler.get_name()
+            soldier.fullname = unithandler.get_name()
+            soldier.set_image(unithandler.get_image())
             self.player_one.units.append(soldier)
             placeip(brd.board, soldier)
 
         for i in range(starting_units_p2):
             soldier = player("P2-{}".format(i))
-            soldier.fullname = namehandler.get_name()
+            soldier.fullname = unithandler.get_name()
+            soldier.set_image(unithandler.get_image())
             self.player_two.units.append(soldier)
             placeip(brd.board, soldier)
         
@@ -341,7 +340,8 @@ class game():
 
         for i in range(npc_enemies):
             npc = enemy("NPC")
-            npc.fullname = namehandler.get_name()
+            npc.fullname = unithandler.get_name()
+            npc.set_image(unithandler.get_image())
             placeip(brd.board, npc)
  
         for i in range(tree_count):
@@ -352,9 +352,18 @@ class game():
         self.selected = False
         self.selected_unit = self.controlling_player.units[0]
 
+        # Unit info card
         self.placeholder_label['text'] = "Units: {}, Buildings: {}".format(len(self.controlling_player.units), self.controlling_player.buildings)
         self.unit_name_label['text'] = self.selected_unit.fullname
         self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
+
+        img = Image.open(self.selected_unit.image)
+        img = img.resize((100, 100), Image.ANTIALIAS)
+        img = ImageTk.PhotoImage(img)
+        self.panel = tk.Label(self.ui, image = img)
+        self.panel.image = img    
+        self.panel.grid(row=15, column=0, columnspan=6, sticky=tk.E)
+
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
 
@@ -363,6 +372,14 @@ class game():
         Runs the tkinter application.
         """
         self.window.mainloop()
+    
+    def change_unit_image(self, image):
+        img = Image.open(image)
+        img = img.resize((100, 100), Image.ANTIALIAS)
+        img = ImageTk.PhotoImage(img)
+        self.panel = tk.Label(self.ui, image = img)
+        self.panel.image = img    
+        self.panel.grid(row=15, column=0, columnspan=6, sticky=tk.E)
 
     def show_stepped_tiles(self):
         if not self.show_stepped_on_tiles:
@@ -547,6 +564,7 @@ class game():
                     self.selected_unit = brd.inspect(mappos)
                     self.unit_name_label['text'] = self.selected_unit.fullname
                     self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
+                    self.change_unit_image(self.selected_unit.image)
             self.reset(mappos, type="soft")
   
         def _movefunc():
@@ -673,6 +691,7 @@ class game():
         self.actions_label['text'] = "Actions remaining: {}".format(self.controlling_player.available_actions + 1)
         self.placeholder_label['text'] = "Units: {}, Buildings: {}".format(len(self.controlling_player.units), self.controlling_player.buildings)
         self.unit_name_label['text'] = self.selected_unit.fullname
+        self.change_unit_image(self.selected_unit.image)
         self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
         
         self.placeholder_label['background'] = self.controlling_player.color
