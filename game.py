@@ -357,12 +357,7 @@ class game():
         self.unit_name_label['text'] = self.selected_unit.fullname
         self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
 
-        img = Image.open(self.selected_unit.image)
-        img = img.resize((100, 100), Image.ANTIALIAS)
-        img = ImageTk.PhotoImage(img)
-        self.panel = tk.Label(self.ui, image = img)
-        self.panel.image = img    
-        self.panel.grid(row=15, column=0, columnspan=6, sticky=tk.E)
+        self.change_unit_image(self.selected_unit.image)
 
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
