@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter.colorchooser import askcolor
 from tkinter.filedialog import askopenfilename
 import fileinput
+from src.namegenerator import namegen
 
 from src.manager import manager, unitcontroller, placement
 from src.util import placeip, cols, fullcols, colsr, colsc
@@ -42,6 +43,7 @@ brd = manager()
 st = state()
 control = unitcontroller()
 convert = any
+namehandler = namegen()
 
 gen = placement(str(random.randint(10000000000, 99999999999)))
 
@@ -56,6 +58,10 @@ class modal_popup(tk.Toplevel):
         tk.Toplevel.__init__(self)
 
         self.transient(self.original_frame.window)
+        #x = self.original_frame.window.winfo_x()
+        #y = self.original_frame.window.winfo_y()
+
+        #self.geometry("+%d+%d" %(x+200,y+200))
         self.geometry("260x210")
         self.lift()
 
@@ -64,8 +70,9 @@ class modal_popup(tk.Toplevel):
         description = tk.Label(self, text=context.description)
         description.grid(row=1, column=0)
 
-        context_btn = tk.Button(self, text=context.ctype, command=context.command)
-        context_btn.grid(row=3, column=0)
+        if context.command:
+            context_btn = tk.Button(self, text=context.ctype, command=context.command)
+            context_btn.grid(row=3, column=0)
 
     def on_close(self):
         self.destroy()
@@ -94,7 +101,7 @@ class game():
         self.window.config(menu=menubar)
         self.initialise_home()
 
-    def initilise_settings(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=1, var_units1=2, var_units2=2):
+    def initilise_settings(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=0, var_units1=2, var_units2=2):
         self.settings_frame = tk.Frame(self.window, padx= 100, pady=100, relief=RIDGE)
         header_label_settings = Label(self.settings_frame, text="Settings", font=("Courier", 44))
         seed_entry = tk.Entry(self.settings_frame, width=15)
@@ -157,10 +164,9 @@ class game():
 
         back_home_button.grid(column=0, row=9, columnspan=4)
         
-
         self.settings_frame.pack()
 
-    def initialise_home(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=1, var_units1=2, var_units2=2):
+    def initialise_home(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=0, var_units1=2, var_units2=2):
             self.home_frame = tk.Frame(self.window, padx= 100, pady=100, relief=RIDGE, width=1000, height=600)
             header_label = Label(self.home_frame, text="GridGame", font=("Courier", 44))
 
@@ -228,7 +234,7 @@ class game():
             b2.grid(column=0, columnspan=3, pady=10, padx=10)
             self.home_frame.pack()
 
-    def reinit(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=1, var_units1=2, var_units2=2):
+    def reinit(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=0, var_units1=2, var_units2=2):
         self.settings_frame.destroy()
         self.initialise_home(var_tiles, var_water_clusters, var_trees, var_factories, var_npcs, var_units1, var_units2)
 
@@ -256,7 +262,7 @@ class game():
 
         self.turn_label = tk.Label(self.ui, text="{}".format(self.player_one.name), background=self.player_one.color)
         self.actions_label = tk.Label(self.ui, text="Actions remaining: 4", background=self.player_one.color)
-        self.placeholder_label = tk.Label(self.ui, text="")
+        self.placeholder_label = tk.Label(self.ui, text="", background=self.player_one.color)
 
         #self.loc_label = tk.Label(self.ui, text="loc")
         self.info_label = tk.Label(self.ui, text="info")
@@ -270,6 +276,11 @@ class game():
         self.inspect_button = tk.Button(self.ui, text="Inspect Cell")
         self.melee_attack_button = tk.Button(self.ui, text="Melee Attack")
         self.show_stepped_tiles_button = tk.Button(self.ui, text="show stepped tiles", command=self.show_stepped_tiles)
+        self.padding_label1 = tk.Label(self.ui, text="")
+        self.padding_label2 = tk.Label(self.ui, text="")
+        self.unit_header_label = tk.Label(self.ui, text="Controlling Unit Info", background=black_color)
+        self.unit_name_label = tk.Label(self.ui, text="")
+        self.unit_health_label = tk.Label(self.ui, text="")
 
         self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = self.max_ui_columns)
         self.turn_label.grid(column=0, row=1, sticky=tk.EW, columnspan = self.max_ui_columns)
@@ -292,6 +303,13 @@ class game():
         self.melee_attack_button.grid(column=0, row=8, sticky=tk.W, columnspan = 4)
 
         self.show_stepped_tiles_button.grid(column=0,sticky=tk.EW,  row=9, columnspan = self.max_ui_columns)
+
+        self.padding_label1.grid(column=0, row=10, sticky=tk.W, columnspan = 4)
+        self.padding_label2.grid(column=0, row=11, sticky=tk.W, columnspan = 4)
+        self.unit_header_label.grid(column=0, row=11, sticky=tk.EW, columnspan = self.max_ui_columns)
+        self.unit_name_label.grid(column=0, row=12, sticky=tk.W, columnspan = 3)
+        self.unit_health_label.grid(column=3, row=12, sticky=tk.E, columnspan = 2)
+
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
 
         self.move_button.bind('<Button-1>', self.switch_mode_selectmove)
@@ -301,11 +319,13 @@ class game():
 
         for i in range(starting_units_p1):
             soldier = player("P1-{}".format(i))
+            soldier.fullname = namehandler.get_name()
             self.player_one.units.append(soldier)
             placeip(brd.board, soldier)
 
         for i in range(starting_units_p2):
             soldier = player("P2-{}".format(i))
+            soldier.fullname = namehandler.get_name()
             self.player_two.units.append(soldier)
             placeip(brd.board, soldier)
         
@@ -319,16 +339,20 @@ class game():
 
         for i in range(npc_enemies):
             npc = enemy("NPC")
+            npc.fullname = namehandler.get_name()
             placeip(brd.board, npc)
  
         for i in range(tree_count):
             makore = tree("T")
             placeip(brd.board, makore)
-
+        
         self.controlling_player = self.player_one
         self.selected = False
         self.selected_unit = self.controlling_player.units[0]
 
+        self.placeholder_label['text'] = "Units: {}, Buildings: {}".format(len(self.controlling_player.units), self.controlling_player.buildings)
+        self.unit_name_label['text'] = self.selected_unit.fullname
+        self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
 
@@ -432,14 +456,17 @@ class game():
         
 
                 
-    def draw_possible_moves(self, unit, movecolor=symbol_dot_color, attackcolor=symbol_attack_dot_color):
+    def draw_possible_moves(self, unit, movecolor=symbol_dot_color, attackcolor=symbol_attack_dot_color, inspect=False):
         """
         Draws the step / attack moves that are available to the selected unit.
         """
         for i in control.possible_moves(unit, brd):
             self.draw_dot(convert.convert_map_to_logical(i), movecolor)
         for i in control.possible_moves(unit, brd, total=True, turns=self.controlling_player.available_actions):
-            self.draw_dot(convert.convert_map_to_logical(i), range_move_color)
+            if not inspect:
+                self.draw_dot(convert.convert_map_to_logical(i), range_move_color)
+            else: 
+                self.draw_dot(convert.convert_map_to_logical(i), Green_color)
         for i in control.possible_melee_moves(unit, brd.board, self.controlling_player):
             self.draw_dot(convert.convert_map_to_logical(i), attackcolor)
             
@@ -507,6 +534,7 @@ class game():
         grid_position = [event.x, event.y]
         logical_position = convert.convert_grid_to_logical_position(grid_position)
         mappos = convert.convert_logical_to_map(logical_position)
+
         
         def _select_unit_click(event):
             grid_position = [event.x, event.y]
@@ -515,6 +543,8 @@ class game():
 
             if isinstance(brd.inspect(mappos), player) and brd.inspect(mappos) in self.controlling_player.units:
                     self.selected_unit = brd.inspect(mappos)
+                    self.unit_name_label['text'] = self.selected_unit.fullname
+                    self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
             self.reset(mappos, type="soft")
   
         def _movefunc():
@@ -560,10 +590,13 @@ class game():
                 self.__capture_click(event)
             if isinstance(structure, building) and structure.owner:
                 self.__capture_click(event, "empty")
+            if isinstance(un, player):
+                pass
 
         if isinstance(un, player) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
-            self.draw_possible_moves(un, movecolor=Green_color, attackcolor=gray_color)
+            self.draw_possible_moves(un, movecolor=Green_color, attackcolor=gray_color, inspect=True)
+            self.pop_up(modal_context(un.fullname, un.range, "unit_description"))
         elif isinstance(un, building):
             self.reset(mappos, type="soft")
             self.get_event_info(mappos)
@@ -636,6 +669,11 @@ class game():
         self.turn_label['text'] = self.controlling_player.name
         self.turn_label['background'] = self.controlling_player.color
         self.actions_label['text'] = "Actions remaining: {}".format(self.controlling_player.available_actions + 1)
+        self.placeholder_label['text'] = "Units: {}, Buildings: {}".format(len(self.controlling_player.units), self.controlling_player.buildings)
+        self.unit_name_label['text'] = self.selected_unit.fullname
+        self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
+        
+        self.placeholder_label['background'] = self.controlling_player.color
         self.actions_label['background'] = self.controlling_player.color
 
     def set_impossible_action_text(self, text):

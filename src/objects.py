@@ -39,6 +39,7 @@ class unit:
         self.health = 3
         self.destroyed = False
         self.strength = 1
+        self.fullname = None
 
     def __str__(self) -> str:
         return self.name
