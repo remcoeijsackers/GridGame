@@ -258,16 +258,17 @@ class game():
         self.ui.columnconfigure(1, weight=3)
         self.max_ui_columns = 6
         
-        self.header_label = tk.Label(self.ui, text="Controls", background='#EE5E51')
+        self.header_label = tk.Label(self.ui, text="Player info", background=black_color)
 
         self.turn_label = tk.Label(self.ui, text="{}".format(self.player_one.name), background=self.player_one.color)
         self.actions_label = tk.Label(self.ui, text="Actions remaining: 4", background=self.player_one.color)
         self.placeholder_label = tk.Label(self.ui, text="", background=self.player_one.color)
 
         #self.loc_label = tk.Label(self.ui, text="loc")
-        self.info_label = tk.Label(self.ui, text="info")
+        #self.info_label = tk.Label(self.ui, text="info")
         #self.desc_label = tk.Label(self.ui, text="description")
-        self.health_label = tk.Label(self.ui, text="health")
+        #self.health_label = tk.Label(self.ui, text="health")
+        self.control_label = tk.Label(self.ui, text="Controls", background=black_color)
         self.mode_label = tk.Label(self.ui, text="Select and move Mode", background=Green_color)
         #self.distance_label = tk.Label(self.ui, text="Distance")
         self.action_details_label = tk.Label(self.ui, text="Action details")
@@ -288,27 +289,27 @@ class game():
         self.placeholder_label.grid(column=0, row=3, sticky=tk.EW, columnspan = self.max_ui_columns)
 
         #self.loc_label.grid(column=0, row=4, sticky=tk.E,padx=5, pady=5)
-        self.info_label.grid(column=1, row=4,sticky=tk.W, padx=5, pady=5)
+        #self.info_label.grid(column=1, row=4,sticky=tk.W, padx=5, pady=5)
         #self.desc_label.grid(column=2, row=4,sticky=tk.E, padx=5, pady=5)
-        self.health_label.grid(column=2, row=4,sticky=tk.N, padx=5, pady=5)
+        #self.health_label.grid(column=2, row=4,sticky=tk.N, padx=5, pady=5)
 
         #self.distance_label.grid(column=0, row=5,sticky=tk.W, padx=5, pady=5,columnspan = 2)
-        self.action_details_label.grid(column=2, row=5,sticky=tk.W, padx=5, pady=5,columnspan = 3)
         
+        self.control_label.grid(column=0, row=5,sticky=tk.EW, columnspan = self.max_ui_columns)
         self.mode_label.grid(column=0, row=6,sticky=tk.EW, columnspan = self.max_ui_columns)
 
-        self.move_button.grid(column=0, row=7, sticky=tk.W, columnspan = 4)
-        self.inspect_button.grid(column=1, row=7, sticky=tk.E, columnspan = 4)
+        self.move_button.grid(column=0, row=7, sticky=tk.W, columnspan = 3)
+        self.inspect_button.grid(column=1, row=7, sticky=tk.E, columnspan = 2)
+        self.melee_attack_button.grid(column=3, row=7, sticky=tk.EW, columnspan = 3)
 
-        self.melee_attack_button.grid(column=0, row=8, sticky=tk.W, columnspan = 4)
+        #self.show_stepped_tiles_button.grid(column=0,sticky=tk.EW,  row=9, columnspan = self.max_ui_columns)
+        self.action_details_label.grid(column=0, row=10,sticky=tk.W, padx=5, pady=5,columnspan = 3)
 
-        self.show_stepped_tiles_button.grid(column=0,sticky=tk.EW,  row=9, columnspan = self.max_ui_columns)
-
-        self.padding_label1.grid(column=0, row=10, sticky=tk.W, columnspan = 4)
-        self.padding_label2.grid(column=0, row=11, sticky=tk.W, columnspan = 4)
-        self.unit_header_label.grid(column=0, row=11, sticky=tk.EW, columnspan = self.max_ui_columns)
-        self.unit_name_label.grid(column=0, row=12, sticky=tk.W, columnspan = 3)
-        self.unit_health_label.grid(column=3, row=12, sticky=tk.E, columnspan = 2)
+        self.padding_label1.grid(column=0, row=11, sticky=tk.W, columnspan = 4)
+        self.padding_label2.grid(column=0, row=12, sticky=tk.W, columnspan = 4)
+        self.unit_header_label.grid(column=0, row=13, sticky=tk.EW, columnspan = self.max_ui_columns)
+        self.unit_name_label.grid(column=0, row=14, sticky=tk.W, columnspan = 3)
+        self.unit_health_label.grid(column=3, row=14, sticky=tk.E, columnspan = 2)
 
         self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
 
@@ -403,9 +404,9 @@ class game():
         """
         #self.loc_label['text'] = "Location: {}".format(event)
         self.statusbar['text'] = " Location: {} | Steps: {} | Description: {}".format(event, control.count(self.selected_unit, event),brd.explain(event))
-        self.info_label['text'] = "Unit: {}".format(brd.inspect(event))
+        #self.info_label['text'] = "Unit: {}".format(brd.inspect(event))
         #self.desc_label['text'] = "Description: {}".format(brd.explain(event))
-        self.health_label['text'] = "Health: {}".format(brd.gethealth(event))
+        #self.health_label['text'] = "Health: {}".format(brd.gethealth(event))
         #self.distance_label['text'] = "Steps: {}".format(control.count(self.selected_unit, event))
 
     def draw_board_and_objects(self, boardmanager: manager):
