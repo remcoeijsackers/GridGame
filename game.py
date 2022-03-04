@@ -1,76 +1,67 @@
-from cgi import test
-from distutils.command.build import build
-import enum
+from turtle import back
 import numpy as np
 import random
-from tkinter import *
+from PIL import ImageTk, Image
+
 import tkinter as tk
 from tkinter.colorchooser import askcolor
 from tkinter.filedialog import askopenfilename
-import fileinput
 
+from src.unitgen import unitgenerator
 from src.manager import manager, unitcontroller, placement
-from src.util import placeip, cols, fullcols, colsr, colsc
+from src.util import placeip, cols, fullcols, colsr, colsc, symbol_thickness, unit_thickness
 from src.state import state
 from src.objects import broken_cell, player, cell, scenery, unit, building, enemy, water, tree
 from src.grid import grid
-
-from src.settings import debug, gridsize
-from src.constants import size_of_board, symbol_size, symbol_thickness, unit_thickness
+from src.settings import debug, gridsize, symbolsize
 from src.conversion import convert_coords
-
 from src.controller import controller, owner
+from src.context import modal_context, settings_context, color_context
 
-board_background = '#2e1600'
-symbol_X_color = '#EE4035'
-symbol_tree_color = 'green'
-symbol_dot_color = '#A999CC'
-symbol_En_color = '#EE4035'
-symbol_attack_dot_color = '#EE4035'
-Green_color = '#7BC043'
-Red_color = '#EE4035'
-symbol_building_color = '#E0f9FF'
-symbol_water_color = 'blue'
-black_color = '#120606'
-canvas_text_color = '#9363FF'
-range_move_color = '#93631F'
-gray_color = 'gray'
-
+convert = any
+colors = color_context()
 brd = manager()   
 st = state()
 control = unitcontroller()
-convert = any
+unithandler = unitgenerator()
+game_settings = settings_context()
 
 gen = placement(str(random.randint(10000000000, 99999999999)))
 
 # random seed placement
 #brd.board = gen.generate(brd.board)
 
-class popUp(tk.Toplevel):
+class modal_popup(tk.Toplevel):
 
-    def __init__(self, original):
+    def __init__(self, original, context: modal_context):
 
         self.original_frame = original
         tk.Toplevel.__init__(self)
+
         self.transient(self.original_frame.window)
         self.geometry("260x210")
         self.lift()
-        label = tk.Label(self, text = "This is Popup window")
-        label.grid()
-        btn = tk.Button(self, text ="Close", command= lambda : self.on_close())
-        btn.grid(row =1)
+
+        title = tk.Label(self, text = context.title)
+        title.grid(row=0, column=0)
+        description = tk.Label(self, text=context.description)
+        description.grid(row=1, column=0)
+
+        if context.command:
+            context_btn = tk.Button(self, text=context.ctype, command=context.command)
+            context_btn.grid(row=3, column=0)
 
     def on_close(self):
-    	self.destroy()
-    	self.original_frame.window.update()
-    	self.original_frame.window.deiconify()
+        self.destroy()
+        self.original_frame.window.update()
+        self.original_frame.window.deiconify()
 
 class game():
     """
     Ties the dataframe game backend to a visual frontend.
     """
     def __init__(self):
-        self.window = Tk()
+        self.window = tk.Tk()
         self.window.title('GridGame')
         self.window.minsize(width=1000, height=600)
 
@@ -78,36 +69,50 @@ class game():
 
         filemenu = tk.Menu(menubar)
 
-        filemenu.add_command(label="Open", command=askopenfilename)
-        filemenu.add_command(label="Save")
+        filemenu.add_command(label="Open", command=self.open_file)
+        filemenu.add_command(label="Save", command=self.save_game)
         filemenu.add_command(label="Exit")
 
         menubar.add_cascade(label="File", menu=filemenu)
 
         self.window.config(menu=menubar)
-        self.initialise_home()
+        self.initialise_home(game_settings)
 
-    def initilise_settings(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=1, var_units1=2, var_units2=2):
-        self.settings_frame = tk.Frame(self.window, padx= 100, pady=100, relief=RIDGE)
-        header_label_settings = Label(self.settings_frame, text="Settings", font=("Courier", 44))
+    def open_file(self):
+        global convert
+        gameboard = st.load_file(askopenfilename())
+        brd.set_board(gameboard)
+        pl1 = owner("player1", colors.symbol_tree_color)
+        pl2 = owner("player2", colors.symbol_water_color)
+        self.gridsize = 14
+        gridsize.set_gridsize(self.gridsize)
+        convert = convert_coords(self.gridsize)
+        self.initialise_old_game(pl1, pl2)
+        self.home_frame.destroy()
+
+    def initilise_settings(self, settings: settings_context):
+        self.settings_frame = tk.Frame(self.window, padx= 100, pady=100, relief=tk.RIDGE)
+        header_label_settings = tk.Label(self.settings_frame, text="Settings", font=("Courier", 44))
         seed_entry = tk.Entry(self.settings_frame, width=15)
         seed_entry.insert(0, '{}'.format(random.randint(0, 9438132)))
         seed_entry_label = tk.Label(self.settings_frame, text="Seed", width=15)
-        tiles = Scale(self.settings_frame, from_=6, to=20, orient=HORIZONTAL, length=300, label="size of the game board")
-        tiles.set(var_tiles)
+        tiles = tk.Scale(self.settings_frame, from_=6, to=20, orient=tk.HORIZONTAL, length=300, label="tiles in the game board (value x2)")
+        tiles.set(settings.var_tiles)
+        boardsize = tk.Scale(self.settings_frame, from_=300, to=1200, orient=tk.HORIZONTAL, length=300, label="size of the game board (value x2)")
+        boardsize.set(settings.var_boardsize)
         total_tiles_label = tk.Label(self.settings_frame, text="total tiles: {}".format(tiles.get() * tiles.get()), width=15)
-        water_clusters = Scale(self.settings_frame, from_=0, to=3, orient=HORIZONTAL, length=150, label="count of lakes")
-        water_clusters.set(var_water_clusters)
-        trees = Scale(self.settings_frame, from_=0, to=10, orient=HORIZONTAL, length=150, label="count of trees")
-        trees.set(var_trees)
-        factories = Scale(self.settings_frame, from_=0, to=5, orient=HORIZONTAL, length=150, label="count of factories")
-        factories.set(var_factories)
-        npcs = Scale(self.settings_frame, from_=0, to=5, orient=HORIZONTAL, length=150, label="count of NPC's")
-        npcs.set(var_npcs)
-        units1 = Scale(self.settings_frame, from_=1, to=10, orient=HORIZONTAL, length=300, label="Units p1")
-        units1.set(var_units1)
-        units2 = Scale(self.settings_frame, from_=1, to=10, orient=HORIZONTAL, length=300, label="Units p2")
-        units2.set(var_units2)
+        water_clusters = tk.Scale(self.settings_frame, from_=0, to=3, orient=tk.HORIZONTAL, length=150, label="count of lakes")
+        water_clusters.set(settings.var_water_clusters)
+        trees = tk.Scale(self.settings_frame, from_=0, to=10, orient=tk.HORIZONTAL, length=150, label="count of trees")
+        trees.set(settings.var_trees)
+        factories = tk.Scale(self.settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of factories")
+        factories.set(settings.var_factories)
+        npcs = tk.Scale(self.settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of NPC's")
+        npcs.set(settings.var_npcs)
+        units1 = tk.Scale(self.settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p1")
+        units1.set(settings.var_units1)
+        units2 = tk.Scale(self.settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p2")
+        units2.set(settings.var_units2)
         
         min_size_needed = tiles.get() + water_clusters.get() * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 10
 
@@ -123,7 +128,15 @@ class game():
                     return min_size_needed
         def validate():
             check_settings_possible()
-            self.reinit(tiles.get(),water_clusters.get(),trees.get(),factories.get(),npcs.get(),units1.get(),units2.get())
+            settings.var_tiles = tiles.get()
+            settings.var_water_clusters = water_clusters.get()
+            settings.var_trees = trees.get()
+            settings.var_factories = factories.get()
+            settings.var_npcs = npcs.get()
+            settings.var_units1 = units1.get()
+            settings.var_units2 = units2.get()
+            settings.var_boardsize = boardsize.get()
+            self.reinit(settings)
 
         header_label_settings.grid(column=0, row=0, columnspan=4)
 
@@ -131,31 +144,32 @@ class game():
         units2.grid(column=0, row=2,pady=10, padx=10, columnspan=4)
 
         tiles.grid(column=0, row=4, columnspan=4, pady=10, padx=10)
+        boardsize.grid(column=0, row=5, columnspan=4, pady=10, padx=10)
 
-        trees.grid(column=0, row=5, pady=10, padx=10)
-        water_clusters.grid(column=1, row=5, pady=10, padx=10)
+        trees.grid(column=0, row=6, pady=10, padx=10)
+        water_clusters.grid(column=1, row=6, pady=10, padx=10)
 
-        factories.grid(column=0, row=6,  pady=10, padx=10)
-        npcs.grid(column=1, row=6, pady=10, padx=10)
+        factories.grid(column=0, row=7,  pady=10, padx=10)
+        npcs.grid(column=1, row=7, pady=10, padx=10)
 
-        total_tiles_label.grid(column=0, row=7,  pady=10, padx=10)
-        total_objects_label.grid(column=1, row=7,  pady=10, padx=10)
-        seed_entry_label.grid(column=0, row=8,  pady=10, padx=10)
-        seed_entry.grid(column=1, row=8, pady=10, padx=10)
+        total_tiles_label.grid(column=0, row=8,  pady=10, padx=10)
+        total_objects_label.grid(column=1, row=8,  pady=10, padx=10)
+
+        seed_entry_label.grid(column=0, row=9,  pady=10, padx=10)
+        seed_entry.grid(column=1, row=9, pady=10, padx=10)
 
         back_home_button = tk.Button(
                 self.settings_frame,
                 text='back home',
-                command=validate, background=board_background)
+                command=validate, background=colors.board_background)
 
         back_home_button.grid(column=0, row=9, columnspan=4)
         
-
         self.settings_frame.pack()
 
-    def initialise_home(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=1, var_units1=2, var_units2=2):
-            self.home_frame = tk.Frame(self.window, padx= 100, pady=100, relief=RIDGE, width=1000, height=600)
-            header_label = Label(self.home_frame, text="GridGame", font=("Courier", 44))
+    def initialise_home(self, settings: settings_context):
+            self.home_frame = tk.Frame(self.window, padx= 100, pady=100, relief=tk.RIDGE, width=1000, height=600)
+            header_label = tk.Label(self.home_frame, text="GridGame", font=("Courier", 44))
 
             entry_player_one = tk.Entry(self.home_frame)
             entry_player_one.insert(0, 'player one')
@@ -185,30 +199,30 @@ class game():
                 p = get_input()
                 pl1 = owner(p[0], entry_player_one['background'])
                 pl2 = owner(p[1], entry_player_two['background'])
-                self.gridsize = var_tiles
+                self.gridsize = settings.var_tiles
     
                 gridsize.set_gridsize(self.gridsize)
-                convert = convert_coords(self.gridsize)
+                convert = convert_coords(self.gridsize, settings.var_boardsize)
                 brd.set_board(grid(self.gridsize).setup())
-                self.initialise_game(pl1,pl2, var_trees, var_units1, var_units2, var_water_clusters, var_factories, var_npcs)
+                self.initialise_game(pl1,pl2, settings)
                 self.home_frame.destroy()
             
             def open_settings():
-                self.initilise_settings()
+                self.initilise_settings(settings)
                 self.home_frame.destroy()
             
 
             b0 = tk.Button(
                 self.home_frame,
                 text='Select a Color for p1',
-                command=change_color_p1, background=board_background)
+                command=change_color_p1, background=colors.board_background)
             b1 = tk.Button(
                 self.home_frame,
                 text='Select a Color for p2',
-                command=change_color_p2, background=board_background)
+                command=change_color_p2, background=colors.board_background)
 
-            b2 = tk.Button(self.home_frame, text="Start Game", command=start_game, background=board_background)
-            settings_button = tk.Button(self.home_frame, text="Settings",command=open_settings,background=board_background)
+            b2 = tk.Button(self.home_frame, text="Start Game", command=start_game, background=colors.board_background)
+            settings_button = tk.Button(self.home_frame, text="Settings",command=open_settings,background=colors.board_background)
 
             header_label.grid(column=0, row=0, columnspan=3)
             entry_player_one.grid(column=0, row=1)
@@ -221,12 +235,13 @@ class game():
             b2.grid(column=0, columnspan=3, pady=10, padx=10)
             self.home_frame.pack()
 
-    def reinit(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=1, var_units1=2, var_units2=2):
+    def reinit(self, settings: settings_context):
         self.settings_frame.destroy()
-        self.initialise_home(var_tiles, var_water_clusters, var_trees, var_factories, var_npcs, var_units1, var_units2)
+        self.initialise_home(settings)
 
-    def initialise_game(self, player_one, player_two, tree_count, starting_units_p1, starting_units_p2, water_clusters, factories, npc_enemies):
-
+    def initialise_game(self, player_one, player_two, settings: settings_context):
+        self.boardsize = settings.var_boardsize
+        self.symbol_size = symbolsize.get_symbolsize(settings.var_boardsize)
         self.player_one = player_one
         self.player_two = player_two
         self.show_stepped_on_tiles = False
@@ -237,90 +252,128 @@ class game():
 
         self.statusbar.pack(side=tk.BOTTOM, fill=tk.X)
 
-        self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board, background=board_background)
+        self.canvas = tk.Canvas(self.window, width=settings.var_boardsize, height=settings.var_boardsize, background=colors.board_background)
         self.canvas.pack(side='left',anchor='nw', fill='x')
         
-        self.ui = Canvas(self.window, bd=1)
+        self.ui = tk.Canvas(self.window, bd=1)
         self.ui.columnconfigure(0, weight=0)
         self.ui.columnconfigure(1, weight=3)
         self.max_ui_columns = 6
         
-        self.header_label = tk.Label(self.ui, text="Controls", background='#EE5E51')
+        self.header_label = tk.Label(self.ui, text="Player info", background=colors.black_color)
 
         self.turn_label = tk.Label(self.ui, text="{}".format(self.player_one.name), background=self.player_one.color)
         self.actions_label = tk.Label(self.ui, text="Actions remaining: 4", background=self.player_one.color)
-        self.placeholder_label = tk.Label(self.ui, text="")
+        self.placeholder_label = tk.Label(self.ui, text="", background=self.player_one.color)
 
-        #self.loc_label = tk.Label(self.ui, text="loc")
-        self.info_label = tk.Label(self.ui, text="info")
-        #self.desc_label = tk.Label(self.ui, text="description")
-        self.health_label = tk.Label(self.ui, text="health")
-        self.mode_label = tk.Label(self.ui, text="Select and move Mode", background=Green_color)
-        #self.distance_label = tk.Label(self.ui, text="Distance")
+        self.control_label = tk.Label(self.ui, text="Controls", background=colors.black_color)
+        self.mode_label = tk.Label(self.ui, text="Select and move Mode", background=colors.green_color)
         self.action_details_label = tk.Label(self.ui, text="Action details")
 
         self.move_button = tk.Button(self.ui, text="Select move")
         self.inspect_button = tk.Button(self.ui, text="Inspect Cell")
         self.melee_attack_button = tk.Button(self.ui, text="Melee Attack")
         self.show_stepped_tiles_button = tk.Button(self.ui, text="show stepped tiles", command=self.show_stepped_tiles)
-    
+        self.padding_label1 = tk.Label(self.ui, text="")
+        self.padding_label2 = tk.Label(self.ui, text="")
+
+        self.unit_box = tk.Frame(self.ui, relief=tk.RIDGE)
+        self.unit_box.grid(column=0, row=14,sticky=tk.W)
+
+        self.unit_frame = tk.Frame(self.unit_box, relief=tk.RIDGE)
+        self.unit_frame.grid(column=2, row=0,sticky=tk.W)
+
+        self.unit_image_frame = tk.Frame(self.unit_box, relief=tk.RIDGE, background=colors.black_color)
+        self.unit_image_frame.grid(column=0, row=0, columnspan=2, sticky=tk.W)
+
+        self.unit_header_label = tk.Label(self.ui, text="Controlling Unit Info", background=colors.black_color)
+        self.unit_name_label = tk.Label(self.unit_frame, text="")
+        self.unit_age_label = tk.Label(self.unit_frame, text="")
+        self.unit_health_label = tk.Label(self.unit_frame, text="")
+        self.unit_attack_label = tk.Label(self.unit_frame, text="Attack: 1")
+        self.unit_range_label = tk.Label(self.unit_frame, text="Range: 1")
+        self.unit_equipment_label = tk.Label(self.unit_frame, text="Equipment: None")
+
         self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = self.max_ui_columns)
         self.turn_label.grid(column=0, row=1, sticky=tk.EW, columnspan = self.max_ui_columns)
         self.actions_label.grid(column=0, row=2, sticky=tk.EW, columnspan = self.max_ui_columns)
         self.placeholder_label.grid(column=0, row=3, sticky=tk.EW, columnspan = self.max_ui_columns)
 
-        #self.loc_label.grid(column=0, row=4, sticky=tk.E,padx=5, pady=5)
-        self.info_label.grid(column=1, row=4,sticky=tk.W, padx=5, pady=5)
-        #self.desc_label.grid(column=2, row=4,sticky=tk.E, padx=5, pady=5)
-        self.health_label.grid(column=2, row=4,sticky=tk.N, padx=5, pady=5)
-
-        #self.distance_label.grid(column=0, row=5,sticky=tk.W, padx=5, pady=5,columnspan = 2)
-        self.action_details_label.grid(column=2, row=5,sticky=tk.W, padx=5, pady=5,columnspan = 3)
-        
+        self.control_label.grid(column=0, row=5,sticky=tk.EW, columnspan = self.max_ui_columns)
         self.mode_label.grid(column=0, row=6,sticky=tk.EW, columnspan = self.max_ui_columns)
 
-        self.move_button.grid(column=0, row=7, sticky=tk.W, columnspan = 2)
-        self.inspect_button.grid(column=1, row=7, sticky=tk.S, columnspan = 2)
+        self.move_button.grid(column=0, row=7, sticky=tk.W, columnspan = 3)
+        self.inspect_button.grid(column=1, row=7, sticky=tk.E, columnspan = 2)
+        self.melee_attack_button.grid(column=3, row=7, sticky=tk.EW, columnspan = 3)
 
-        self.melee_attack_button.grid(column=2,sticky=tk.E,  row=7, columnspan = 2)
-        self.show_stepped_tiles_button.grid(column=0,sticky=tk.EW,  row=8, columnspan = self.max_ui_columns)
-        self.ui.pack(side='right',anchor='nw',expand=True,fill='both')
+        #self.show_stepped_tiles_button.grid(column=0,sticky=tk.EW,  row=9, columnspan = self.max_ui_columns)
+        self.action_details_label.grid(column=0, row=10,sticky=tk.W, padx=5, pady=5,columnspan = 3)
 
+        self.padding_label1.grid(column=0, row=11, sticky=tk.W, columnspan = 4)
+        self.padding_label2.grid(column=0, row=12, sticky=tk.W, columnspan = 4)
+
+        self.unit_header_label.grid(column=0, row=13, sticky=tk.EW, columnspan = 6)
+
+        self.unit_name_label.grid(column=0, row=0, sticky=tk.W)
+        self.unit_age_label.grid(column=1, row=0, sticky=tk.E)
+        self.unit_health_label.grid(column=0, row=1, sticky=tk.W)
+        self.unit_attack_label.grid(column=0, row=2, sticky=tk.W)
+        self.unit_range_label.grid(column=0, row=3, sticky=tk.W)
+        self.unit_equipment_label.grid(column=0, row=4, sticky=tk.W)
+
+        self.ui.pack(side='right',anchor=tk.NW,expand=True,fill='both')
+        
         self.move_button.bind('<Button-1>', self.switch_mode_selectmove)
         self.inspect_button.bind('<Button-1>', self.switch_mode_inspect)
         self.melee_attack_button.bind('<Button-1>', self.switch_mode_melee_attack)
-
         self.canvas.bind('<Button-1>', self.select_move_click)
 
-        for i in range(starting_units_p1):
+        for i in range(settings.var_units1):
             soldier = player("P1-{}".format(i))
+            soldier.fullname = unithandler.get_name()
+            soldier.set_image(unithandler.get_image())
+            soldier.set_age(unithandler.get_age())
             self.player_one.units.append(soldier)
             placeip(brd.board, soldier)
 
-        for i in range(starting_units_p2):
+        for i in range(settings.var_units2):
             soldier = player("P2-{}".format(i))
+            soldier.fullname = unithandler.get_name()
+            soldier.set_image(unithandler.get_image())
+            soldier.set_age(unithandler.get_age())
             self.player_two.units.append(soldier)
             placeip(brd.board, soldier)
         
-        for i in range(water_clusters):
+        for i in range(settings.var_water_clusters):
             water_clustr = water("W")
             brd.placeclus(water_clustr)
 
-        for i in range(factories):
+        for i in range(settings.var_factories):
             fct = building("F")
             placeip(brd.board, fct)
 
-        for i in range(npc_enemies):
+        for i in range(settings.var_npcs):
             npc = enemy("NPC")
+            npc.fullname = unithandler.get_name()
+            npc.set_image(unithandler.get_image())
+            npc.set_age(unithandler.get_age())
             placeip(brd.board, npc)
  
-        for i in range(tree_count):
+        for i in range(settings.var_trees):
             makore = tree("T")
             placeip(brd.board, makore)
-
+        
         self.controlling_player = self.player_one
         self.selected = False
         self.selected_unit = self.controlling_player.units[0]
+
+        # Unit info card
+        self.placeholder_label['text'] = "Units: {}, Buildings: {}".format(len(self.controlling_player.units), self.controlling_player.buildings)
+        self.unit_name_label['text'] = self.selected_unit.fullname
+        self.unit_age_label['text'] = "Age: {}".format(self.selected_unit.age)
+        self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
+
+        self.change_unit_image(self.selected_unit.image)
 
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
@@ -330,6 +383,14 @@ class game():
         Runs the tkinter application.
         """
         self.window.mainloop()
+    
+    def change_unit_image(self, image):
+        img = Image.open(image)
+        img = img.resize((100, 100), Image.ANTIALIAS)
+        img = ImageTk.PhotoImage(img)
+        self.panel = tk.Label(self.unit_image_frame, image = img, background=colors.black_color)
+        self.panel.image = img    
+        self.panel.grid(row=0, column=0, sticky=tk.W)
 
     def show_stepped_tiles(self):
         if not self.show_stepped_on_tiles:
@@ -338,15 +399,15 @@ class game():
             self.show_stepped_on_tiles = False
             self.reset(self.selected_unit.loc,type="soft")
 
-    def pop_up(self):
-    	popUp(self)
+    def pop_up(self, context: modal_context):
+    	modal_popup(self, context)
 
     def switch_mode_inspect(self, event):
         """
         Switches the control mode to inspecting grid elements.
         """
         self.mode_label['text'] = "Inspect Mode"
-        self.mode_label['background'] = Green_color
+        self.mode_label['background'] = colors.green_color
         self.canvas.bind('<Button-1>', self.inspect_click)
 
     def switch_mode_selectmove(self, event):
@@ -354,27 +415,24 @@ class game():
         Switches the control mode to selecting and moving owned units.
         """
         self.mode_label['text'] = "Select and move Mode"
-        self.mode_label['background'] = Green_color
+        self.mode_label['background'] = colors.green_color
         self.canvas.bind('<Button-1>', self.select_move_click)
-    
+
+
     def switch_mode_melee_attack(self, event):
         """
         Switches the control mode to attacking with the selected unit.
         """
         self.mode_label['text'] = "Melee Attack Mode"
-        self.mode_label['background'] = Red_color
+        self.mode_label['background'] = colors.red_color
         self.canvas.bind('<Button-1>', self.melee_attack_click)
 
     def get_event_info(self, event):
         """
         Changes the labels text to reflect the selected unit/cell/action
         """
-        #self.loc_label['text'] = "Location: {}".format(event)
         self.statusbar['text'] = " Location: {} | Steps: {} | Description: {}".format(event, control.count(self.selected_unit, event),brd.explain(event))
-        self.info_label['text'] = "Unit: {}".format(brd.inspect(event))
-        #self.desc_label['text'] = "Description: {}".format(brd.explain(event))
-        self.health_label['text'] = "Health: {}".format(brd.gethealth(event))
-        #self.distance_label['text'] = "Steps: {}".format(control.count(self.selected_unit, event))
+
 
     def draw_board_and_objects(self, boardmanager: manager):
         """
@@ -388,16 +446,20 @@ class game():
                 self.player_two.units.remove(obj)
 
         for i in range(self.gridsize):
-            self.canvas.create_line((i + 1) * size_of_board / self.gridsize, 0, (i + 1) * size_of_board / self.gridsize, size_of_board)
+            self.canvas.create_line((i + 1) * self.boardsize / self.gridsize, 0, (i + 1) * self.boardsize / self.gridsize, self.boardsize)
 
         for i in range(self.gridsize):
-            self.canvas.create_line(0, (i + 1) * size_of_board / self.gridsize, size_of_board, (i + 1) * size_of_board / self.gridsize)
+            self.canvas.create_line(0, (i + 1) * self.boardsize / self.gridsize, self.boardsize, (i + 1) * self.boardsize / self.gridsize)
+        
+        # Changes tiles color after movement slightly
+        for obj in boardmanager.get_all_clean_cells(brd.board):
+            self.draw_square(convert.convert_map_to_logical(obj.loc),obj.color)
 
         for obj in boardmanager.get_all_objects(brd.board):
             if obj.destroyed:
                 cleanup_func(obj)
             if isinstance(obj, water):
-                self.draw_square(convert.convert_map_to_logical(obj.loc), symbol_water_color)
+                self.draw_square(convert.convert_map_to_logical(obj.loc), obj.color)
                 
             if isinstance(obj, player) and not obj.destroyed:
                 if obj in self.player_one.units:
@@ -410,58 +472,65 @@ class game():
                 self.draw_tree(convert.convert_map_to_logical(obj.loc))
                 
             if isinstance(obj, building) and not obj.destroyed:
-                self.draw_building(convert.convert_map_to_logical(obj.loc))
+                self.draw_building(convert.convert_map_to_logical(obj.loc), obj.color)
                 
             if isinstance(obj, enemy) and not obj.destroyed:
-                self.draw_unit(convert.convert_map_to_logical(obj.loc), symbol_En_color)
+                self.draw_unit(convert.convert_map_to_logical(obj.loc), colors.symbol_en_color)
                 
             if isinstance(obj, broken_cell):
                 self.draw_broken_cell(convert.convert_map_to_logical(obj.loc))
 
         if self.show_stepped_on_tiles:
             for cl in boardmanager.get_all_cells(brd.board):
-                self.draw_square(convert.convert_map_to_logical(cl.loc), Green_color)
+                self.draw_square(convert.convert_map_to_logical(cl.loc), colors.green_color)
         
-
-                
-    def draw_possible_moves(self, unit, movecolor=symbol_dot_color, attackcolor=symbol_attack_dot_color):
+    def draw_possible_moves(self, unit, movecolor=colors.symbol_dot_color, attackcolor=colors.symbol_attack_dot_color, inspect=False):
         """
         Draws the step / attack moves that are available to the selected unit.
         """
         for i in control.possible_moves(unit, brd):
             self.draw_dot(convert.convert_map_to_logical(i), movecolor)
         for i in control.possible_moves(unit, brd, total=True, turns=self.controlling_player.available_actions):
-            self.draw_dot(convert.convert_map_to_logical(i), range_move_color)
+            if not inspect:
+                self.draw_dot(convert.convert_map_to_logical(i), colors.range_move_color)
+            else: 
+                self.draw_dot(convert.convert_map_to_logical(i), colors.green_color)
         for i in control.possible_melee_moves(unit, brd.board, self.controlling_player):
             self.draw_dot(convert.convert_map_to_logical(i), attackcolor)
             
     def draw_tree(self, logical_position):
         logical_position = np.array(logical_position)
         grid_position = convert.convert_logical_to_grid_position(logical_position)
-        self.canvas.create_oval(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness -10,
-                                outline=symbol_tree_color)
+        self.canvas.create_oval(grid_position[0] - self.symbol_size, grid_position[1] - self.symbol_size,
+                                grid_position[0] + self.symbol_size, grid_position[1] + self.symbol_size, width=symbol_thickness -10,
+                                outline=colors.symbol_tree_subcolor)
+        self.canvas.create_oval(grid_position[0] - self.symbol_size, grid_position[1] - self.symbol_size,
+                                grid_position[0] + self.symbol_size, grid_position[1] + self.symbol_size, width=symbol_thickness -20,
+                                outline=colors.symbol_tree_color)
+        self.canvas.create_oval(grid_position[0] - self.symbol_size, grid_position[1] - self.symbol_size,
+                                grid_position[0] + self.symbol_size, grid_position[1] + self.symbol_size, width=symbol_thickness -30,
+                                outline=colors.green_color)
 
     def draw_broken_cell(self, logical_position):
         grid_position = convert.convert_logical_to_grid_position(logical_position)
-        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] + symbol_size, width=symbol_thickness,
-                                fill=symbol_X_color)
-        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] + symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=symbol_thickness,
-                                fill=symbol_X_color)
+        self.canvas.create_line(grid_position[0] - self.symbol_size, grid_position[1] - self.symbol_size,
+                                grid_position[0] + self.symbol_size, grid_position[1] + self.symbol_size, width=symbol_thickness,
+                                fill=colors.symbol_x_color)
+        self.canvas.create_line(grid_position[0] - self.symbol_size, grid_position[1] + self.symbol_size,
+                                grid_position[0] + self.symbol_size, grid_position[1] - self.symbol_size, width=symbol_thickness,
+                                fill=colors.symbol_x_color)
 
-    def draw_building(self, logical_position):
+    def draw_building(self, logical_position, color=colors.symbol_building_color):
         grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_rectangle(grid_position[0], grid_position[1],
                                 grid_position[0], grid_position[1], width=symbol_thickness,
-                                fill=symbol_building_color, outline=symbol_building_color)
+                                fill=color, outline=color)
         self.canvas.create_line(grid_position[0], grid_position[1],
-                                grid_position[0], grid_position[1] - symbol_size, width=symbol_thickness,
-                                fill=black_color)
-        self.canvas.create_text(grid_position[0] - symbol_size,
-                                grid_position[1] + symbol_size, 
-                                fill=canvas_text_color)
+                                grid_position[0], grid_position[1] - self.symbol_size, width=symbol_thickness,
+                                fill=colors.black_color)
+        self.canvas.create_text(grid_position[0] - self.symbol_size,
+                                grid_position[1] + self.symbol_size, 
+                                fill=colors.canvas_text_color)
 
     def draw_square(self, logical_position, color):
         grid_position = convert.convert_logical_to_grid_position(logical_position)
@@ -473,18 +542,18 @@ class game():
         grid_position = convert.convert_logical_to_grid_position(logical_position)
         mappos = convert.convert_logical_to_map(logical_position)
         health = brd.gethealth(mappos)
-        self.canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
-                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=unit_thickness,
+        self.canvas.create_line(grid_position[0] - self.symbol_size, grid_position[1] - self.symbol_size,
+                                grid_position[0] + self.symbol_size, grid_position[1] - self.symbol_size, width=unit_thickness,
                                 fill=color)
-        self.canvas.create_text(grid_position[0] - symbol_size,
-                                grid_position[1] + symbol_size, 
-                                fill=canvas_text_color, text=health)
+        self.canvas.create_text(grid_position[0] - self.symbol_size,
+                                grid_position[1] + self.symbol_size, 
+                                fill=colors.canvas_text_color, text=health)
     
     def draw_dot(self, logical_position, color):
         width = 10
-        if color == symbol_attack_dot_color or color == gray_color:
+        if color == colors.symbol_attack_dot_color or color == colors.gray_color:
             width = 20
-        if color == range_move_color:
+        if color == colors.range_move_color:
             width = 15
         logical_position = np.array(logical_position)
         grid_position = convert.convert_logical_to_grid_position(logical_position)
@@ -499,6 +568,7 @@ class game():
         grid_position = [event.x, event.y]
         logical_position = convert.convert_grid_to_logical_position(grid_position)
         mappos = convert.convert_logical_to_map(logical_position)
+
         
         def _select_unit_click(event):
             grid_position = [event.x, event.y]
@@ -507,6 +577,10 @@ class game():
 
             if isinstance(brd.inspect(mappos), player) and brd.inspect(mappos) in self.controlling_player.units:
                     self.selected_unit = brd.inspect(mappos)
+                    self.unit_name_label['text'] = self.selected_unit.fullname
+                    self.unit_age_label['text'] = "Age: {}".format(self.selected_unit.age)
+                    self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
+                    self.change_unit_image(self.selected_unit.image)
             self.reset(mappos, type="soft")
   
         def _movefunc():
@@ -546,14 +620,23 @@ class game():
 
         un = brd.inspect(mappos)
 
+        def __button_action():
+            structure = brd.inspect(mappos)
+            if isinstance(structure, building) and not structure.owner:
+                self.__capture_click(event)
+            if isinstance(structure, building) and structure.owner:
+                self.__capture_click(event, "empty")
+            if isinstance(un, player):
+                pass
+
         if isinstance(un, player) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
-            self.draw_possible_moves(un, movecolor=Green_color, attackcolor=gray_color)
+            self.draw_possible_moves(un, movecolor=colors.green_color, attackcolor=colors.gray_color, inspect=True)
+            self.pop_up(modal_context(un.fullname, un.range, "unit_description"))
         elif isinstance(un, building):
             self.reset(mappos, type="soft")
             self.get_event_info(mappos)
-            self.pop_up()
-
+            self.pop_up(modal_context("capture", "Capture the building", "capture_building", __button_action))
         else: 
             self.reset(mappos, type="soft")
             self.get_event_info(mappos)
@@ -571,9 +654,34 @@ class game():
                 brd.board = control.attack(mappos, brd.board, self.selected_unit.strength)
                 self.reset(mappos)
             else:
-                self.set_impossible_action_text('{} has a melee range of {}'.format(self.selected_unit, self.selected_unit.melee_range))
+                self.set_impossible_action_text('{} has a melee range of {}'.format(self.selected_unit.fullname, self.selected_unit.melee_range))
         return mappos
-
+        
+    def __capture_click(self, event, ctype="normal"):
+        """
+        Allows the current selected unit to capture buildings.
+        """
+        grid_position = [event.x, event.y]
+        logical_position = convert.convert_grid_to_logical_position(grid_position)
+        mappos = convert.convert_logical_to_map(logical_position)
+        for i in control.possible_melee_moves(self.selected_unit, brd.board, self.controlling_player):
+            if i == mappos:
+                structure = brd.inspect(i)
+                if isinstance(structure, building) and ctype == "normal":
+                    structure.set_color(self.controlling_player.color)
+                    self.controlling_player.buildings.append(structure)
+                    structure.set_owner(self.controlling_player)
+                    self.reset(mappos)
+                elif isinstance(structure, building) and ctype == "empty":
+                    structure.set_color(colors.symbol_building_color)
+                    structure.owner = None 
+                    #TODO: Make this remove the buildings from the other owner
+                    self.game_controller.other_owner.buildings.pop(structure)
+                else:
+                    self.set_impossible_action_text('{} can only capture factories.'.format(self.selected_unit.fullname))
+            else:
+                self.set_impossible_action_text('{} has a capture range of {}'.format(self.selected_unit.fullname, self.selected_unit.melee_range))
+        return mappos
 
     def monitor_state(self):
         """
@@ -587,7 +695,7 @@ class game():
         if current_controlling_player != self.controlling_player:
             self.mode_label['text'] = "Select and move Mode"
             self.canvas.bind('<Button-1>', self.select_move_click)
-            self.mode_label['background'] = Green_color
+            self.mode_label['background'] = colors.green_color
             #self.selected_unit = self.controlling_player.units[0]
             for p, unit in enumerate(self.controlling_player.units):
                 if unit.health > 0:
@@ -596,6 +704,13 @@ class game():
         self.turn_label['text'] = self.controlling_player.name
         self.turn_label['background'] = self.controlling_player.color
         self.actions_label['text'] = "Actions remaining: {}".format(self.controlling_player.available_actions + 1)
+        self.placeholder_label['text'] = "Units: {}, Buildings: {}".format(len(self.controlling_player.units), self.controlling_player.buildings)
+        self.unit_name_label['text'] = self.selected_unit.fullname
+        self.unit_age_label['text'] = "Age: {}".format(self.selected_unit.age)
+        self.change_unit_image(self.selected_unit.image)
+        self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
+        
+        self.placeholder_label['background'] = self.controlling_player.color
         self.actions_label['background'] = self.controlling_player.color
 
     def set_impossible_action_text(self, text):
@@ -632,21 +747,22 @@ class game():
         self.canvas.delete("all")
         for widget in self.ui.winfo_children():
             widget.destroy()
-        self.ui['background'] = board_background
+        self.ui['background'] = colors.board_background
         self.canvas.unbind('<Button-1>')
         self.statusbar['text'] = ""
 
-        self.canvas.create_text(size_of_board / 2, size_of_board / 3, font="cmr 60 bold", fill=winner.color, text=text)
+        self.canvas.create_text(self.boardsize / 2, self.boardsize / 3, font="cmr 60 bold", fill=winner.color, text=text)
         score_text = 'Results \n'
-        self.canvas.create_text(size_of_board / 2, 5 * size_of_board / 8, font="cmr 40 bold", fill=Green_color,
+        self.canvas.create_text(self.boardsize / 2, 5 * self.boardsize / 8, font="cmr 40 bold", fill=colors.green_color,
                                 text=score_text)
 
         score_text = '{} Units Left: '.format(self.game_controller.current_owner.name) + "{}".format(len(self.game_controller.current_owner.units)) + '\n'
         score_text += '{} Units Left: '.format(self.game_controller.other_owner.name) + "{}".format(len(self.game_controller.other_owner.units)) + '\n'
 
-        self.canvas.create_text(size_of_board / 2, 3 * size_of_board / 4, font="cmr 30 bold", fill=Green_color,
+        self.canvas.create_text(self.boardsize / 2, 3 * self.boardsize / 4, font="cmr 30 bold", fill=colors.green_color,
                                 text=score_text)
-                
+    def save_game(self):
+        st.save(brd.board)
 
 main = game()
 main.mainloop()

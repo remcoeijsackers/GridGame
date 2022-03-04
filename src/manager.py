@@ -1,5 +1,3 @@
-from shutil import move
-from numpy import broadcast_arrays
 import pandas as pd
 import random
 from pandas.core.frame import DataFrame
@@ -127,6 +125,17 @@ class manager:
         for row in all_items_on_board:
             for item in row:
                 if isinstance(item, cell) and item.stepped_on > 0:
+                    yield item
+                    
+    def get_all_clean_cells(self, board: DataFrame):
+        """
+        Return all coordinates in the board.
+        """
+        self.give_all_cells_coords()
+        all_items_on_board = board.to_numpy()
+        for row in all_items_on_board:
+            for item in row:
+                if isinstance(item, cell):
                     yield item
 
     def get_adjacent_cells(self, loc, distance):
@@ -466,7 +475,7 @@ class unitcontroller:
                     yield coord
                 else:
                     # if its not a cell, but a piece of scenery or a unit, melee is posible
-                    if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) and not board.at[coord[0], coord[1]] in controlling_player.units):
+                    if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
                         yield coord
 
     def place(self, unit: unit, loc, boardmanager: manager) -> DataFrame and bool:
@@ -508,7 +517,7 @@ class unitcontroller:
                 attacked_unit: unit = board.iloc[int(loc[0])][int(pr)]
                 attacked_unit.take_damage(damage)
         return board
-    
+
     def attack_on_loc(self, loc, board):
         """
         Remote Attack a cell, scenery or another unit.
