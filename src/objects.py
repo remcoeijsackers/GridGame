@@ -46,6 +46,7 @@ class unit:
         self.destroyed = False
         self.strength = 1
         self.fullname = None
+        self.owner = None
 
     def __str__(self) -> str:
         return self.name

@@ -22,6 +22,10 @@ class state:
         df2 = pd.read_pickle("saves/{}".format(v))
         return df2
 
+    def load_file(self, v) -> DataFrame:
+        df2 = pd.read_pickle(v)
+        return df2
+        
     def close(self):
         saves = glob.glob('saves/*')
         for f in saves:

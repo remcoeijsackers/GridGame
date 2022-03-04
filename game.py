@@ -84,14 +84,26 @@ class game():
 
         filemenu = tk.Menu(menubar)
 
-        filemenu.add_command(label="Open", command=askopenfilename)
-        filemenu.add_command(label="Save")
+        filemenu.add_command(label="Open", command=self.open_file)
+        filemenu.add_command(label="Save", command=self.save_game)
         filemenu.add_command(label="Exit")
 
         menubar.add_cascade(label="File", menu=filemenu)
 
         self.window.config(menu=menubar)
         self.initialise_home(game_settings)
+
+    def open_file(self):
+        global convert
+        gameboard = st.load_file(askopenfilename())
+        brd.set_board(gameboard)
+        pl1 = owner("player1", symbol_tree_color)
+        pl2 = owner("player2", symbol_water_color)
+        self.gridsize = 14
+        gridsize.set_gridsize(self.gridsize)
+        convert = convert_coords(self.gridsize)
+        self.initialise_old_game(pl1, pl2)
+        self.home_frame.destroy()
 
     def initilise_settings(self, settings: settings_context):
         self.settings_frame = tk.Frame(self.window, padx= 100, pady=100, relief=tk.RIDGE)
@@ -767,7 +779,8 @@ class game():
 
         self.canvas.create_text(self.boardsize / 2, 3 * self.boardsize / 4, font="cmr 30 bold", fill=Green_color,
                                 text=score_text)
-                
+    def save_game(self):
+        st.save(brd.board)
 
 main = game()
 main.mainloop()
