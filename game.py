@@ -16,11 +16,12 @@ from src.grid import grid
 from src.settings import debug, gridsize, symbolsize
 from src.conversion import convert_coords
 from src.controller import controller, owner
-from src.context import modal_context
+from src.context import modal_context, settings_context
 
-board_background = '#2e1600'
+board_background = '#422102'
 symbol_X_color = '#EE4035'
-symbol_tree_color = 'green'
+symbol_tree_color = '#41701b'
+symbol_tree_subcolor = '#264a0a'
 symbol_dot_color = '#A999CC'
 symbol_En_color = '#EE4035'
 symbol_attack_dot_color = '#EE4035'
@@ -38,6 +39,7 @@ st = state()
 control = unitcontroller()
 convert = any
 unithandler = unitgenerator()
+game_settings = settings_context()
 
 gen = placement(str(random.randint(10000000000, 99999999999)))
 
@@ -264,10 +266,6 @@ class game():
         self.actions_label = tk.Label(self.ui, text="Actions remaining: 4", background=self.player_one.color)
         self.placeholder_label = tk.Label(self.ui, text="", background=self.player_one.color)
 
-        #self.loc_label = tk.Label(self.ui, text="loc")
-        #self.info_label = tk.Label(self.ui, text="info")
-        #self.desc_label = tk.Label(self.ui, text="description")
-        #self.health_label = tk.Label(self.ui, text="health")
         self.control_label = tk.Label(self.ui, text="Controls", background=black_color)
         self.mode_label = tk.Label(self.ui, text="Select and move Mode", background=Green_color)
         self.action_details_label = tk.Label(self.ui, text="Action details")
@@ -279,14 +277,18 @@ class game():
         self.padding_label1 = tk.Label(self.ui, text="")
         self.padding_label2 = tk.Label(self.ui, text="")
 
-        self.unit_frame = tk.Frame(self.ui, relief=tk.RIDGE)
-        self.unit_frame.grid(column=2, row=14,sticky=tk.W)
+        self.unit_box = tk.Frame(self.ui, relief=tk.RIDGE)
+        self.unit_box.grid(column=0, row=14,sticky=tk.W)
 
-        self.unit_image_frame = tk.Frame(self.ui, relief=tk.RIDGE, background=black_color)
-        self.unit_image_frame.grid(column=0, row=14, columnspan=2, sticky=tk.W)
+        self.unit_frame = tk.Frame(self.unit_box, relief=tk.RIDGE)
+        self.unit_frame.grid(column=2, row=0,sticky=tk.W)
+
+        self.unit_image_frame = tk.Frame(self.unit_box, relief=tk.RIDGE, background=black_color)
+        self.unit_image_frame.grid(column=0, row=0, columnspan=2, sticky=tk.W)
 
         self.unit_header_label = tk.Label(self.ui, text="Controlling Unit Info", background=black_color)
         self.unit_name_label = tk.Label(self.unit_frame, text="")
+        self.unit_age_label = tk.Label(self.unit_frame, text="")
         self.unit_health_label = tk.Label(self.unit_frame, text="")
         self.unit_attack_label = tk.Label(self.unit_frame, text="Attack: 1")
         self.unit_range_label = tk.Label(self.unit_frame, text="Range: 1")
@@ -312,7 +314,8 @@ class game():
 
         self.unit_header_label.grid(column=0, row=13, sticky=tk.EW, columnspan = 6)
 
-        self.unit_name_label.grid(column=0, row=0, sticky=tk.W, )
+        self.unit_name_label.grid(column=0, row=0, sticky=tk.W)
+        self.unit_age_label.grid(column=1, row=0, sticky=tk.E)
         self.unit_health_label.grid(column=0, row=1, sticky=tk.W)
         self.unit_attack_label.grid(column=0, row=2, sticky=tk.W)
         self.unit_range_label.grid(column=0, row=3, sticky=tk.W)
@@ -329,6 +332,7 @@ class game():
             soldier = player("P1-{}".format(i))
             soldier.fullname = unithandler.get_name()
             soldier.set_image(unithandler.get_image())
+            soldier.set_age(unithandler.get_age())
             self.player_one.units.append(soldier)
             placeip(brd.board, soldier)
 
@@ -336,6 +340,7 @@ class game():
             soldier = player("P2-{}".format(i))
             soldier.fullname = unithandler.get_name()
             soldier.set_image(unithandler.get_image())
+            soldier.set_age(unithandler.get_age())
             self.player_two.units.append(soldier)
             placeip(brd.board, soldier)
         
@@ -351,6 +356,7 @@ class game():
             npc = enemy("NPC")
             npc.fullname = unithandler.get_name()
             npc.set_image(unithandler.get_image())
+            npc.set_age(unithandler.get_age())
             placeip(brd.board, npc)
  
         for i in range(tree_count):
@@ -364,6 +370,7 @@ class game():
         # Unit info card
         self.placeholder_label['text'] = "Units: {}, Buildings: {}".format(len(self.controlling_player.units), self.controlling_player.buildings)
         self.unit_name_label['text'] = self.selected_unit.fullname
+        self.unit_age_label['text'] = "Age: {}".format(self.selected_unit.age)
         self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
 
         self.change_unit_image(self.selected_unit.image)
@@ -447,12 +454,14 @@ class game():
 
         for i in range(self.gridsize):
             self.canvas.create_line(0, (i + 1) * self.boardsize / self.gridsize, self.boardsize, (i + 1) * self.boardsize / self.gridsize)
-
+        
+        for cell in boardmanager.get_all_clean_cells(brd.board):
+            self.draw_square(convert.convert_map_to_logical(cell.loc),cell.color)
         for obj in boardmanager.get_all_objects(brd.board):
             if obj.destroyed:
                 cleanup_func(obj)
             if isinstance(obj, water):
-                self.draw_square(convert.convert_map_to_logical(obj.loc), symbol_water_color)
+                self.draw_square(convert.convert_map_to_logical(obj.loc), obj.color)
                 
             if isinstance(obj, player) and not obj.destroyed:
                 if obj in self.player_one.units:
@@ -498,7 +507,13 @@ class game():
         grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_oval(grid_position[0] - self.symbol_size, grid_position[1] - self.symbol_size,
                                 grid_position[0] + self.symbol_size, grid_position[1] + self.symbol_size, width=symbol_thickness -10,
+                                outline=symbol_tree_subcolor)
+        self.canvas.create_oval(grid_position[0] - self.symbol_size, grid_position[1] - self.symbol_size,
+                                grid_position[0] + self.symbol_size, grid_position[1] + self.symbol_size, width=symbol_thickness -20,
                                 outline=symbol_tree_color)
+        self.canvas.create_oval(grid_position[0] - self.symbol_size, grid_position[1] - self.symbol_size,
+                                grid_position[0] + self.symbol_size, grid_position[1] + self.symbol_size, width=symbol_thickness -30,
+                                outline=Green_color)
 
     def draw_broken_cell(self, logical_position):
         grid_position = convert.convert_logical_to_grid_position(logical_position)
@@ -567,6 +582,7 @@ class game():
             if isinstance(brd.inspect(mappos), player) and brd.inspect(mappos) in self.controlling_player.units:
                     self.selected_unit = brd.inspect(mappos)
                     self.unit_name_label['text'] = self.selected_unit.fullname
+                    self.unit_age_label['text'] = "Age: {}".format(self.selected_unit.age)
                     self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
                     self.change_unit_image(self.selected_unit.image)
             self.reset(mappos, type="soft")
@@ -695,6 +711,7 @@ class game():
         self.actions_label['text'] = "Actions remaining: {}".format(self.controlling_player.available_actions + 1)
         self.placeholder_label['text'] = "Units: {}, Buildings: {}".format(len(self.controlling_player.units), self.controlling_player.buildings)
         self.unit_name_label['text'] = self.selected_unit.fullname
+        self.unit_age_label['text'] = "Age: {}".format(self.selected_unit.age)
         self.change_unit_image(self.selected_unit.image)
         self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
         
