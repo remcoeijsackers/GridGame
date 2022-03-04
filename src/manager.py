@@ -126,6 +126,17 @@ class manager:
             for item in row:
                 if isinstance(item, cell) and item.stepped_on > 0:
                     yield item
+                    
+    def get_all_clean_cells(self, board: DataFrame):
+        """
+        Return all coordinates in the board.
+        """
+        self.give_all_cells_coords()
+        all_items_on_board = board.to_numpy()
+        for row in all_items_on_board:
+            for item in row:
+                if isinstance(item, cell):
+                    yield item
 
     def get_adjacent_cells(self, loc, distance):
         """

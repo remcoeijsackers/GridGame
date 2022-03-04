@@ -1,9 +1,14 @@
+import random
+
+boardcolors = ['#422102','#542b05', '#4a2a0c']
+watercolors = ['#0e1b7d', '#1b2785', '#141f7a']
 class cell:
     def __init__(self, name = ".", stepped_on=0) -> None:
         self.name = name
         self.walkable = True
         self.description = "a cell on the grid"
         self.stepped_on = stepped_on
+        self.color = random.choice(boardcolors)
 
     def __repr__(self) -> str:
         return self.name
@@ -14,6 +19,7 @@ class cell:
     def set_loc(self, loc):
         self.loc = loc
         return self.loc
+        
 
 class broken_cell:
     def __init__(self, name = "x") -> None:
@@ -40,6 +46,7 @@ class unit:
         self.destroyed = False
         self.strength = 1
         self.fullname = None
+        self.owner = None
 
     def __str__(self) -> str:
         return self.name
@@ -47,7 +54,15 @@ class unit:
     def set_loc(self, loc):
         self.loc = loc
         return self.loc
-    
+
+    def set_image(self, image):
+        self.image = image
+        return self.image
+
+    def set_age (self, age):
+        self.age = age
+        return self.age
+
     def take_damage(self, damage):
         self.health -= damage
         if self.health <= 0:
@@ -128,6 +143,7 @@ class water(scenery):
         super().__init__(args)
         self.name = args[0]
         self.destroyed = False
+        self.color = random.choice(watercolors)
     def __str__(self) -> str:
         return self.name
 
