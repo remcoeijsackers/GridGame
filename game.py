@@ -16,28 +16,13 @@ from src.grid import grid
 from src.settings import debug, gridsize, symbolsize
 from src.conversion import convert_coords
 from src.controller import controller, owner
-from src.context import modal_context, settings_context
+from src.context import modal_context, settings_context, color_context
 
-board_background = '#422102'
-symbol_X_color = '#EE4035'
-symbol_tree_color = '#41701b'
-symbol_tree_subcolor = '#264a0a'
-symbol_dot_color = '#A999CC'
-symbol_En_color = '#EE4035'
-symbol_attack_dot_color = '#EE4035'
-Green_color = '#7BC043'
-Red_color = '#EE4035'
-symbol_building_color = '#E0f9FF'
-symbol_water_color = 'blue'
-black_color = '#120606'
-canvas_text_color = '#9363FF'
-range_move_color = '#93631F'
-gray_color = 'gray'
-
+convert = any
+colors = color_context()
 brd = manager()   
 st = state()
 control = unitcontroller()
-convert = any
 unithandler = unitgenerator()
 game_settings = settings_context()
 
@@ -97,8 +82,8 @@ class game():
         global convert
         gameboard = st.load_file(askopenfilename())
         brd.set_board(gameboard)
-        pl1 = owner("player1", symbol_tree_color)
-        pl2 = owner("player2", symbol_water_color)
+        pl1 = owner("player1", colors.symbol_tree_color)
+        pl2 = owner("player2", colors.symbol_water_color)
         self.gridsize = 14
         gridsize.set_gridsize(self.gridsize)
         convert = convert_coords(self.gridsize)
@@ -176,7 +161,7 @@ class game():
         back_home_button = tk.Button(
                 self.settings_frame,
                 text='back home',
-                command=validate, background=board_background)
+                command=validate, background=colors.board_background)
 
         back_home_button.grid(column=0, row=9, columnspan=4)
         
@@ -230,14 +215,14 @@ class game():
             b0 = tk.Button(
                 self.home_frame,
                 text='Select a Color for p1',
-                command=change_color_p1, background=board_background)
+                command=change_color_p1, background=colors.board_background)
             b1 = tk.Button(
                 self.home_frame,
                 text='Select a Color for p2',
-                command=change_color_p2, background=board_background)
+                command=change_color_p2, background=colors.board_background)
 
-            b2 = tk.Button(self.home_frame, text="Start Game", command=start_game, background=board_background)
-            settings_button = tk.Button(self.home_frame, text="Settings",command=open_settings,background=board_background)
+            b2 = tk.Button(self.home_frame, text="Start Game", command=start_game, background=colors.board_background)
+            settings_button = tk.Button(self.home_frame, text="Settings",command=open_settings,background=colors.board_background)
 
             header_label.grid(column=0, row=0, columnspan=3)
             entry_player_one.grid(column=0, row=1)
@@ -255,7 +240,6 @@ class game():
         self.initialise_home(settings)
 
     def initialise_game(self, player_one, player_two, settings: settings_context):
-        # tree_count, starting_units_p1, starting_units_p2, water_clusters, factories, npc_enemies, var_boardsize
         self.boardsize = settings.var_boardsize
         self.symbol_size = symbolsize.get_symbolsize(settings.var_boardsize)
         self.player_one = player_one
@@ -268,7 +252,7 @@ class game():
 
         self.statusbar.pack(side=tk.BOTTOM, fill=tk.X)
 
-        self.canvas = tk.Canvas(self.window, width=settings.var_boardsize, height=settings.var_boardsize, background=board_background)
+        self.canvas = tk.Canvas(self.window, width=settings.var_boardsize, height=settings.var_boardsize, background=colors.board_background)
         self.canvas.pack(side='left',anchor='nw', fill='x')
         
         self.ui = tk.Canvas(self.window, bd=1)
@@ -276,14 +260,14 @@ class game():
         self.ui.columnconfigure(1, weight=3)
         self.max_ui_columns = 6
         
-        self.header_label = tk.Label(self.ui, text="Player info", background=black_color)
+        self.header_label = tk.Label(self.ui, text="Player info", background=colors.black_color)
 
         self.turn_label = tk.Label(self.ui, text="{}".format(self.player_one.name), background=self.player_one.color)
         self.actions_label = tk.Label(self.ui, text="Actions remaining: 4", background=self.player_one.color)
         self.placeholder_label = tk.Label(self.ui, text="", background=self.player_one.color)
 
-        self.control_label = tk.Label(self.ui, text="Controls", background=black_color)
-        self.mode_label = tk.Label(self.ui, text="Select and move Mode", background=Green_color)
+        self.control_label = tk.Label(self.ui, text="Controls", background=colors.black_color)
+        self.mode_label = tk.Label(self.ui, text="Select and move Mode", background=colors.green_color)
         self.action_details_label = tk.Label(self.ui, text="Action details")
 
         self.move_button = tk.Button(self.ui, text="Select move")
@@ -299,10 +283,10 @@ class game():
         self.unit_frame = tk.Frame(self.unit_box, relief=tk.RIDGE)
         self.unit_frame.grid(column=2, row=0,sticky=tk.W)
 
-        self.unit_image_frame = tk.Frame(self.unit_box, relief=tk.RIDGE, background=black_color)
+        self.unit_image_frame = tk.Frame(self.unit_box, relief=tk.RIDGE, background=colors.black_color)
         self.unit_image_frame.grid(column=0, row=0, columnspan=2, sticky=tk.W)
 
-        self.unit_header_label = tk.Label(self.ui, text="Controlling Unit Info", background=black_color)
+        self.unit_header_label = tk.Label(self.ui, text="Controlling Unit Info", background=colors.black_color)
         self.unit_name_label = tk.Label(self.unit_frame, text="")
         self.unit_age_label = tk.Label(self.unit_frame, text="")
         self.unit_health_label = tk.Label(self.unit_frame, text="")
@@ -404,7 +388,7 @@ class game():
         img = Image.open(image)
         img = img.resize((100, 100), Image.ANTIALIAS)
         img = ImageTk.PhotoImage(img)
-        self.panel = tk.Label(self.unit_image_frame, image = img, background=black_color)
+        self.panel = tk.Label(self.unit_image_frame, image = img, background=colors.black_color)
         self.panel.image = img    
         self.panel.grid(row=0, column=0, sticky=tk.W)
 
@@ -423,7 +407,7 @@ class game():
         Switches the control mode to inspecting grid elements.
         """
         self.mode_label['text'] = "Inspect Mode"
-        self.mode_label['background'] = Green_color
+        self.mode_label['background'] = colors.green_color
         self.canvas.bind('<Button-1>', self.inspect_click)
 
     def switch_mode_selectmove(self, event):
@@ -431,7 +415,7 @@ class game():
         Switches the control mode to selecting and moving owned units.
         """
         self.mode_label['text'] = "Select and move Mode"
-        self.mode_label['background'] = Green_color
+        self.mode_label['background'] = colors.green_color
         self.canvas.bind('<Button-1>', self.select_move_click)
 
 
@@ -440,7 +424,7 @@ class game():
         Switches the control mode to attacking with the selected unit.
         """
         self.mode_label['text'] = "Melee Attack Mode"
-        self.mode_label['background'] = Red_color
+        self.mode_label['background'] = colors.red_color
         self.canvas.bind('<Button-1>', self.melee_attack_click)
 
     def get_event_info(self, event):
@@ -467,6 +451,7 @@ class game():
         for i in range(self.gridsize):
             self.canvas.create_line(0, (i + 1) * self.boardsize / self.gridsize, self.boardsize, (i + 1) * self.boardsize / self.gridsize)
         
+        # Changes tiles color after movement slightly
         for obj in boardmanager.get_all_clean_cells(brd.board):
             self.draw_square(convert.convert_map_to_logical(obj.loc),obj.color)
 
@@ -490,18 +475,16 @@ class game():
                 self.draw_building(convert.convert_map_to_logical(obj.loc), obj.color)
                 
             if isinstance(obj, enemy) and not obj.destroyed:
-                self.draw_unit(convert.convert_map_to_logical(obj.loc), symbol_En_color)
+                self.draw_unit(convert.convert_map_to_logical(obj.loc), colors.symbol_en_color)
                 
             if isinstance(obj, broken_cell):
                 self.draw_broken_cell(convert.convert_map_to_logical(obj.loc))
 
         if self.show_stepped_on_tiles:
             for cl in boardmanager.get_all_cells(brd.board):
-                self.draw_square(convert.convert_map_to_logical(cl.loc), Green_color)
+                self.draw_square(convert.convert_map_to_logical(cl.loc), colors.green_color)
         
-
-                
-    def draw_possible_moves(self, unit, movecolor=symbol_dot_color, attackcolor=symbol_attack_dot_color, inspect=False):
+    def draw_possible_moves(self, unit, movecolor=colors.symbol_dot_color, attackcolor=colors.symbol_attack_dot_color, inspect=False):
         """
         Draws the step / attack moves that are available to the selected unit.
         """
@@ -509,9 +492,9 @@ class game():
             self.draw_dot(convert.convert_map_to_logical(i), movecolor)
         for i in control.possible_moves(unit, brd, total=True, turns=self.controlling_player.available_actions):
             if not inspect:
-                self.draw_dot(convert.convert_map_to_logical(i), range_move_color)
+                self.draw_dot(convert.convert_map_to_logical(i), colors.range_move_color)
             else: 
-                self.draw_dot(convert.convert_map_to_logical(i), Green_color)
+                self.draw_dot(convert.convert_map_to_logical(i), colors.green_color)
         for i in control.possible_melee_moves(unit, brd.board, self.controlling_player):
             self.draw_dot(convert.convert_map_to_logical(i), attackcolor)
             
@@ -520,34 +503,34 @@ class game():
         grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_oval(grid_position[0] - self.symbol_size, grid_position[1] - self.symbol_size,
                                 grid_position[0] + self.symbol_size, grid_position[1] + self.symbol_size, width=symbol_thickness -10,
-                                outline=symbol_tree_subcolor)
+                                outline=colors.symbol_tree_subcolor)
         self.canvas.create_oval(grid_position[0] - self.symbol_size, grid_position[1] - self.symbol_size,
                                 grid_position[0] + self.symbol_size, grid_position[1] + self.symbol_size, width=symbol_thickness -20,
-                                outline=symbol_tree_color)
+                                outline=colors.symbol_tree_color)
         self.canvas.create_oval(grid_position[0] - self.symbol_size, grid_position[1] - self.symbol_size,
                                 grid_position[0] + self.symbol_size, grid_position[1] + self.symbol_size, width=symbol_thickness -30,
-                                outline=Green_color)
+                                outline=colors.green_color)
 
     def draw_broken_cell(self, logical_position):
         grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_line(grid_position[0] - self.symbol_size, grid_position[1] - self.symbol_size,
                                 grid_position[0] + self.symbol_size, grid_position[1] + self.symbol_size, width=symbol_thickness,
-                                fill=symbol_X_color)
+                                fill=colors.symbol_x_color)
         self.canvas.create_line(grid_position[0] - self.symbol_size, grid_position[1] + self.symbol_size,
                                 grid_position[0] + self.symbol_size, grid_position[1] - self.symbol_size, width=symbol_thickness,
-                                fill=symbol_X_color)
+                                fill=colors.symbol_x_color)
 
-    def draw_building(self, logical_position, color=symbol_building_color):
+    def draw_building(self, logical_position, color=colors.symbol_building_color):
         grid_position = convert.convert_logical_to_grid_position(logical_position)
         self.canvas.create_rectangle(grid_position[0], grid_position[1],
                                 grid_position[0], grid_position[1], width=symbol_thickness,
                                 fill=color, outline=color)
         self.canvas.create_line(grid_position[0], grid_position[1],
                                 grid_position[0], grid_position[1] - self.symbol_size, width=symbol_thickness,
-                                fill=black_color)
+                                fill=colors.black_color)
         self.canvas.create_text(grid_position[0] - self.symbol_size,
                                 grid_position[1] + self.symbol_size, 
-                                fill=canvas_text_color)
+                                fill=colors.canvas_text_color)
 
     def draw_square(self, logical_position, color):
         grid_position = convert.convert_logical_to_grid_position(logical_position)
@@ -564,13 +547,13 @@ class game():
                                 fill=color)
         self.canvas.create_text(grid_position[0] - self.symbol_size,
                                 grid_position[1] + self.symbol_size, 
-                                fill=canvas_text_color, text=health)
+                                fill=colors.canvas_text_color, text=health)
     
     def draw_dot(self, logical_position, color):
         width = 10
-        if color == symbol_attack_dot_color or color == gray_color:
+        if color == colors.symbol_attack_dot_color or color == colors.gray_color:
             width = 20
-        if color == range_move_color:
+        if color == colors.range_move_color:
             width = 15
         logical_position = np.array(logical_position)
         grid_position = convert.convert_logical_to_grid_position(logical_position)
@@ -648,7 +631,7 @@ class game():
 
         if isinstance(un, player) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
-            self.draw_possible_moves(un, movecolor=Green_color, attackcolor=gray_color, inspect=True)
+            self.draw_possible_moves(un, movecolor=colors.green_color, attackcolor=colors.gray_color, inspect=True)
             self.pop_up(modal_context(un.fullname, un.range, "unit_description"))
         elif isinstance(un, building):
             self.reset(mappos, type="soft")
@@ -690,7 +673,7 @@ class game():
                     structure.set_owner(self.controlling_player)
                     self.reset(mappos)
                 elif isinstance(structure, building) and ctype == "empty":
-                    structure.set_color(symbol_building_color)
+                    structure.set_color(colors.symbol_building_color)
                     structure.owner = None 
                     #TODO: Make this remove the buildings from the other owner
                     self.game_controller.other_owner.buildings.pop(structure)
@@ -699,7 +682,6 @@ class game():
             else:
                 self.set_impossible_action_text('{} has a capture range of {}'.format(self.selected_unit.fullname, self.selected_unit.melee_range))
         return mappos
-
 
     def monitor_state(self):
         """
@@ -713,7 +695,7 @@ class game():
         if current_controlling_player != self.controlling_player:
             self.mode_label['text'] = "Select and move Mode"
             self.canvas.bind('<Button-1>', self.select_move_click)
-            self.mode_label['background'] = Green_color
+            self.mode_label['background'] = colors.green_color
             #self.selected_unit = self.controlling_player.units[0]
             for p, unit in enumerate(self.controlling_player.units):
                 if unit.health > 0:
@@ -765,19 +747,19 @@ class game():
         self.canvas.delete("all")
         for widget in self.ui.winfo_children():
             widget.destroy()
-        self.ui['background'] = board_background
+        self.ui['background'] = colors.board_background
         self.canvas.unbind('<Button-1>')
         self.statusbar['text'] = ""
 
         self.canvas.create_text(self.boardsize / 2, self.boardsize / 3, font="cmr 60 bold", fill=winner.color, text=text)
         score_text = 'Results \n'
-        self.canvas.create_text(self.boardsize / 2, 5 * self.boardsize / 8, font="cmr 40 bold", fill=Green_color,
+        self.canvas.create_text(self.boardsize / 2, 5 * self.boardsize / 8, font="cmr 40 bold", fill=colors.green_color,
                                 text=score_text)
 
         score_text = '{} Units Left: '.format(self.game_controller.current_owner.name) + "{}".format(len(self.game_controller.current_owner.units)) + '\n'
         score_text += '{} Units Left: '.format(self.game_controller.other_owner.name) + "{}".format(len(self.game_controller.other_owner.units)) + '\n'
 
-        self.canvas.create_text(self.boardsize / 2, 3 * self.boardsize / 4, font="cmr 30 bold", fill=Green_color,
+        self.canvas.create_text(self.boardsize / 2, 3 * self.boardsize / 4, font="cmr 30 bold", fill=colors.green_color,
                                 text=score_text)
     def save_game(self):
         st.save(brd.board)
