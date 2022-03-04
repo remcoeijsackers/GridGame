@@ -54,10 +54,6 @@ class modal_popup(tk.Toplevel):
         tk.Toplevel.__init__(self)
 
         self.transient(self.original_frame.window)
-        #x = self.original_frame.window.winfo_x()
-        #y = self.original_frame.window.winfo_y()
-
-        #self.geometry("+%d+%d" %(x+200,y+200))
         self.geometry("260x210")
         self.lift()
 
@@ -95,31 +91,31 @@ class game():
         menubar.add_cascade(label="File", menu=filemenu)
 
         self.window.config(menu=menubar)
-        self.initialise_home()
+        self.initialise_home(game_settings)
 
-    def initilise_settings(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=0, var_units1=2, var_units2=2, var_boardsize=600):
+    def initilise_settings(self, settings: settings_context):
         self.settings_frame = tk.Frame(self.window, padx= 100, pady=100, relief=tk.RIDGE)
         header_label_settings = tk.Label(self.settings_frame, text="Settings", font=("Courier", 44))
         seed_entry = tk.Entry(self.settings_frame, width=15)
         seed_entry.insert(0, '{}'.format(random.randint(0, 9438132)))
         seed_entry_label = tk.Label(self.settings_frame, text="Seed", width=15)
         tiles = tk.Scale(self.settings_frame, from_=6, to=20, orient=tk.HORIZONTAL, length=300, label="tiles in the game board (value x2)")
-        tiles.set(var_tiles)
+        tiles.set(settings.var_tiles)
         boardsize = tk.Scale(self.settings_frame, from_=300, to=1200, orient=tk.HORIZONTAL, length=300, label="size of the game board (value x2)")
-        boardsize.set(var_boardsize)
+        boardsize.set(settings.var_boardsize)
         total_tiles_label = tk.Label(self.settings_frame, text="total tiles: {}".format(tiles.get() * tiles.get()), width=15)
         water_clusters = tk.Scale(self.settings_frame, from_=0, to=3, orient=tk.HORIZONTAL, length=150, label="count of lakes")
-        water_clusters.set(var_water_clusters)
+        water_clusters.set(settings.var_water_clusters)
         trees = tk.Scale(self.settings_frame, from_=0, to=10, orient=tk.HORIZONTAL, length=150, label="count of trees")
-        trees.set(var_trees)
+        trees.set(settings.var_trees)
         factories = tk.Scale(self.settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of factories")
-        factories.set(var_factories)
+        factories.set(settings.var_factories)
         npcs = tk.Scale(self.settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of NPC's")
-        npcs.set(var_npcs)
+        npcs.set(settings.var_npcs)
         units1 = tk.Scale(self.settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p1")
-        units1.set(var_units1)
+        units1.set(settings.var_units1)
         units2 = tk.Scale(self.settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p2")
-        units2.set(var_units2)
+        units2.set(settings.var_units2)
         
         min_size_needed = tiles.get() + water_clusters.get() * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 10
 
@@ -135,7 +131,15 @@ class game():
                     return min_size_needed
         def validate():
             check_settings_possible()
-            self.reinit(tiles.get(),water_clusters.get(),trees.get(),factories.get(),npcs.get(),units1.get(),units2.get(), boardsize.get())
+            settings.var_tiles = tiles.get()
+            settings.var_water_clusters = water_clusters.get()
+            settings.var_trees = trees.get()
+            settings.var_factories = factories.get()
+            settings.var_npcs = npcs.get()
+            settings.var_units1 = units1.get()
+            settings.var_units2 = units2.get()
+            settings.var_boardsize = boardsize.get()
+            self.reinit(settings)
 
         header_label_settings.grid(column=0, row=0, columnspan=4)
 
@@ -166,7 +170,7 @@ class game():
         
         self.settings_frame.pack()
 
-    def initialise_home(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=0, var_units1=2, var_units2=2, var_boardsize=600):
+    def initialise_home(self, settings: settings_context):
             self.home_frame = tk.Frame(self.window, padx= 100, pady=100, relief=tk.RIDGE, width=1000, height=600)
             header_label = tk.Label(self.home_frame, text="GridGame", font=("Courier", 44))
 
@@ -198,16 +202,16 @@ class game():
                 p = get_input()
                 pl1 = owner(p[0], entry_player_one['background'])
                 pl2 = owner(p[1], entry_player_two['background'])
-                self.gridsize = var_tiles
+                self.gridsize = settings.var_tiles
     
                 gridsize.set_gridsize(self.gridsize)
-                convert = convert_coords(self.gridsize, var_boardsize)
+                convert = convert_coords(self.gridsize, settings.var_boardsize)
                 brd.set_board(grid(self.gridsize).setup())
-                self.initialise_game(pl1,pl2, var_trees, var_units1, var_units2, var_water_clusters, var_factories, var_npcs, var_boardsize)
+                self.initialise_game(pl1,pl2, settings)
                 self.home_frame.destroy()
             
             def open_settings():
-                self.initilise_settings()
+                self.initilise_settings(settings)
                 self.home_frame.destroy()
             
 
@@ -234,14 +238,14 @@ class game():
             b2.grid(column=0, columnspan=3, pady=10, padx=10)
             self.home_frame.pack()
 
-    def reinit(self, var_tiles=14, var_water_clusters=2, var_trees=6, var_factories=2, var_npcs=0, var_units1=2, var_units2=2, var_boardsize=600):
+    def reinit(self, settings: settings_context):
         self.settings_frame.destroy()
-        self.initialise_home(var_tiles, var_water_clusters, var_trees, var_factories, var_npcs, var_units1, var_units2, var_boardsize)
+        self.initialise_home(settings)
 
-    def initialise_game(self, player_one, player_two, tree_count, starting_units_p1, starting_units_p2, water_clusters, factories, npc_enemies, var_boardsize):
-
-        self.boardsize = var_boardsize
-        self.symbol_size = symbolsize.get_symbolsize(var_boardsize)
+    def initialise_game(self, player_one, player_two, settings: settings_context):
+        # tree_count, starting_units_p1, starting_units_p2, water_clusters, factories, npc_enemies, var_boardsize
+        self.boardsize = settings.var_boardsize
+        self.symbol_size = symbolsize.get_symbolsize(settings.var_boardsize)
         self.player_one = player_one
         self.player_two = player_two
         self.show_stepped_on_tiles = False
@@ -252,7 +256,7 @@ class game():
 
         self.statusbar.pack(side=tk.BOTTOM, fill=tk.X)
 
-        self.canvas = tk.Canvas(self.window, width=var_boardsize, height=var_boardsize, background=board_background)
+        self.canvas = tk.Canvas(self.window, width=settings.var_boardsize, height=settings.var_boardsize, background=board_background)
         self.canvas.pack(side='left',anchor='nw', fill='x')
         
         self.ui = tk.Canvas(self.window, bd=1)
@@ -328,7 +332,7 @@ class game():
         self.melee_attack_button.bind('<Button-1>', self.switch_mode_melee_attack)
         self.canvas.bind('<Button-1>', self.select_move_click)
 
-        for i in range(starting_units_p1):
+        for i in range(settings.var_units1):
             soldier = player("P1-{}".format(i))
             soldier.fullname = unithandler.get_name()
             soldier.set_image(unithandler.get_image())
@@ -336,7 +340,7 @@ class game():
             self.player_one.units.append(soldier)
             placeip(brd.board, soldier)
 
-        for i in range(starting_units_p2):
+        for i in range(settings.var_units2):
             soldier = player("P2-{}".format(i))
             soldier.fullname = unithandler.get_name()
             soldier.set_image(unithandler.get_image())
@@ -344,22 +348,22 @@ class game():
             self.player_two.units.append(soldier)
             placeip(brd.board, soldier)
         
-        for i in range(water_clusters):
+        for i in range(settings.var_water_clusters):
             water_clustr = water("W")
             brd.placeclus(water_clustr)
 
-        for i in range(factories):
+        for i in range(settings.var_factories):
             fct = building("F")
             placeip(brd.board, fct)
 
-        for i in range(npc_enemies):
+        for i in range(settings.var_npcs):
             npc = enemy("NPC")
             npc.fullname = unithandler.get_name()
             npc.set_image(unithandler.get_image())
             npc.set_age(unithandler.get_age())
             placeip(brd.board, npc)
  
-        for i in range(tree_count):
+        for i in range(settings.var_trees):
             makore = tree("T")
             placeip(brd.board, makore)
         
@@ -431,12 +435,8 @@ class game():
         """
         Changes the labels text to reflect the selected unit/cell/action
         """
-        #self.loc_label['text'] = "Location: {}".format(event)
         self.statusbar['text'] = " Location: {} | Steps: {} | Description: {}".format(event, control.count(self.selected_unit, event),brd.explain(event))
-        #self.info_label['text'] = "Unit: {}".format(brd.inspect(event))
-        #self.desc_label['text'] = "Description: {}".format(brd.explain(event))
-        #self.health_label['text'] = "Health: {}".format(brd.gethealth(event))
-        #self.distance_label['text'] = "Steps: {}".format(control.count(self.selected_unit, event))
+
 
     def draw_board_and_objects(self, boardmanager: manager):
         """
@@ -455,8 +455,9 @@ class game():
         for i in range(self.gridsize):
             self.canvas.create_line(0, (i + 1) * self.boardsize / self.gridsize, self.boardsize, (i + 1) * self.boardsize / self.gridsize)
         
-        for cell in boardmanager.get_all_clean_cells(brd.board):
-            self.draw_square(convert.convert_map_to_logical(cell.loc),cell.color)
+        for obj in boardmanager.get_all_clean_cells(brd.board):
+            self.draw_square(convert.convert_map_to_logical(obj.loc),obj.color)
+
         for obj in boardmanager.get_all_objects(brd.board):
             if obj.destroyed:
                 cleanup_func(obj)
