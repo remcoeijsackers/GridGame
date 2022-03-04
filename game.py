@@ -1,3 +1,4 @@
+from turtle import back
 import numpy as np
 import random
 from PIL import ImageTk, Image
@@ -277,22 +278,25 @@ class game():
         self.show_stepped_tiles_button = tk.Button(self.ui, text="show stepped tiles", command=self.show_stepped_tiles)
         self.padding_label1 = tk.Label(self.ui, text="")
         self.padding_label2 = tk.Label(self.ui, text="")
+
+        self.unit_frame = tk.Frame(self.ui, relief=tk.RIDGE)
+        self.unit_frame.grid(column=2, row=14,sticky=tk.W)
+
+        self.unit_image_frame = tk.Frame(self.ui, relief=tk.RIDGE, background=black_color)
+        self.unit_image_frame.grid(column=0, row=14, columnspan=2, sticky=tk.W)
+
         self.unit_header_label = tk.Label(self.ui, text="Controlling Unit Info", background=black_color)
-        self.unit_name_label = tk.Label(self.ui, text="")
-        self.unit_health_label = tk.Label(self.ui, text="")
+        self.unit_name_label = tk.Label(self.unit_frame, text="")
+        self.unit_health_label = tk.Label(self.unit_frame, text="")
+        self.unit_attack_label = tk.Label(self.unit_frame, text="Attack: 1")
+        self.unit_range_label = tk.Label(self.unit_frame, text="Range: 1")
+        self.unit_equipment_label = tk.Label(self.unit_frame, text="Equipment: None")
 
         self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = self.max_ui_columns)
         self.turn_label.grid(column=0, row=1, sticky=tk.EW, columnspan = self.max_ui_columns)
         self.actions_label.grid(column=0, row=2, sticky=tk.EW, columnspan = self.max_ui_columns)
         self.placeholder_label.grid(column=0, row=3, sticky=tk.EW, columnspan = self.max_ui_columns)
 
-        #self.loc_label.grid(column=0, row=4, sticky=tk.E,padx=5, pady=5)
-        #self.info_label.grid(column=1, row=4,sticky=tk.W, padx=5, pady=5)
-        #self.desc_label.grid(column=2, row=4,sticky=tk.E, padx=5, pady=5)
-        #self.health_label.grid(column=2, row=4,sticky=tk.N, padx=5, pady=5)
-
-        #self.distance_label.grid(column=0, row=5,sticky=tk.W, padx=5, pady=5,columnspan = 2)
-        
         self.control_label.grid(column=0, row=5,sticky=tk.EW, columnspan = self.max_ui_columns)
         self.mode_label.grid(column=0, row=6,sticky=tk.EW, columnspan = self.max_ui_columns)
 
@@ -305,9 +309,14 @@ class game():
 
         self.padding_label1.grid(column=0, row=11, sticky=tk.W, columnspan = 4)
         self.padding_label2.grid(column=0, row=12, sticky=tk.W, columnspan = 4)
-        self.unit_header_label.grid(column=0, row=13, sticky=tk.EW, columnspan = self.max_ui_columns)
-        self.unit_name_label.grid(column=0, row=14, sticky=tk.W, columnspan = 3)
-        self.unit_health_label.grid(column=3, row=14, sticky=tk.E, columnspan = 2)
+
+        self.unit_header_label.grid(column=0, row=13, sticky=tk.EW, columnspan = 6)
+
+        self.unit_name_label.grid(column=0, row=0, sticky=tk.W, )
+        self.unit_health_label.grid(column=0, row=1, sticky=tk.W)
+        self.unit_attack_label.grid(column=0, row=2, sticky=tk.W)
+        self.unit_range_label.grid(column=0, row=3, sticky=tk.W)
+        self.unit_equipment_label.grid(column=0, row=4, sticky=tk.W)
 
         self.ui.pack(side='right',anchor=tk.NW,expand=True,fill='both')
         
@@ -372,9 +381,9 @@ class game():
         img = Image.open(image)
         img = img.resize((100, 100), Image.ANTIALIAS)
         img = ImageTk.PhotoImage(img)
-        self.panel = tk.Label(self.ui, image = img)
+        self.panel = tk.Label(self.unit_image_frame, image = img, background=black_color)
         self.panel.image = img    
-        self.panel.grid(row=15, column=0, columnspan=6, sticky=tk.E)
+        self.panel.grid(row=0, column=0, sticky=tk.W)
 
     def show_stepped_tiles(self):
         if not self.show_stepped_on_tiles:
