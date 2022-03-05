@@ -39,7 +39,7 @@ class unit:
         self.name = args[0]
         self.description = "{}".format(self.name)
         self.range = 1
-        self.steps = 1
+        self.shoot_range = 1
         self.melee_range = 1
         self.walkable = False
         self.health = 3
@@ -47,6 +47,7 @@ class unit:
         self.strength = 1
         self.fullname = None
         self.owner = None
+        self.equipment = None
 
     def __str__(self) -> str:
         return self.name

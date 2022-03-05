@@ -10,7 +10,7 @@ class unit_modal_context(modal_context):
         super().__init__(title, ctype, command)
         self.unit = unit
 class settings_context:
-    def __init__(self, var_tiles=14, var_water_clusters=2, var_trees=8, var_factories=2, var_npcs=0, var_units1=2, var_units2=2, var_boardsize=600) -> None:
+    def __init__(self, var_tiles=14, var_water_clusters=2, var_trees=8, var_factories=2, var_npcs=0, var_units1=2, var_units2=2, var_boardsize=800) -> None:
         self.var_tiles= var_tiles
         self.var_water_clusters= var_water_clusters
         self.var_trees= var_trees
