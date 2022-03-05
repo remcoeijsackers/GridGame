@@ -369,11 +369,8 @@ class game():
 
         # Unit info card
         self.placeholder_label['text'] = "Units: {}, Buildings: {}".format(len(self.controlling_player.units), self.controlling_player.buildings)
-        self.unit_name_label['text'] = self.selected_unit.fullname
-        self.unit_age_label['text'] = "Age: {}".format(self.selected_unit.age)
-        self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
 
-        self.change_unit_image(self.selected_unit.image)
+        self.change_unit_card(self.selected_unit)
 
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
@@ -384,8 +381,11 @@ class game():
         """
         self.window.mainloop()
     
-    def change_unit_image(self, image):
-        img = Image.open(image)
+    def change_unit_card(self, unit):
+        self.unit_name_label['text'] = unit.fullname
+        self.unit_age_label['text'] = "Age: {}".format(unit.age)
+        self.unit_health_label['text'] = "Health: {}".format(unit.health)
+        img = Image.open(unit.image)
         img = img.resize((100, 100), Image.ANTIALIAS)
         img = ImageTk.PhotoImage(img)
         self.panel = tk.Label(self.unit_image_frame, image = img, background=colors.black_color)
@@ -580,7 +580,7 @@ class game():
                     self.unit_name_label['text'] = self.selected_unit.fullname
                     self.unit_age_label['text'] = "Age: {}".format(self.selected_unit.age)
                     self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
-                    self.change_unit_image(self.selected_unit.image)
+                    self.change_unit_card(self.selected_unit)
             self.reset(mappos, type="soft")
   
         def _movefunc():
@@ -707,7 +707,7 @@ class game():
         self.placeholder_label['text'] = "Units: {}, Buildings: {}".format(len(self.controlling_player.units), self.controlling_player.buildings)
         self.unit_name_label['text'] = self.selected_unit.fullname
         self.unit_age_label['text'] = "Age: {}".format(self.selected_unit.age)
-        self.change_unit_image(self.selected_unit.image)
+        self.change_unit_card(self.selected_unit)
         self.unit_health_label['text'] = "Health: {}".format(self.selected_unit.health)
         
         self.placeholder_label['background'] = self.controlling_player.color
