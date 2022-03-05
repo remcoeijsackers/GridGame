@@ -67,83 +67,6 @@ class game():
         #self.initialise_old_game(pl1, pl2)
         self.home_frame.destroy()
 
-    def initilise_settings(self, settings: settings_context):
-        self.settings_frame = tk.Frame(self.window, padx= 100, pady=100, relief=tk.RIDGE)
-        header_label_settings = tk.Label(self.settings_frame, text="Settings", font=("Courier", 44))
-        seed_entry = tk.Entry(self.settings_frame, width=15)
-        seed_entry.insert(0, '{}'.format(random.randint(0, 9438132)))
-        seed_entry_label = tk.Label(self.settings_frame, text="Seed", width=15)
-        tiles = tk.Scale(self.settings_frame, from_=6, to=20, orient=tk.HORIZONTAL, length=300, label="tiles in the game board (value x2)")
-        tiles.set(settings.var_tiles)
-        boardsize = tk.Scale(self.settings_frame, from_=300, to=1200, orient=tk.HORIZONTAL, length=300, label="size of the game board (value x2)")
-        boardsize.set(settings.var_boardsize)
-        total_tiles_label = tk.Label(self.settings_frame, text="total tiles: {}".format(tiles.get() * tiles.get()), width=15)
-        water_clusters = tk.Scale(self.settings_frame, from_=0, to=3, orient=tk.HORIZONTAL, length=150, label="count of lakes")
-        water_clusters.set(settings.var_water_clusters)
-        trees = tk.Scale(self.settings_frame, from_=0, to=10, orient=tk.HORIZONTAL, length=150, label="count of trees")
-        trees.set(settings.var_trees)
-        factories = tk.Scale(self.settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of factories")
-        factories.set(settings.var_factories)
-        npcs = tk.Scale(self.settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of NPC's")
-        npcs.set(settings.var_npcs)
-        units1 = tk.Scale(self.settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p1")
-        units1.set(settings.var_units1)
-        units2 = tk.Scale(self.settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p2")
-        units2.set(settings.var_units2)
-        
-        min_size_needed = tiles.get() + water_clusters.get() * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 10
-
-        total_objects_label = tk.Label(self.settings_frame, text="total objects: {}".format(min_size_needed), width=15)
-
-        def check_settings_possible():
-                watr = int(water_clusters.get())
-                total_tiles = tiles.get() * tiles.get()
-                min_size_needed = tiles.get() + watr * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 5
-                if min_size_needed > total_tiles:
-                    tiles.set(min_size_needed)
-                    total_tiles_label['text'] = "total tiles: {}".format(total_tiles)
-                    return min_size_needed
-        def validate():
-            check_settings_possible()
-            settings.var_tiles = tiles.get()
-            settings.var_water_clusters = water_clusters.get()
-            settings.var_trees = trees.get()
-            settings.var_factories = factories.get()
-            settings.var_npcs = npcs.get()
-            settings.var_units1 = units1.get()
-            settings.var_units2 = units2.get()
-            settings.var_boardsize = boardsize.get()
-            self.reinit(settings)
-
-        header_label_settings.grid(column=0, row=0, columnspan=4)
-
-        units1.grid(column=0, row=1,pady=10, padx=10, columnspan=4)
-        units2.grid(column=0, row=2,pady=10, padx=10, columnspan=4)
-
-        tiles.grid(column=0, row=4, columnspan=4, pady=10, padx=10)
-        boardsize.grid(column=0, row=5, columnspan=4, pady=10, padx=10)
-
-        trees.grid(column=0, row=6, pady=10, padx=10)
-        water_clusters.grid(column=1, row=6, pady=10, padx=10)
-
-        factories.grid(column=0, row=7,  pady=10, padx=10)
-        npcs.grid(column=1, row=7, pady=10, padx=10)
-
-        total_tiles_label.grid(column=0, row=8,  pady=10, padx=10)
-        total_objects_label.grid(column=1, row=8,  pady=10, padx=10)
-
-        seed_entry_label.grid(column=0, row=9,  pady=10, padx=10)
-        seed_entry.grid(column=1, row=9, pady=10, padx=10)
-
-        back_home_button = tk.Button(
-                self.settings_frame,
-                text='back home',
-                command=validate, background=colors.board_background)
-
-        back_home_button.grid(column=0, row=9, columnspan=4)
-        
-        self.settings_frame.pack()
-
     def initialise_home(self, settings: settings_context):
             self.home_frame = tk.Frame(self.window, padx= 100, pady=100, relief=tk.RIDGE, width=1000, height=600)
             header_label = tk.Label(self.home_frame, text="GridGame", font=("Courier", 44))
@@ -185,10 +108,9 @@ class game():
                 self.home_frame.destroy()
             
             def open_settings():
-                self.initilise_settings(settings)
+                ui.initilise_settings(self.window, settings, self.initialise_home)
                 self.home_frame.destroy()
             
-
             b0 = tk.Button(
                 self.home_frame,
                 text='Select a Color for p1',
@@ -211,10 +133,6 @@ class game():
 
             b2.grid(column=0, columnspan=3, pady=10, padx=10)
             self.home_frame.pack()
-
-    def reinit(self, settings: settings_context):
-        self.settings_frame.destroy()
-        self.initialise_home(settings)
 
     def initialise_game(self, player_one, player_two, settings: settings_context):
         self.boardsize = settings.var_boardsize
@@ -239,9 +157,7 @@ class game():
         
         self.header_label = tk.Label(self.ui, text="Player info", background=colors.black_color)
 
-        self.turn_label = tk.Label(self.ui, text="{}".format(self.player_one.name), background=self.player_one.color)
-        self.actions_label = tk.Label(self.ui, text="Actions remaining: 4", background=self.player_one.color)
-        self.placeholder_label = tk.Label(self.ui, text="", background=self.player_one.color)
+        self.player_box = tk.Frame(self.ui,background=colors.black_color)
 
         self.control_label = tk.Label(self.ui, text="Controls", background=colors.black_color)
         self.mode_label = tk.Label(self.ui, text="Select and move Mode", background=colors.green_color)
@@ -259,9 +175,7 @@ class game():
         self.unit_box.grid(column=0, row=14,sticky=tk.W)
 
         self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = self.max_ui_columns)
-        self.turn_label.grid(column=0, row=1, sticky=tk.EW, columnspan = self.max_ui_columns)
-        self.actions_label.grid(column=0, row=2, sticky=tk.EW, columnspan = self.max_ui_columns)
-        self.placeholder_label.grid(column=0, row=3, sticky=tk.EW, columnspan = self.max_ui_columns)
+        self.player_box.grid(column=0, row=1,sticky=tk.EW, columnspan = self.max_ui_columns)
 
         self.control_label.grid(column=0, row=5,sticky=tk.EW, columnspan = self.max_ui_columns)
         self.mode_label.grid(column=0, row=6,sticky=tk.EW, columnspan = self.max_ui_columns)
@@ -326,10 +240,8 @@ class game():
         self.selected = False
         self.selected_unit = self.controlling_player.units[0]
 
-        # Unit info card
-        self.placeholder_label['text'] = "Units: {}, Buildings: {}".format(len(self.controlling_player.units), self.controlling_player.buildings)
-
-        ui.make_unit_card(self.unit_box,self.selected_unit,row=0)
+        ui.make_player_card(self.player_box, self.controlling_player)
+        ui.make_unit_card(self.unit_box,self.selected_unit)
 
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
@@ -504,8 +416,6 @@ class game():
                 self.__capture_click(event)
             if isinstance(structure, building) and structure.owner:
                 self.__capture_click(event, "empty")
-            if isinstance(un, player):
-                pass
 
         if isinstance(un, player) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
@@ -579,14 +489,8 @@ class game():
                 if unit.health > 0:
                     self.selected_unit = self.controlling_player.units[p]
 
-        self.turn_label['text'] = self.controlling_player.name
-        self.turn_label['background'] = self.controlling_player.color
-        self.actions_label['text'] = "Actions remaining: {}".format(self.controlling_player.available_actions + 1)
-        self.placeholder_label['text'] = "Units: {}, Buildings: {}".format(len(self.controlling_player.units), self.controlling_player.buildings)
+        ui.make_player_card(self.player_box, self.controlling_player)
         ui.make_unit_card(self.unit_box,self.selected_unit,row=0)
-        
-        self.placeholder_label['background'] = self.controlling_player.color
-        self.actions_label['background'] = self.controlling_player.color
 
     def set_impossible_action_text(self, text):
         """
