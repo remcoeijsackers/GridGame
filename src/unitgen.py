@@ -13,5 +13,5 @@ class unitgenerator:
         return "assets/user{}.png".format(random.randrange(1,6))
     
     def get_age(self) -> str:
-        return random.randrange(20,60)
+        return "{}".format(random.randrange(20,60))
 
