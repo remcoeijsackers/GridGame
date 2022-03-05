@@ -16,7 +16,7 @@ from src.grid import grid
 from src.settings import debug, gridsize, symbolsize
 from src.conversion import convert_coords
 from src.controller import controller, owner
-from src.context import modal_context, settings_context, color_context
+from src.context import modal_context, settings_context, color_context, unit_modal_context
 
 convert = any
 colors = color_context()
@@ -43,9 +43,36 @@ class modal_popup(tk.Toplevel):
         self.lift()
 
         title = tk.Label(self, text = context.title)
-        title.grid(row=0, column=0)
-        description = tk.Label(self, text=context.description)
-        description.grid(row=1, column=0)
+        title.grid(row=0, column=0, sticky=tk.EW)
+
+        if context.ctype == "unit":
+            self.unit_frame = tk.Frame(self, relief=tk.RIDGE)
+            self.unit_frame.grid(column=1, row=2,sticky=tk.W)
+
+            self.unit_image_frame = tk.Frame(self, relief=tk.RIDGE, background=colors.black_color)
+            self.unit_image_frame.grid(column=0, row=2, columnspan=2, sticky=tk.W)
+            img = Image.open(context.unit.image)
+            img = img.resize((100, 100), Image.ANTIALIAS)
+            img = ImageTk.PhotoImage(img)
+            self.panel = tk.Label(self.unit_image_frame, image = img, background=colors.black_color)
+            self.panel.image = img    
+            self.panel.grid(row=0, column=0, sticky=tk.W)
+
+            self.unit_name_label = tk.Label(self.unit_frame, text=context.unit.fullname)
+            self.unit_age_label = tk.Label(self.unit_frame, text=context.unit.age)
+            self.unit_health_label = tk.Label(self.unit_frame, text="")
+            self.unit_attack_label = tk.Label(self.unit_frame, text="Attack: 1")
+            self.unit_range_label = tk.Label(self.unit_frame, text="Range: 1")
+            self.unit_equipment_label = tk.Label(self.unit_frame, text="Equipment: None")
+            self.unit_owner_label = tk.Label(self.unit_frame, text=context.unit.owner.name)
+
+            self.unit_name_label.grid(column=0, row=3, sticky=tk.W)
+            self.unit_age_label.grid(column=0, row=4, sticky=tk.W)
+            self.unit_health_label.grid(column=0, row=5, sticky=tk.W)
+            self.unit_attack_label.grid(column=0, row=6, sticky=tk.W)
+            self.unit_range_label.grid(column=0, row=7, sticky=tk.W)
+            self.unit_equipment_label.grid(column=0, row=8, sticky=tk.W)
+            self.unit_owner_label.grid(column=0, row=8, sticky=tk.W)
 
         if context.command:
             context_btn = tk.Button(self, text=context.ctype, command=context.command)
@@ -331,6 +358,7 @@ class game():
         for i in range(settings.var_units1):
             soldier = player("P1-{}".format(i))
             soldier.fullname = unithandler.get_name()
+            soldier.owner = self.player_one
             soldier.set_image(unithandler.get_image())
             soldier.set_age(unithandler.get_age())
             self.player_one.units.append(soldier)
@@ -339,6 +367,7 @@ class game():
         for i in range(settings.var_units2):
             soldier = player("P2-{}".format(i))
             soldier.fullname = unithandler.get_name()
+            soldier.owner = self.player_two
             soldier.set_image(unithandler.get_image())
             soldier.set_age(unithandler.get_age())
             self.player_two.units.append(soldier)
@@ -632,11 +661,11 @@ class game():
         if isinstance(un, player) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
             self.draw_possible_moves(un, movecolor=colors.green_color, attackcolor=colors.gray_color, inspect=True)
-            self.pop_up(modal_context(un.fullname, un.range, "unit_description"))
+            self.pop_up(unit_modal_context("unit description", "unit", un))
         elif isinstance(un, building):
             self.reset(mappos, type="soft")
             self.get_event_info(mappos)
-            self.pop_up(modal_context("capture", "Capture the building", "capture_building", __button_action))
+            self.pop_up(modal_context("capture", "capture_building", __button_action))
         else: 
             self.reset(mappos, type="soft")
             self.get_event_info(mappos)
