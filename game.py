@@ -1,7 +1,6 @@
 from turtle import back
 import numpy as np
 import random
-from PIL import ImageTk, Image
 
 import tkinter as tk
 from tkinter.colorchooser import askcolor
@@ -9,7 +8,7 @@ from tkinter.filedialog import askopenfilename
 
 from src.unitgen import unitgenerator
 from src.manager import manager, unitcontroller, placement
-from src.util import placeip, cols, fullcols, colsr, colsc, symbol_thickness, unit_thickness
+from src.util import placeip
 from src.state import state
 from src.objects import broken_cell, player, cell, scenery, unit, building, enemy, water, tree
 from src.grid import grid
@@ -27,11 +26,6 @@ st = state()
 control = unitcontroller()
 unithandler = unitgenerator()
 game_settings = settings_context()
-
-gen = placement(str(random.randint(10000000000, 99999999999)))
-
-# random seed placement
-#brd.board = gen.generate(brd.board)
 
 class game():
     """
@@ -54,18 +48,6 @@ class game():
 
         self.window.config(menu=menubar)
         self.initialise_home(game_settings)
-
-    def open_file(self):
-        global convert
-        gameboard = st.load_file(askopenfilename())
-        brd.set_board(gameboard)
-        pl1 = owner("player1", colors.symbol_tree_color)
-        pl2 = owner("player2", colors.symbol_water_color)
-        self.gridsize = 14
-        gridsize.set_gridsize(self.gridsize)
-        convert = convert_coords(self.gridsize)
-        #self.initialise_old_game(pl1, pl2)
-        self.home_frame.destroy()
 
     def initialise_home(self, settings: settings_context):
             self.home_frame = tk.Frame(self.window, padx= 100, pady=100, relief=tk.RIDGE, width=1000, height=600)
@@ -362,7 +344,6 @@ class game():
         logical_position = convert.convert_grid_to_logical_position(grid_position)
         mappos = convert.convert_logical_to_map(logical_position)
 
-        
         def _select_unit_click(event):
             grid_position = [event.x, event.y]
             logical_position = convert.convert_grid_to_logical_position(grid_position)
@@ -542,6 +523,18 @@ class game():
                                 text=score_text)
     def save_game(self):
         st.save(brd.board)
+
+    def open_file(self):
+        global convert
+        gameboard = st.load_file(askopenfilename())
+        brd.set_board(gameboard)
+        pl1 = owner("player1", colors.symbol_tree_color)
+        pl2 = owner("player2", colors.symbol_water_color)
+        self.gridsize = 14
+        gridsize.set_gridsize(self.gridsize)
+        convert = convert_coords(self.gridsize)
+        #self.initialise_old_game(pl1, pl2)
+        self.home_frame.destroy()
 
 main = game()
 main.mainloop()

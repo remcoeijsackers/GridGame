@@ -89,6 +89,7 @@ class uihandler:
                     tiles.set(min_size_needed)
                     total_tiles_label['text'] = "total tiles: {}".format(total_tiles)
                     return min_size_needed
+
         def validate():
             check_settings_possible()
             settings.var_tiles = tiles.get()
