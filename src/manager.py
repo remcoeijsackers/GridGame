@@ -2,11 +2,8 @@ import pandas as pd
 import random
 from pandas.core.frame import DataFrame
 
-
-from src.grid import grid
 from src.util import fullcols, placeip, colsandrows, placeip_near_wall, colsc, colsr
-from src.state import state
-from src.objects import cell, unit, player, scenery, building, broken_cell, water, tree
+from src.objects import cell, unit, player, scenery, building, broken_cell
 from src.settings import gridsize, debug
 
 from src.controller import owner
