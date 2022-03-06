@@ -19,6 +19,16 @@
 <img src="assets/settings.png?raw=true" width="200px">
 </p>
 
+## Dataframe as board
+Everything in the game is saved and managed in a pandas dataframe.
+Tkinter is used to provide a visual frontend
+<p align="center"> 
+<img src="assets/gridgame2.png?raw=true" width="200px" >
+<img src="assets/cli.png?raw=true" width="200px">
+
+</p>
+
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
