@@ -186,8 +186,11 @@ class painter:
         canvas.create_rectangle(grid_position[0], grid_position[1],
                                 grid_position[0], grid_position[1], width=symbol_thickness,
                                 fill=color, outline=color)
+        canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
+                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=unit_thickness +20,
+                                fill=colors.sub_gray_color)                              
         canvas.create_line(grid_position[0], grid_position[1],
-                                grid_position[0], grid_position[1] - symbol_size, width=symbol_thickness,
+                                grid_position[0], grid_position[1] + symbol_size, width=symbol_thickness -30,
                                 fill=colors.black_color)
         canvas.create_text(grid_position[0] - symbol_size,
                                 grid_position[1] + symbol_size, 
@@ -196,16 +199,37 @@ class painter:
     def draw_square(self, convert: convert_coords, canvas: tk.Canvas, logical_position, color):
         grid_position = convert.convert_logical_to_grid_position(logical_position)
         canvas.create_rectangle(grid_position[0] , grid_position[1],
-                                grid_position[0], grid_position[1], width=40,
+                                grid_position[0], grid_position[1], width=symbol_thickness +10,
                                 fill=color, outline=color)
 
     def draw_unit(self, convert: convert_coords, canvas: tk.Canvas, board, symbol_size, logical_position, color):
         grid_position = convert.convert_logical_to_grid_position(logical_position)
         mappos = convert.convert_logical_to_map(logical_position)
         health = board.gethealth(mappos)
+
+        #Legs
+        canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
+                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=unit_thickness +20,
+                                fill=colors.sub_gray_color)
+                        
+        # Face                        
+        canvas.create_line(grid_position[0] - symbol_size, grid_position[1],
+                                grid_position[0] + symbol_size, grid_position[1] , width=unit_thickness +10,
+                                fill=color)
+        #Arms
+        canvas.create_line(grid_position[0], grid_position[1],
+                                grid_position[0], grid_position[1] - symbol_size + 4, width=symbol_thickness -20,
+                                fill=colors.gray_color)
+
+        #Body
         canvas.create_line(grid_position[0] - symbol_size, grid_position[1] - symbol_size,
                                 grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=unit_thickness,
-                                fill=color)
+                                fill=colors.black_color)
+        #accent body
+        canvas.create_line(grid_position[0], grid_position[1] - symbol_size,
+                                grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=unit_thickness,
+                                fill=colors.dark_gray_color)
+
         canvas.create_text(grid_position[0] - symbol_size,
                                 grid_position[1] + symbol_size, 
                                 fill=colors.canvas_text_color, text=health)
