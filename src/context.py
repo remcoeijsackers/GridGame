@@ -37,3 +37,5 @@ class color_context:
         self.canvas_text_color = '#9363FF'
         self.range_move_color = '#93631F'
         self.gray_color = 'gray'
+        self.dark_gray_color = '#333131'
+        self.sub_gray_color = '#575151'
