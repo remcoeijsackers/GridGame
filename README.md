@@ -44,17 +44,17 @@ Tkinter is used to provide a visual frontend
 <!-- GETTING STARTED -->
 ## Getting Started
 
-To get a local copy up and running follow these simple steps.
+To get a local copy up and running, follow these simple steps.
 
 ### 1. Clone the repo
 ```
 git clone https://github.com/remcoeijsackers/GridGame.git
 ```
 
-### 1. Installating the project
+### 2. Installing the project
 
 
-Option 1: run the source
+Option 1: run source
 ```
 pip install -r requirements.txt
 python game.py
