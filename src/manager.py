@@ -440,22 +440,7 @@ class unitcontroller:
         
         for coord in self.sub_possible_moves(unit, boardmanager, total, turns):
             movecords.append(coord)
-
-        for i in tmpcords:
-            subcords = []
-            topsubcords = []
-            #for crd in boardmanager.get_right_and_left_cells(i):
-            #    subcords.append(crd)
-            #for crd in boardmanager.get_top_and_bottom_cells(i):
-            #    topsubcords.append(crd)
-#
-            #if subcords[0] in movecords and subcords[1] in movecords and not i == unit.loc:
-            #    retcords.append(i)
-            #if topsubcords[0] in movecords and topsubcords[1] in movecords and not i == unit.loc: 
-            #    retcords.append(i)
-            subcords = []
-            topsubcords = []
-        
+                    
         for i in movecords:
             retcords.append(i)
 
