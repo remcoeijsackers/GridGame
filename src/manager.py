@@ -7,6 +7,7 @@ from src.objects import cell, unit, player, scenery, building, broken_cell
 from src.settings import gridsize, debug
 
 from src.controller import owner
+import math
 
 class placement:
     """
@@ -380,25 +381,28 @@ class manager:
             x.set_loc((i[0], i[1]))
 
 class unitcontroller:
+
+    def calculate_distance(self, unit, loc) -> int:
+        x1 = unit.loc[0]
+        y1 = colsc().get(unit.loc[1])
+        x2 = loc[0]
+        y2 = colsc().get(loc[1])
+
+        dx = abs(x2 - x1)
+        dy = abs(y2 - y1)
+        mind = min(dx, dy)
+        maxd = max(dx, dy)
+        diagstep = mind
+        straigthstep = maxd - mind
+        return round(math.sqrt(2) * diagstep + straigthstep)
+
     def count(self, unit, loc) -> int:
         """
         Count how many steps an action would take.
         """
-        z = unit.loc[0], colsc().get(unit.loc[1])
-        b = int(loc[0]), colsc().get(loc[1])
-        # for singular vertical moves
-        if abs(z[0] - b[0]) ==  1 and abs(z[1] - b[1]) == 1:
-            # both are one
-            outcome = 1
-        elif (abs(z[0] - b[0]) !=  1 and abs(z[1] - b[1]) != 1) and abs(z[0] - b[0]) == abs(z[1] - b[1]):
-            #both are the same, but not one
-            outcome = abs(z[0] - b[0])
-
-        else: 
-            outcome = abs(z[0] - b[0]) + abs(z[1] - b[1])
-        return outcome
+        return self.calculate_distance(unit, loc)
     
-    def sub_possible_moves(self, unit, boardmanager: manager, total=False, turns=1):
+    def sub_possible_moves(self, unit, boardmanager: manager, total=False, turns=0):
         """
         Return the coordinates an unit can walk to.
         """
@@ -407,21 +411,21 @@ class unitcontroller:
             filter_coords.append(i)
         for i in boardmanager.block_walk_behind_object_in_col(boardmanager.board, unit):
             filter_coords.append(i)
-        #for i in boardmanager.get_coords_of_items_in_diagonal_topleft_to_bottomright(boardmanager.board, unit):
-        #    filter_coords.append(i)
-        #for i in boardmanager.get_coords_of_items_in_diagonal_topright_to_bottomleft(boardmanager.board, unit):
-        #    filter_coords.append(i)
         for spot in colsandrows():
             for coord in spot:
                 if not total:
+
                     if self.count(unit, coord) <= unit.range and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
                         yield coord
                 else: 
+                    if turns == 3:
+                        if self.count(unit, coord) <= unit.range * (turns + 1.5) and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
+                            yield coord                        
                     if turns > 0:
                         if self.count(unit, coord) <= unit.range * (turns + 1) and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
                             yield coord
                     else:
-                        if self.count(unit, coord) <= unit.range * turns  and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
+                        if self.count(unit, coord) <= unit.range  and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
                             yield coord
 
 
@@ -440,15 +444,15 @@ class unitcontroller:
         for i in tmpcords:
             subcords = []
             topsubcords = []
-            for crd in boardmanager.get_right_and_left_cells(i):
-                subcords.append(crd)
-            for crd in boardmanager.get_top_and_bottom_cells(i):
-                topsubcords.append(crd)
-
-            if subcords[0] in movecords and subcords[1] in movecords and not i == unit.loc:
-                retcords.append(i)
-            if topsubcords[0] in movecords and topsubcords[1] in movecords and not i == unit.loc: 
-                retcords.append(i)
+            #for crd in boardmanager.get_right_and_left_cells(i):
+            #    subcords.append(crd)
+            #for crd in boardmanager.get_top_and_bottom_cells(i):
+            #    topsubcords.append(crd)
+#
+            #if subcords[0] in movecords and subcords[1] in movecords and not i == unit.loc:
+            #    retcords.append(i)
+            #if topsubcords[0] in movecords and topsubcords[1] in movecords and not i == unit.loc: 
+            #    retcords.append(i)
             subcords = []
             topsubcords = []
         
@@ -468,6 +472,21 @@ class unitcontroller:
         for spot in colsandrows():
             for coord in spot:
                 # check if its a cell
+                if self.count(selected_unit, coord) <= selected_unit.shoot_range and getattr(board.at[coord[0], coord[1]], 'walkable'):
+                    yield coord
+                else:
+                    # if its not a cell, but a piece of scenery or a unit, melee is posible
+                    if coord != selected_unit.loc:
+                        if self.count(selected_unit, coord) <= selected_unit.shoot_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
+                            yield coord
+
+    def possible_ranged_moves(self, selected_unit, board: DataFrame, controlling_player: owner):
+        """
+        Return the coordinates an unit can attack.
+        """
+        for spot in colsandrows():
+            for coord in spot:
+                # check if its a cell
                 if self.count(selected_unit, coord) <= selected_unit.melee_range and getattr(board.at[coord[0], coord[1]], 'walkable'):
                     yield coord
                 else:
@@ -475,7 +494,6 @@ class unitcontroller:
                     if coord != selected_unit.loc:
                         if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
                             yield coord
-
     def place(self, unit: unit, loc, boardmanager: manager) -> DataFrame and bool:
         """
         Place an unit to another spot in the dataframe.

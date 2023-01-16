@@ -1,5 +1,5 @@
 from turtle import back
-import numpy as np
+from src.util import placeipRigid
 import random
 
 import tkinter as tk
@@ -35,6 +35,7 @@ class game():
         self.window = tk.Tk()
         self.window.title('GridGame')
         self.window.minsize(width=1000, height=600)
+        self.itemPlacement = "rigid"
 
         menubar = tk.Menu(self.window)
 
@@ -188,7 +189,8 @@ class game():
             soldier.set_image(unithandler.get_image())
             soldier.set_age(unithandler.get_age())
             self.player_one.units.append(soldier)
-            placeip(brd.board, soldier)
+            if self.itemPlacement == "rigid":
+                placeipRigid(brd.board, soldier, "top")
 
         for i in range(settings.var_units2):
             soldier = player("P2-{}".format(i))
@@ -197,7 +199,8 @@ class game():
             soldier.set_image(unithandler.get_image())
             soldier.set_age(unithandler.get_age())
             self.player_two.units.append(soldier)
-            placeip(brd.board, soldier)
+            if self.itemPlacement == "rigid":
+                placeipRigid(brd.board, soldier, "bottom")
         
         for i in range(settings.var_water_clusters):
             water_clustr = water("W")
@@ -217,6 +220,7 @@ class game():
         for i in range(settings.var_trees):
             makore = tree("T")
             placeip(brd.board, makore)
+
         
         self.controlling_player = self.player_one
         self.selected = False
@@ -321,7 +325,8 @@ class game():
         if self.show_stepped_on_tiles:
             for cl in boardmanager.get_all_cells(brd.board):
                 painter().draw_square(convert,self.canvas,convert.convert_map_to_logical(cl.loc),colors.green_color)
-        
+        print(brd.board)
+
     def draw_possible_moves(self, unit, movecolor=colors.symbol_dot_color, attackcolor=colors.symbol_attack_dot_color, inspect=False):
         """
         Draws the step / attack moves that are available to the selected unit.
@@ -334,6 +339,9 @@ class game():
             else: 
                 painter().draw_dot(convert, self.canvas,convert.convert_map_to_logical(i) ,colors.green_color)
         for i in control.possible_melee_moves(unit, brd.board, self.controlling_player):
+            painter().draw_dot(convert, self.canvas,convert.convert_map_to_logical(i) ,colors.symbol_ranged_attack_dot_color, 3)
+
+        for i in control.possible_ranged_moves(unit, brd.board, self.controlling_player):
             painter().draw_dot(convert, self.canvas,convert.convert_map_to_logical(i) ,attackcolor)
     
     def select_move_click(self, event):
@@ -425,7 +433,22 @@ class game():
             else:
                 self.set_impossible_action_text('{} has a melee range of {}'.format(self.selected_unit.fullname, self.selected_unit.melee_range))
         return mappos
-        
+
+    def ranged_attack_click(self, event):
+        """
+        Allows the current selected unit to attack objects and other units.
+        """
+        grid_position = [event.x, event.y]
+        logical_position = convert.convert_grid_to_logical_position(grid_position)
+        mappos = convert.convert_logical_to_map(logical_position)
+        for i in control.possible_ranged_moves(self.selected_unit, brd.board, self.controlling_player):
+            if i == mappos:
+                brd.board = control.attack(mappos, brd.board, self.selected_unit.strength)
+                self.reset(mappos)
+            else:
+                self.set_impossible_action_text('{} has a ranged range of {}'.format(self.selected_unit.fullname, self.selected_unit.melee_range))
+        return mappos
+
     def __capture_click(self, event, ctype="normal"):
         """
         Allows the current selected unit to capture buildings.
