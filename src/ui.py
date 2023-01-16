@@ -76,6 +76,8 @@ class uihandler:
         units1.set(settings.var_units1)
         units2 = tk.Scale(settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p2")
         units2.set(settings.var_units2)
+        placementRandom = tk.Checkbutton(settings_frame)
+        placementRigid = tk.Checkbutton(settings_frame)
         
         min_size_needed = tiles.get() + water_clusters.get() * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 10
 
@@ -121,7 +123,9 @@ class uihandler:
         total_objects_label.grid(column=1, row=8,  pady=10, padx=10)
 
         seed_entry_label.grid(column=0, row=9,  pady=10, padx=10)
-        seed_entry.grid(column=1, row=9, pady=10, padx=10)
+        placementRandom.grid(column=0, row=10)
+        placementRigid.grid(column=0, row=11)
+        seed_entry.grid(column=1, row=12, pady=10, padx=10)
 
         back_home_button = tk.Button(
                 settings_frame,
@@ -230,12 +234,11 @@ class painter:
                                 grid_position[0] + symbol_size, grid_position[1] - symbol_size, width=unit_thickness,
                                 fill=colors.dark_gray_color)
 
-        canvas.create_text(grid_position[0] - symbol_size,
+        canvas.create_text(grid_position[0] - symbol_size + 10,
                                 grid_position[1] + symbol_size, 
                                 fill=colors.canvas_text_color, text=health)
     
-    def draw_dot(self, convert: convert_coords, canvas: tk.Canvas, logical_position, color):
-        width = 10
+    def draw_dot(self, convert: convert_coords, canvas: tk.Canvas, logical_position, color, width=10):
         if color == colors.symbol_attack_dot_color or color == colors.gray_color:
             width = 20
         if color == colors.range_move_color:

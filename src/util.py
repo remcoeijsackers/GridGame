@@ -12,8 +12,14 @@ cols = ["A","B","C","D","E","F","G","H","I","J"]
 fullcols = [i for i in "abcdefghijklmnopqrstuvwxyz".upper()]
 
 def colsc():
+    """
+    For mapping letters to ints.
+    """
     return dict(zip(fullcols[:gridsize.get_gridsize()], list(range(gridsize.get_gridsize())))) #for mapping colname to ints
 def colsr():
+    """
+    For mapping ints to letters.
+    """
     return dict(zip(list(range(gridsize.get_gridsize())), fullcols[:gridsize.get_gridsize()])) # for mapping ints to colname
 
 def rows():
@@ -41,8 +47,25 @@ def placeip(dataframe, placee):
     else: 
         placeip(dataframe, placee)
 
-
     return r, c
+
+def placeipRigid(dataframe, placee, place):
+    columns_available = fullcols[:gridsize.get_gridsize()]
+    def cl():
+        return random.choice(fullcols[:gridsize.get_gridsize()])
+    def rc():
+        if place == "top":
+            return 0
+            #return random.choice([0, gridsize.get_gridsize() - 1])
+        if place == "bottom":
+            return gridsize.get_gridsize() -1
+    r = rc()
+    c = cl()
+    if isinstance(dataframe.at[r, c], cell):
+        dataframe.at[r, c] = placee
+        placee.set_loc((r,c))
+    else: 
+        placeipRigid(dataframe, placee, place)
 
 def placeip_near_wall(dataframe: DataFrame, placee):
     columns_available = fullcols[:gridsize.get_gridsize()]
