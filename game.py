@@ -16,7 +16,7 @@ from src.settings import debug, gridsize, symbolsize
 from src.conversion import convert_coords
 from src.controller import controller, owner
 from src.context import modal_context, settings_context, color_context, unit_modal_context
-from src.ui import uihandler, modal_popup, painter
+from src.ui import uihandler, painter
 
 convert = any
 colors = color_context()
@@ -27,12 +27,12 @@ control = unitcontroller()
 unithandler = unitgenerator()
 game_settings = settings_context()
 
-class game():
+class game(object):
     """
     Ties the dataframe game backend to a visual frontend.
     """
-    def __init__(self):
-        self.window = tk.Tk()
+    def __init__(self, window):
+        self.window = window
         self.window.title('GridGame')
         self.window.minsize(width=1000, height=600)
         self.itemPlacement = "rigid"
@@ -144,7 +144,8 @@ class game():
 
         self.control_label = tk.Label(self.ui, text="Controls", background=colors.black_color)
         self.mode_label = tk.Label(self.ui, text="Select and move Mode", background=colors.green_color)
-        self.action_details_label = tk.Label(self.ui, text="Action details")
+        self.action_details_label = tk.Label(self.ui, text="Action details", background=colors.gray_color)
+        self.action_details_label_description = tk.Label(self.ui, text="Action details", background=colors.dark_gray_color)
 
         self.move_button = tk.Button(self.ui, text="Select move")
         self.inspect_button = tk.Button(self.ui, text="Inspect Cell")
@@ -153,9 +154,12 @@ class game():
         self.padding_label1 = tk.Label(self.ui, text="")
         self.padding_label2 = tk.Label(self.ui, text="")
 
+        self.end_turn_button = tk.Button(self.ui, text="End turn")
+        self.inspect_button_sub = tk.Button(self.ui, text="Admin Inspect")
+
         self.unit_header_label = tk.Label(self.ui, text="Controlling Unit Info", background=colors.black_color)
         self.unit_box = tk.Frame(self.ui, relief=tk.RIDGE)
-        self.unit_box.grid(column=0, row=14,sticky=tk.W)
+        self.unit_box.grid(column=0, row=20,sticky=tk.W)
 
         self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = self.max_ui_columns)
         self.player_box.grid(column=0, row=1,sticky=tk.EW, columnspan = self.max_ui_columns)
@@ -163,23 +167,28 @@ class game():
         self.control_label.grid(column=0, row=5,sticky=tk.EW, columnspan = self.max_ui_columns)
         self.mode_label.grid(column=0, row=6,sticky=tk.EW, columnspan = self.max_ui_columns)
 
-        self.move_button.grid(column=0, row=7, sticky=tk.W, columnspan = 3)
-        self.inspect_button.grid(column=1, row=7, sticky=tk.E, columnspan = 2)
-        self.melee_attack_button.grid(column=3, row=7, sticky=tk.EW, columnspan = 3)
+        self.move_button.grid(column=0, row=7, sticky=tk.W, columnspan = int(abs(self.max_ui_columns/2)))
+        self.inspect_button.grid(column=0, row=10, sticky=tk.EW, columnspan = self.max_ui_columns)
+        self.melee_attack_button.grid(column=int(abs(self.max_ui_columns/2)), row=7, sticky=tk.W, columnspan = int(abs(self.max_ui_columns/2)))
 
         #self.show_stepped_tiles_button.grid(column=0,sticky=tk.EW,  row=9, columnspan = self.max_ui_columns)
-        self.action_details_label.grid(column=0, row=10,sticky=tk.W, padx=5, pady=5,columnspan = 3)
+        self.action_details_label_description.grid(column=int(abs((self.max_ui_columns/2) )), row=11,sticky=tk.EW, columnspan = int(abs((self.max_ui_columns/2)+2)))
+        self.action_details_label.grid(column=0, row=11,sticky=tk.EW, columnspan = int(abs((self.max_ui_columns/2)-1)))
 
-        self.padding_label1.grid(column=0, row=11, sticky=tk.W, columnspan = 4)
-        self.padding_label2.grid(column=0, row=12, sticky=tk.W, columnspan = 4)
+        #self.padding_label1.grid(column=0, row=10, sticky=tk.W, columnspan = 4)
+        self.padding_label2.grid(column=0, row=13, sticky=tk.W, columnspan = 4)
 
-        self.unit_header_label.grid(column=0, row=13, sticky=tk.EW, columnspan = 6)
+        
+        self.end_turn_button.grid(column=0, row=15, sticky=tk.W, columnspan=3)
+        self.inspect_button_sub.grid(column=3, row=15, sticky=tk.W, columnspan=3)
+        self.unit_header_label.grid(column=0, row=19, sticky=tk.EW, columnspan = 6)
 
         self.ui.pack(side='right',anchor=tk.NW,expand=True,fill='both')
         
         self.move_button.bind('<Button-1>', self.switch_mode_selectmove)
         self.inspect_button.bind('<Button-1>', self.switch_mode_inspect)
         self.melee_attack_button.bind('<Button-1>', self.switch_mode_melee_attack)
+        self.inspect_button_sub.bind('<Button-1>', self.test_modal)
         self.canvas.bind('<Button-1>', self.select_move_click)
 
         for i in range(settings.var_units1):
@@ -388,6 +397,15 @@ class game():
         else:
             _movefunc()
 
+    def test_modal(self, event):
+
+        toplevel = tk.Toplevel()
+        label1 = tk.Label(toplevel, text="ABOUT_TEXT", height=0, width=100)
+        label1.pack()
+        label2 = tk.Label(toplevel, text="DISCLAIMER", height=0, width=100)
+        label2.pack()
+
+
     def inspect_click(self, event):
         """
         Allows the user to get info about what is on a certain tile.
@@ -409,10 +427,12 @@ class game():
         if isinstance(un, player) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
             self.draw_possible_moves(un, movecolor=colors.green_color, attackcolor=colors.gray_color, inspect=True)
+            self.window.withdraw()
             modal_popup(self, unit_modal_context("unit description", "unit", un))
         elif isinstance(un, building):
             self.reset(mappos, type="soft")
             self.get_event_info(mappos)
+            self.window.withdraw()
             modal_popup(self, modal_context("capture", "capture_building", __button_action))
         else: 
             self.reset(mappos, type="soft")
@@ -468,7 +488,7 @@ class game():
                     structure.set_color(colors.symbol_building_color)
                     structure.owner = None 
                     #TODO: Make this remove the buildings from the other owner
-                    self.game_controller.other_owner.buildings.pop(structure)
+                    #self.game_controller.other_owner.buildings.pop(structure)
                 else:
                     self.set_impossible_action_text('{} can only capture factories.'.format(self.selected_unit.fullname))
             else:
@@ -559,5 +579,35 @@ class game():
         #self.initialise_old_game(pl1, pl2)
         self.home_frame.destroy()
 
-main = game()
-main.mainloop()
+class modal_popup(tk.Toplevel):
+
+    def __init__(self, original, context: modal_context):
+
+        self.original_frame = original
+        tk.Toplevel.__init__(self)
+
+        self.transient(root)
+        self.geometry("260x210")
+        self.lift()
+
+        title = tk.Label(self, text = context.title)
+        title.grid(row=0, column=0, sticky=tk.EW)
+
+        if context.ctype == "unit":
+            uihandler().make_unit_card(self, context.unit, row=0)
+
+        if context.command:
+            context_btn = tk.Button(self, text=context.ctype, command=context.command)
+            context_btn.grid(row=3, column=0)
+        btn = tk.Button(self, text ="Close", command= lambda : self.on_close())
+        btn.grid(row =1)
+    def on_close(self):
+        self.destroy()
+        self.original_frame.window.update()
+        self.original_frame.window.deiconify()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    main = game(root)
+    root.geometry("1200x800")
+    main.mainloop()

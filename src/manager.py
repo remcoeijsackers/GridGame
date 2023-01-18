@@ -1,4 +1,3 @@
-import pandas as pd
 import random
 from pandas.core.frame import DataFrame
 

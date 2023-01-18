@@ -135,33 +135,6 @@ class uihandler:
         back_home_button.grid(column=0, row=9, columnspan=4)
         
         settings_frame.pack()
-class modal_popup(tk.Toplevel):
-
-    def __init__(self, original, context: modal_context):
-
-        self.original_frame = original
-        tk.Toplevel.__init__(self)
-
-        self.transient(self.original_frame.window)
-        self.geometry("260x210")
-        self.lift()
-
-        title = tk.Label(self, text = context.title)
-        title.grid(row=0, column=0, sticky=tk.EW)
-
-        if context.ctype == "unit":
-            uihandler().make_unit_card(self, context.unit, row=0)
-
-        if context.command:
-            context_btn = tk.Button(self, text=context.ctype, command=context.command)
-            context_btn.grid(row=3, column=0)
-
-    def on_close(self):
-        self.destroy()
-        self.original_frame.window.update()
-        self.original_frame.window.deiconify()
-
-
 class painter:
     def draw_tree(self, convert: convert_coords, canvas: tk.Canvas, symbol_size, logical_position):
         logical_position = np.array(logical_position)
