@@ -1,1 +1,1 @@
-from .gamesettings import ui
+from .ui import screens

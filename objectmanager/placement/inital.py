@@ -1,0 +1,51 @@
+from src.unitgen import unitgenerator
+from src.manager import manager, unitcontroller, placement
+from src.util import placeip, placeipRigid
+from src.state import state
+from src.objects import broken_cell, player, cell, scenery, unit, building, enemy, water, tree
+from src.grid import grid
+from src.settings import debug, gridsize, symbolsize
+from src.conversion import convert_coords
+from src.controller import controller, owner
+from src.context import modal_context, settings_context, color_context, unit_modal_context
+from src.ui import uihandler, painter
+
+def create_pieces(parent, player_one, player_two, settings: settings_context, brd, unithandler):
+        for i in range(settings.var_units1):
+            soldier = player("P1-{}".format(i))
+            soldier.fullname = unithandler.get_name()
+            soldier.owner = player_one
+            soldier.set_image(unithandler.get_image())
+            soldier.set_age(unithandler.get_age())
+            player_one.units.append(soldier)
+            if parent.itemPlacement == "rigid":
+                placeipRigid(brd.board, soldier, "top")
+
+        for i in range(settings.var_units2):
+            soldier = player("P2-{}".format(i))
+            soldier.fullname = unithandler.get_name()
+            soldier.owner = player_two
+            soldier.set_image(unithandler.get_image())
+            soldier.set_age(unithandler.get_age())
+            player_two.units.append(soldier)
+            if parent.itemPlacement == "rigid":
+                placeipRigid(brd.board, soldier, "bottom")
+        
+        for i in range(settings.var_water_clusters):
+            water_clustr = water("W")
+            brd.placeclus(water_clustr)
+
+        for i in range(settings.var_factories):
+            fct = building("F")
+            placeip(brd.board, fct)
+
+        for i in range(settings.var_npcs):
+            npc = enemy("NPC")
+            npc.fullname = unithandler.get_name()
+            npc.set_image(unithandler.get_image())
+            npc.set_age(unithandler.get_age())
+            placeip(brd.board, npc)
+ 
+        for i in range(settings.var_trees):
+            makore = tree("T")
+            placeip(brd.board, makore)

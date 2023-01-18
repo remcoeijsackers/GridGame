@@ -17,7 +17,9 @@ from src.conversion import convert_coords
 from src.controller import controller, owner
 from src.context import modal_context, settings_context, color_context, unit_modal_context
 from src.ui import uihandler, painter
-from uibuilder.gamesettings.ui import initialise_home_screen
+
+from uibuilder.ui.screens import initialise_home_screen, initialise_game_screen, display_gameover_screen
+from objectmanager.placement.inital import create_pieces
 
 colors = color_context()
 ui = uihandler()
@@ -32,7 +34,6 @@ class game(object):
     Ties the dataframe game backend to a visual frontend.
     """
     def __init__(self, window):
-        
         self.window = window
         self.window.title('GridGame')
         self.window.minsize(width=1000, height=600)
@@ -41,7 +42,6 @@ class game(object):
         self.convert = convert_coords(self.game_settings.var_tiles, self.game_settings.var_boardsize)
 
         menubar = tk.Menu(self.window)
-
         filemenu = tk.Menu(menubar)
 
         filemenu.add_command(label="Open", command=self.open_file)
@@ -54,136 +54,26 @@ class game(object):
         self.initialise_home(self.game_settings)
         
     def initialise_home(self, settings: settings_context):
-            return initialise_home_screen(self, settings,brd, ui, gridsize)
+        return initialise_home_screen(self, settings, brd, ui, gridsize)
 
     def initialise_game(self, player_one, player_two, settings: settings_context):
-        self.boardsize = settings.var_boardsize
-        self.symbol_size = symbolsize.get_symbolsize(settings.var_boardsize)
-        self.player_one = player_one
-        self.player_two = player_two
-        self.show_stepped_on_tiles = False
-
-        self.game_controller = controller(player_one, player_two)
-
-        self.statusbar = tk.Label(self.window, text="Cell info", bd=1, relief=tk.SUNKEN, anchor=tk.W)
-
-        self.statusbar.pack(side=tk.BOTTOM, fill=tk.X)
-
-        self.canvas = tk.Canvas(self.window, width=settings.var_boardsize, height=settings.var_boardsize, background=colors.board_background)
-        self.canvas.pack(side='left',anchor='nw', fill='x')
+        initialise_game_screen(self, player_one, player_two, settings)
+        return self.place_initial_board(player_one,player_two,settings)
         
-        self.ui = tk.Canvas(self.window, bd=1)
-        self.ui.columnconfigure(0, weight=0)
-        self.ui.columnconfigure(1, weight=3)
-        self.max_ui_columns = 6
-        
-        self.header_label = tk.Label(self.ui, text="Player info", background=colors.black_color)
+    def place_initial_board(self, player_one, player_two, settings: settings_context):
+        create_pieces(self, player_one,player_two,settings, brd,unithandler)
 
-        self.player_box = tk.Frame(self.ui,background=colors.black_color)
-
-        self.control_label = tk.Label(self.ui, text="Controls", background=colors.black_color)
-        self.mode_label = tk.Label(self.ui, text="Select and move Mode", background=colors.green_color)
-        self.action_details_label = tk.Label(self.ui, text="Action details", background=colors.gray_color)
-        self.action_details_label_description = tk.Label(self.ui, text="Action details", background=colors.dark_gray_color)
-
-        self.move_button = tk.Button(self.ui, text="Select move")
-        self.inspect_button = tk.Button(self.ui, text="Inspect Cell")
-        self.melee_attack_button = tk.Button(self.ui, text="Melee Attack")
-        self.show_stepped_tiles_button = tk.Button(self.ui, text="show stepped tiles", command=self.show_stepped_tiles)
-        self.padding_label1 = tk.Label(self.ui, text="")
-        self.padding_label2 = tk.Label(self.ui, text="")
-
-        self.end_turn_button = tk.Button(self.ui, text="End turn")
-        self.inspect_button_sub = tk.Button(self.ui, text="Admin Inspect")
-
-        self.unit_header_label = tk.Label(self.ui, text="Controlling Unit Info", background=colors.black_color)
-        self.unit_box = tk.Frame(self.ui, relief=tk.RIDGE)
-        self.unit_box.grid(column=0, row=20,sticky=tk.W)
-
-        self.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = self.max_ui_columns)
-        self.player_box.grid(column=0, row=1,sticky=tk.EW, columnspan = self.max_ui_columns)
-
-        self.control_label.grid(column=0, row=5,sticky=tk.EW, columnspan = self.max_ui_columns)
-        self.mode_label.grid(column=0, row=6,sticky=tk.EW, columnspan = self.max_ui_columns)
-
-        self.move_button.grid(column=0, row=7, sticky=tk.W, columnspan = int(abs(self.max_ui_columns/2)))
-        self.inspect_button.grid(column=0, row=10, sticky=tk.EW, columnspan = self.max_ui_columns)
-        self.melee_attack_button.grid(column=int(abs(self.max_ui_columns/2)), row=7, sticky=tk.W, columnspan = int(abs(self.max_ui_columns/2)))
-
-        #self.show_stepped_tiles_button.grid(column=0,sticky=tk.EW,  row=9, columnspan = self.max_ui_columns)
-        self.action_details_label_description.grid(column=int(abs((self.max_ui_columns/2) )), row=11,sticky=tk.EW, columnspan = int(abs((self.max_ui_columns/2)+2)))
-        self.action_details_label.grid(column=0, row=11,sticky=tk.EW, columnspan = int(abs((self.max_ui_columns/2)-1)))
-
-        #self.padding_label1.grid(column=0, row=10, sticky=tk.W, columnspan = 4)
-        self.padding_label2.grid(column=0, row=13, sticky=tk.W, columnspan = 4)
-
-        
-        self.end_turn_button.grid(column=0, row=15, sticky=tk.W, columnspan=3)
-        self.inspect_button_sub.grid(column=3, row=15, sticky=tk.W, columnspan=3)
-        self.unit_header_label.grid(column=0, row=19, sticky=tk.EW, columnspan = 6)
-
-        self.ui.pack(side='right',anchor=tk.NW,expand=True,fill='both')
-        
-        self.move_button.bind('<Button-1>', self.switch_mode_selectmove)
-        self.inspect_button.bind('<Button-1>', self.switch_mode_inspect)
-        self.melee_attack_button.bind('<Button-1>', self.switch_mode_melee_attack)
-        self.inspect_button_sub.bind('<Button-1>', self.test_modal)
-        self.canvas.bind('<Button-1>', self.select_move_click)
-
-        for i in range(settings.var_units1):
-            soldier = player("P1-{}".format(i))
-            soldier.fullname = unithandler.get_name()
-            soldier.owner = self.player_one
-            soldier.set_image(unithandler.get_image())
-            soldier.set_age(unithandler.get_age())
-            self.player_one.units.append(soldier)
-            if self.itemPlacement == "rigid":
-                placeipRigid(brd.board, soldier, "top")
-
-        for i in range(settings.var_units2):
-            soldier = player("P2-{}".format(i))
-            soldier.fullname = unithandler.get_name()
-            soldier.owner = self.player_two
-            soldier.set_image(unithandler.get_image())
-            soldier.set_age(unithandler.get_age())
-            self.player_two.units.append(soldier)
-            if self.itemPlacement == "rigid":
-                placeipRigid(brd.board, soldier, "bottom")
-        
-        for i in range(settings.var_water_clusters):
-            water_clustr = water("W")
-            brd.placeclus(water_clustr)
-
-        for i in range(settings.var_factories):
-            fct = building("F")
-            placeip(brd.board, fct)
-
-        for i in range(settings.var_npcs):
-            npc = enemy("NPC")
-            npc.fullname = unithandler.get_name()
-            npc.set_image(unithandler.get_image())
-            npc.set_age(unithandler.get_age())
-            placeip(brd.board, npc)
- 
-        for i in range(settings.var_trees):
-            makore = tree("T")
-            placeip(brd.board, makore)
-
-        
-        self.controlling_player = self.player_one
+        self.controlling_player = player_one
         self.selected = False
         self.selected_unit = self.controlling_player.units[0]
 
         ui.make_player_card(self.player_box, self.controlling_player)
-        ui.make_unit_card(self.unit_box,self.selected_unit)
+        ui.make_unit_card(self.unit_box, self.selected_unit)
 
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
 
     def mainloop(self):
-        """
-        Runs the tkinter application.
-        """
         self.window.mainloop()
 
     def show_stepped_tiles(self):
@@ -236,10 +126,10 @@ class game(object):
                 self.player_two.units.remove(obj)
 
         for i in range(self.gridsize):
-            self.canvas.create_line((i + 1) * self.boardsize / self.gridsize, 0, (i + 1) * self.boardsize / self.gridsize, self.boardsize)
+            self.canvas.create_line((i + 1) * self.game_settings.var_boardsize / self.gridsize, 0, (i + 1) * self.game_settings.var_boardsize / self.gridsize, self.game_settings.var_boardsize)
 
         for i in range(self.gridsize):
-            self.canvas.create_line(0, (i + 1) * self.boardsize / self.gridsize, self.boardsize, (i + 1) * self.boardsize / self.gridsize)
+            self.canvas.create_line(0, (i + 1) * self.game_settings.var_boardsize / self.gridsize, self.game_settings.var_boardsize, (i + 1) * self.game_settings.var_boardsize / self.gridsize)
         
         # Changes tiles color after movement slightly
         for obj in boardmanager.get_all_clean_cells(brd.board):
@@ -481,28 +371,8 @@ class game(object):
         self.draw_possible_moves(self.selected_unit)
 
     def display_gameover(self, winner: owner):
-        """
-        Cleans the canvas and shows the winner and score.
-        """
-        text = 'Winner: {}'.format(winner.name)
+        return display_gameover_screen(self, winner)
 
-        self.canvas.delete("all")
-        for widget in self.ui.winfo_children():
-            widget.destroy()
-        self.ui['background'] = colors.board_background
-        self.canvas.unbind('<Button-1>')
-        self.statusbar['text'] = ""
-
-        self.canvas.create_text(self.boardsize / 2, self.boardsize / 3, font="cmr 60 bold", fill=winner.color, text=text)
-        score_text = 'Results \n'
-        self.canvas.create_text(self.boardsize / 2, 5 * self.boardsize / 8, font="cmr 40 bold", fill=colors.green_color,
-                                text=score_text)
-
-        score_text = '{} Units Left: '.format(self.game_controller.current_owner.name) + "{}".format(len(self.game_controller.current_owner.units)) + '\n'
-        score_text += '{} Units Left: '.format(self.game_controller.other_owner.name) + "{}".format(len(self.game_controller.other_owner.units)) + '\n'
-
-        self.canvas.create_text(self.boardsize / 2, 3 * self.boardsize / 4, font="cmr 30 bold", fill=colors.green_color,
-                                text=score_text)
     def save_game(self):
         st.save(brd.board)
 
