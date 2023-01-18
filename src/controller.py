@@ -11,6 +11,7 @@ class owner:
         self.units:list(unit) = []
         self.color = color
         self.buildings: list(building) = []
+        
     def action(self):
         self.available_actions -= 1
 
@@ -23,7 +24,7 @@ class controller:
         self.current_owner: owner = first_player
 
     def action_or_switch(self):
-        if self.current_owner.available_actions > 0:
+        if self.current_owner.available_actions >= 1:
             self.current_owner.action()
         else: 
             self.current_owner.available_actions = 3

@@ -2,7 +2,15 @@ import random
 
 boardcolors = ['#422102','#542b05', '#4a2a0c']
 watercolors = ['#0e1b7d', '#1b2785', '#141f7a']
-class cell:
+
+class abstract_object:
+    def __init__(self) -> None:
+        self.name = ""
+        self.walkable = False
+        self.description = ""
+        self.destroyed = False
+
+class cell(abstract_object):
     def __init__(self, name = ".", stepped_on=0) -> None:
         self.name = name
         self.walkable = True
@@ -21,7 +29,7 @@ class cell:
         return self.loc
         
 
-class broken_cell:
+class broken_cell(abstract_object):
     def __init__(self, name = "x") -> None:
         self.name = name
         self.walkable = False
@@ -34,7 +42,7 @@ class broken_cell:
     def __str__(self) -> str:
         return self.name
 
-class unit:
+class unit(abstract_object):
     def __init__(self, args) -> None:
         self.name = args[0]
         self.description = "{}".format(self.name)
