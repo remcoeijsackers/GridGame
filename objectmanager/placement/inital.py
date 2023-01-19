@@ -7,10 +7,19 @@ from src.grid import grid
 from src.settings import debug, gridsize, symbolsize
 from src.conversion import convert_coords
 from src.controller import controller, owner
-from src.context import modal_context, settings_context, color_context, unit_modal_context
+from src.context import modal_context, settings_context, color_context, unit_modal_context,placement_context
 from src.ui import uihandler, painter
 
-def create_pieces(parent, player_one, player_two, settings: settings_context, brd, unithandler):
+def create_pieces(parent, player_one, player_two, settings: settings_context, brd, unithandler, placement: placement_context ):
+
+        for i in range(settings.var_trees):
+            makore = tree("T")
+            placeip(brd.board, makore)
+        
+        for i in range(settings.var_water_clusters):
+            water_clustr = water("W")
+            brd.placeclus(water_clustr)
+
         for i in range(settings.var_units1):
             soldier = player("P1-{}".format(i))
             soldier.fullname = unithandler.get_name()
@@ -31,10 +40,6 @@ def create_pieces(parent, player_one, player_two, settings: settings_context, br
             if parent.itemPlacement == "rigid":
                 placeipRigid(brd.board, soldier, "bottom")
         
-        for i in range(settings.var_water_clusters):
-            water_clustr = water("W")
-            brd.placeclus(water_clustr)
-
         for i in range(settings.var_factories):
             fct = building("F")
             placeip(brd.board, fct)
@@ -46,6 +51,3 @@ def create_pieces(parent, player_one, player_two, settings: settings_context, br
             npc.set_age(unithandler.get_age())
             placeip(brd.board, npc)
  
-        for i in range(settings.var_trees):
-            makore = tree("T")
-            placeip(brd.board, makore)

@@ -27,7 +27,7 @@ class placement:
                 return random.choice(range(gridsize))
             r = rc()
             c = cl()
-            if hasattr(board.at[r, c], 'walkable'):
+            if  isinstance(board.at[i[0], i[1]], cell) and bool(getattr(board.at[i[0],i[1]], 'walkable')):
                 board.at[r, c] = placee
             else: 
                 placeip(board, placee)
@@ -376,8 +376,9 @@ class manager:
         placeip_near_wall(self.board, placee)
         for i in self.get_adjacent_cells(placee.loc, 2):
             x = classfromobject(name)
-            self.board.at[i[0], i[1]] = x
-            x.set_loc((i[0], i[1]))
+            if  isinstance(self.board.at[i[0], i[1]], cell) and bool(getattr(self.board.at[i[0],i[1]], 'walkable')): #hasattr(self.board.at[i[0],i[1]], 'walkable') and 
+                self.board.at[i[0], i[1]] = x
+                x.set_loc((i[0], i[1]))
 
 class unitcontroller:
 

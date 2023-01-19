@@ -14,6 +14,12 @@ class owner:
         
     def action(self):
         self.available_actions -= 1
+    
+    def clear(self):
+        self.available_actions = 3
+        self.units = []
+        self.buildings = []
+
 
 class controller:
     """

@@ -41,7 +41,7 @@ def placeip(dataframe, placee):
         return random.choice(range(gridsize.get_gridsize()))
     r = rc()
     c = cl()
-    if isinstance(dataframe.at[r, c], cell):
+    if  isinstance(dataframe.at[r, c], cell) and bool(getattr(dataframe.at[r,c], 'walkable')):
         dataframe.at[r, c] = placee
         placee.set_loc((r,c))
     else: 
@@ -56,12 +56,11 @@ def placeipRigid(dataframe, placee, place):
     def rc():
         if place == "top":
             return 0
-            #return random.choice([0, gridsize.get_gridsize() - 1])
         if place == "bottom":
             return gridsize.get_gridsize() -1
     r = rc()
     c = cl()
-    if isinstance(dataframe.at[r, c], cell):
+    if isinstance(dataframe.at[r, c], cell) and bool(getattr(dataframe.at[r,c], 'walkable')):
         dataframe.at[r, c] = placee
         placee.set_loc((r,c))
     else: 

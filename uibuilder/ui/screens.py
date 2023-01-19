@@ -7,6 +7,11 @@ from src.conversion import convert_coords
 from src.grid import grid
 from src.settings import symbolsize
 
+def initialise_canvas(parent, settings: settings_context):
+        parent.canvas = tk.Canvas(parent.window, width=settings.var_boardsize, height=settings.var_boardsize, background=color_context().board_background)
+        parent.canvas.pack(side='left',anchor='nw', fill='x')
+        
+
 def initialise_game_screen(parent, player_one, player_two, settings: settings_context):
         parent.symbol_size = symbolsize.get_symbolsize(settings.var_boardsize)
         parent.player_one = player_one
@@ -19,8 +24,7 @@ def initialise_game_screen(parent, player_one, player_two, settings: settings_co
 
         parent.statusbar.pack(side=tk.BOTTOM, fill=tk.X)
 
-        parent.canvas = tk.Canvas(parent.window, width=settings.var_boardsize, height=settings.var_boardsize, background=color_context().board_background)
-        parent.canvas.pack(side='left',anchor='nw', fill='x')
+        initialise_canvas(parent, settings)
         
         parent.ui = tk.Canvas(parent.window, bd=1)
         parent.ui.columnconfigure(0, weight=0)
@@ -45,10 +49,16 @@ def initialise_game_screen(parent, player_one, player_two, settings: settings_co
 
         parent.end_turn_button = tk.Button(parent.ui, text="End turn")
         parent.inspect_button_sub = tk.Button(parent.ui, text="Admin Inspect")
-
+        
         parent.unit_header_label = tk.Label(parent.ui, text="Controlling Unit Info", background=color_context().black_color)
         parent.unit_box = tk.Frame(parent.ui, relief=tk.RIDGE)
         parent.unit_box.grid(column=0, row=20,sticky=tk.W)
+
+        parent.admin_box = tk.Frame(parent.ui, relief=tk.RIDGE)
+        parent.reset_game_button = tk.Button(parent.admin_box, text="reset")
+        parent.reset_game_button.grid(column=0, row=0, columnspan=parent.max_ui_columns)
+        parent.admin_box.grid(column=0, row=21,sticky=tk.W)
+
 
         parent.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = parent.max_ui_columns)
         parent.player_box.grid(column=0, row=1,sticky=tk.EW, columnspan = parent.max_ui_columns)
@@ -78,6 +88,7 @@ def initialise_game_screen(parent, player_one, player_two, settings: settings_co
         parent.inspect_button.bind('<Button-1>', parent.switch_mode_inspect)
         parent.melee_attack_button.bind('<Button-1>', parent.switch_mode_melee_attack)
         parent.inspect_button_sub.bind('<Button-1>', parent.test_modal)
+        parent.reset_game_button.bind('<Button-1>', parent.admin_reset_board)
         parent.canvas.bind('<Button-1>', parent.select_move_click)
 
 def initialise_home_screen( parent, settings: settings_context, brd, ui, gridsize):

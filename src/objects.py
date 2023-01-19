@@ -10,6 +10,9 @@ class abstract_object:
         self.description = ""
         self.destroyed = False
 
+    def remove(self) -> None:
+        del self
+
 class cell(abstract_object):
     def __init__(self, name = ".", stepped_on=0) -> None:
         self.name = name
@@ -87,7 +90,7 @@ class enemy(unit):
         super().__init__(args)
         self.health = 4
         self.description = "An NPC, hostile"
-class map_object:
+class map_object(abstract_object):
     def __init__(self) -> None:
         self.name = ""
     def __repr__(self) -> str:

@@ -9,6 +9,10 @@ class unit_modal_context(modal_context):
     def __init__(self, title, ctype, unit, command=None) -> None:
         super().__init__(title, ctype, command)
         self.unit = unit
+
+class placement_context:
+    def __init__(self, mode) -> None:
+        self.mode = mode
 class settings_context:
     def __init__(self, var_tiles=14, var_water_clusters=2, var_trees=8, var_factories=2, var_npcs=0, var_units1=2, var_units2=2, var_boardsize=800) -> None:
         self.var_tiles= var_tiles

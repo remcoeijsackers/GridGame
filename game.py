@@ -15,10 +15,10 @@ from src.grid import grid
 from src.settings import debug, gridsize, symbolsize
 from src.conversion import convert_coords
 from src.controller import controller, owner
-from src.context import modal_context, settings_context, color_context, unit_modal_context
+from src.context import modal_context, settings_context, color_context, unit_modal_context, placement_context
 from src.ui import uihandler, painter
 
-from uibuilder.ui.screens import initialise_home_screen, initialise_game_screen, display_gameover_screen
+from uibuilder.ui.screens import initialise_home_screen, initialise_game_screen, display_gameover_screen, initialise_canvas
 from objectmanager.placement.inital import create_pieces
 
 colors = color_context()
@@ -61,8 +61,7 @@ class game(object):
         return self.place_initial_board(player_one,player_two,settings)
         
     def place_initial_board(self, player_one, player_two, settings: settings_context):
-        create_pieces(self, player_one,player_two,settings, brd,unithandler)
-
+        create_pieces(self, player_one,player_two,settings, brd,unithandler, placement_context('army'))
         self.controlling_player = player_one
         self.selected = False
         self.selected_unit = self.controlling_player.units[0]
@@ -72,6 +71,17 @@ class game(object):
 
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
+
+    def admin_reset_board(self, event):
+        self.player_one.clear()
+        self.player_two.clear()
+        for i in brd.get_all_objects(brd.board):
+            i.remove()
+        for i in brd.get_coords_of_all_objects(brd.board):
+            brd.board.at[i[0], i[1]] = cell()
+        self.place_initial_board(self.player_one,self.player_two,self.game_settings)
+        
+        return self.draw_board_and_objects(brd)
 
     def mainloop(self):
         self.window.mainloop()
