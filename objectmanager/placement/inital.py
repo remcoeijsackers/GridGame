@@ -10,7 +10,8 @@ from src.controller import controller, owner
 from src.context import modal_context, settings_context, color_context, unit_modal_context,placement_context
 from src.ui import uihandler, painter
 
-def create_pieces(parent, player_one, player_two, settings: settings_context, brd, unithandler, placement: placement_context ):
+from objectmanager import generator
+def create_pieces(parent, player_one, player_two, settings: settings_context, brd,  placement: placement_context ):
 
         for i in range(settings.var_trees):
             makore = tree("T")
@@ -22,20 +23,20 @@ def create_pieces(parent, player_one, player_two, settings: settings_context, br
 
         for i in range(settings.var_units1):
             soldier = player("P1-{}".format(i))
-            soldier.fullname = unithandler.get_name()
+            soldier.fullname = generator.unitgenerator.get_name()
             soldier.owner = player_one
-            soldier.set_image(unithandler.get_image())
-            soldier.set_age(unithandler.get_age())
+            soldier.set_image(generator.unitgenerator.get_image())
+            soldier.set_age(generator.unitgenerator.get_age())
             player_one.units.append(soldier)
             if parent.itemPlacement == "rigid":
                 placeipRigid(brd.board, soldier, "top")
 
         for i in range(settings.var_units2):
             soldier = player("P2-{}".format(i))
-            soldier.fullname = unithandler.get_name()
+            soldier.fullname = generator.unitgenerator.get_name()
             soldier.owner = player_two
-            soldier.set_image(unithandler.get_image())
-            soldier.set_age(unithandler.get_age())
+            soldier.set_image(generator.unitgenerator.get_image())
+            soldier.set_age(generator.unitgenerator.get_age())
             player_two.units.append(soldier)
             if parent.itemPlacement == "rigid":
                 placeipRigid(brd.board, soldier, "bottom")
@@ -46,8 +47,8 @@ def create_pieces(parent, player_one, player_two, settings: settings_context, br
 
         for i in range(settings.var_npcs):
             npc = enemy("NPC")
-            npc.fullname = unithandler.get_name()
-            npc.set_image(unithandler.get_image())
-            npc.set_age(unithandler.get_age())
+            npc.fullname = generator.unitgenerator.get_name()
+            npc.set_image(generator.unitgenerator.get_image())
+            npc.set_age(generator.unitgenerator.get_age())
             placeip(brd.board, npc)
  

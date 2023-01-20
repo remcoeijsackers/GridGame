@@ -59,12 +59,17 @@ class unit(abstract_object):
         self.fullname = None
         self.owner = None
         self.equipment = None
+        self.events = []
 
     def __str__(self) -> str:
         return self.name
 
+    def move(self, loc):
+        self.loc = loc
+
     def set_loc(self, loc):
         self.loc = loc
+        self.log_event(loc)
         return self.loc
 
     def set_image(self, image):
@@ -73,8 +78,12 @@ class unit(abstract_object):
 
     def set_age (self, age):
         self.age = age
+        self.log_event(age)
         return self.age
 
+    def log_event(self,event):
+        self.events.append(event)
+        
     def take_damage(self, damage):
         self.health -= damage
         if self.health <= 0:

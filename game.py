@@ -1,32 +1,26 @@
-from turtle import back
-from src.util import placeipRigid
-import random
 
 import tkinter as tk
-from tkinter.colorchooser import askcolor
 from tkinter.filedialog import askopenfilename
 
-from src.unitgen import unitgenerator
-from src.manager import manager, unitcontroller, placement
-from src.util import placeip
+from src.manager import manager, unitcontroller
 from src.state import state
-from src.objects import broken_cell, player, cell, scenery, unit, building, enemy, water, tree
-from src.grid import grid
-from src.settings import debug, gridsize, symbolsize
-from src.conversion import convert_coords
-from src.controller import controller, owner
-from src.context import modal_context, settings_context, color_context, unit_modal_context, placement_context
-from src.ui import uihandler, painter
+from src.objects import broken_cell, player, cell, building, enemy, water, tree
 
-from uibuilder.ui.screens import initialise_home_screen, initialise_game_screen, display_gameover_screen, initialise_canvas
+from src.settings import debug, gridsize
+from src.conversion import convert_coords
+from src.controller import  owner
+from src.context import modal_context, settings_context, color_context, unit_modal_context, placement_context
+from src.ui import painter
+
+from uibuilder.ui.screens import initialise_home_screen, initialise_game_screen, display_gameover_screen, initialise_canvas, finalise_game_screen
+from uibuilder.ui.components import make_player_card, make_unit_card, initilise_settings, make_admin_card,make_unit_event_card
+
 from objectmanager.placement.inital import create_pieces
 
 colors = color_context()
-ui = uihandler()
 brd = manager()   
 st = state()
 control = unitcontroller()
-unithandler = unitgenerator()
 game_settings = settings_context()
 
 class game(object):
@@ -54,20 +48,24 @@ class game(object):
         self.initialise_home(self.game_settings)
         
     def initialise_home(self, settings: settings_context):
-        return initialise_home_screen(self, settings, brd, ui, gridsize)
+        return initialise_home_screen(self, settings, brd, gridsize)
 
     def initialise_game(self, player_one, player_two, settings: settings_context):
         initialise_game_screen(self, player_one, player_two, settings)
         return self.place_initial_board(player_one,player_two,settings)
         
     def place_initial_board(self, player_one, player_two, settings: settings_context):
-        create_pieces(self, player_one,player_two,settings, brd,unithandler, placement_context('army'))
+        create_pieces(self, player_one,player_two,settings, brd, placement_context('army'))
         self.controlling_player = player_one
         self.selected = False
         self.selected_unit = self.controlling_player.units[0]
 
-        ui.make_player_card(self.player_box, self.controlling_player)
-        ui.make_unit_card(self.unit_box, self.selected_unit)
+        make_player_card(self.player_box, self.controlling_player)
+        make_unit_card(self, self.unit_box, self.selected_unit, row=20)
+     
+        make_admin_card(self, self.admin_box, row=22)
+
+        finalise_game_screen(self)
 
         self.draw_board_and_objects(brd)
         self.draw_possible_moves(self.selected_unit)
@@ -207,7 +205,7 @@ class game(object):
 
             if isinstance(brd.inspect(mappos), player) and brd.inspect(mappos) in self.controlling_player.units:
                     self.selected_unit = brd.inspect(mappos)
-                    ui.make_unit_card(self.unit_box,self.selected_unit,row=0)
+                    make_unit_card(self, self.unit_box,self.selected_unit,row=20)
             self.reset(mappos, type="soft")
   
         def _movefunc():
@@ -352,8 +350,8 @@ class game(object):
                 if unit.health > 0:
                     self.selected_unit = self.controlling_player.units[p]
 
-        ui.make_player_card(self.player_box, self.controlling_player)
-        ui.make_unit_card(self.unit_box,self.selected_unit,row=0)
+        make_player_card(self.player_box, self.controlling_player)
+        make_unit_card(self, self.unit_box,self.selected_unit,row=20)
 
     def set_impossible_action_text(self, text):
         """
@@ -412,7 +410,7 @@ class modal_popup(tk.Toplevel):
         title.grid(row=0, column=0, sticky=tk.EW)
 
         if context.ctype == "unit":
-            uihandler().make_unit_card(self, context.unit, row=0)
+            make_unit_card(original, self, context.unit, row=0)
 
         if context.command:
             context_btn = tk.Button(self, text=context.ctype, command=context.command)
@@ -427,5 +425,5 @@ class modal_popup(tk.Toplevel):
 if __name__ == "__main__":
     root = tk.Tk()
     main = game(root)
-    root.geometry("1200x800")
+    root.geometry("1400x1000")
     main.mainloop()

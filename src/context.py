@@ -44,3 +44,4 @@ class color_context:
         self.gray_color = 'gray'
         self.dark_gray_color = '#333131'
         self.sub_gray_color = '#575151'
+        self.ui_background = '#505151'
