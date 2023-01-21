@@ -38,7 +38,14 @@ class controller:
             self.current_owner = self.other_owner
             self.other_owner = tmp
         return self.current_owner
-    
+
+    def switch_player(self):
+        self.current_owner.available_actions = 3
+        tmp = self.current_owner
+        self.current_owner = self.other_owner
+        self.other_owner = tmp
+        return self.current_owner
+
     def check_game_state(self):
         all_units_owner1 = len(self.current_owner.units)
         x = 0

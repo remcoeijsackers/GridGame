@@ -60,7 +60,7 @@ class game(object):
         self.selected = False
         self.selected_unit = self.controlling_player.units[0]
 
-        make_player_card(self.player_box, self.controlling_player)
+        make_player_card(self.player_box, self.controlling_player, row=2)
         make_unit_card(self, self.unit_box, self.selected_unit, row=20)
      
         make_admin_card(self, self.admin_box, row=22)
@@ -68,7 +68,7 @@ class game(object):
         finalise_game_screen(self)
 
         self.draw_board_and_objects(brd)
-        self.draw_possible_moves(self.selected_unit)
+        self.draw_possible_movement(self.selected_unit)
 
     def admin_reset_board(self, event):
         self.player_one.clear()
@@ -83,13 +83,32 @@ class game(object):
 
     def mainloop(self):
         self.window.mainloop()
+    
+    def end_turn(self):
+        self.controlling_player = self.game_controller.switch_player()
+
+        self.mode_label['text'] = "Select and move Mode"
+        self.canvas.bind('<Button-1>', self.select_move_click)
+        self.mode_label['background'] = colors.green_color
+
+        for p, unit in enumerate(self.controlling_player.units):
+            if unit.health > 0:
+                self.selected_unit = self.controlling_player.units[p]
+
+        make_player_card(self.player_box, self.controlling_player,row=2)
+        make_unit_card(self, self.unit_box,self.selected_unit,row=20)
+        self.refresh_board()
+        self.draw_possible_movement(self.selected_unit)
+        
 
     def show_stepped_tiles(self):
         if not self.show_stepped_on_tiles:
             self.show_stepped_on_tiles = True
+            self.refresh_board()
         else:
             self.show_stepped_on_tiles = False
-            self.reset(self.selected_unit.loc,type="soft")
+            self.refresh_board()
+            #self.reset(self.selected_unit.loc,type="soft")
 
     def switch_mode_inspect(self, event):
         """
@@ -103,6 +122,8 @@ class game(object):
         """
         Switches the control mode to selecting and moving owned units.
         """
+        self.refresh_board()
+        self.draw_possible_movement(self.selected_unit)
         self.mode_label['text'] = "Select and move Mode"
         self.mode_label['background'] = colors.green_color
         self.canvas.bind('<Button-1>', self.select_move_click)
@@ -112,6 +133,9 @@ class game(object):
         """
         Switches the control mode to attacking with the selected unit.
         """
+        self.refresh_board()
+        self.draw_possible_melee_attacks(self.selected_unit)
+        
         self.mode_label['text'] = "Melee Attack Mode"
         self.mode_label['background'] = colors.red_color
         self.canvas.bind('<Button-1>', self.melee_attack_click)
@@ -173,12 +197,13 @@ class game(object):
                 painter().draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(cl.loc),colors.green_color)
         print(brd.board)
 
-    def draw_possible_moves(self, unit, movecolor=colors.symbol_dot_color, attackcolor=colors.symbol_attack_dot_color, inspect=False):
+    def draw_all_possible_moves(self, unit, movecolor=colors.symbol_dot_color, attackcolor=colors.symbol_attack_dot_color, inspect=False):
         """
         Draws the step / attack moves that are available to the selected unit.
         """
         for i in control.possible_moves(unit, brd):
             painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i),movecolor)
+
         for i in control.possible_moves(unit, brd, total=True, turns=self.controlling_player.available_actions):
             if not inspect:
                 painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colors.range_move_color)
@@ -189,7 +214,23 @@ class game(object):
 
         for i in control.possible_ranged_moves(unit, brd.board, self.controlling_player):
             painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,attackcolor)
-    
+
+    def draw_possible_movement(self, unit, inspect=False ):
+        col=colors.symbol_dot_color
+        if inspect:
+            col=colors.green_color
+
+        for i in control.possible_moves(unit, brd, total=True, turns=self.controlling_player.available_actions):
+            painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i),col)
+
+    def draw_possible_melee_attacks(self, unit, inspect=False ):
+        col=colors.symbol_attack_dot_color
+        if inspect:
+            col=colors.green_color
+
+        for i in control.possible_melee_moves(unit, brd.board, self.controlling_player):
+            painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,col, 3)
+
     def select_move_click(self, event):
         """
         Allows the user to either move a unit, or select another of their units
@@ -263,7 +304,7 @@ class game(object):
 
         if isinstance(un, player) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
-            self.draw_possible_moves(un, movecolor=colors.green_color, attackcolor=colors.gray_color, inspect=True)
+            self.draw_all_possible_moves(un, movecolor=colors.green_color, attackcolor=colors.gray_color, inspect=True)
             self.window.withdraw()
             modal_popup(self, unit_modal_context("unit description", "unit", un))
         elif isinstance(un, building):
@@ -350,7 +391,7 @@ class game(object):
                 if unit.health > 0:
                     self.selected_unit = self.controlling_player.units[p]
 
-        make_player_card(self.player_box, self.controlling_player)
+        make_player_card(self.player_box, self.controlling_player,row=2)
         make_unit_card(self, self.unit_box,self.selected_unit,row=20)
 
     def set_impossible_action_text(self, text):
@@ -359,7 +400,12 @@ class game(object):
         """
         self.action_details_label['text'] = text
 
-    def reset(self, mappos, type="hard"):
+    def refresh_board(self):
+        self.canvas.delete("all")
+        self.draw_board_and_objects(brd)
+
+
+    def reset(self, mappos=None, type="hard"):
         """
         Reset the board after an action, reflecting the new state.
         """
@@ -369,14 +415,15 @@ class game(object):
             self.display_gameover(done)
             return
         self.set_impossible_action_text("")
-        self.get_event_info(mappos)
+        if mappos:
+            self.get_event_info(mappos)
         if type == "hard":
             self.monitor_state()
         if debug:
             print(brd.show())
         self.canvas.delete("all")
         self.draw_board_and_objects(brd)
-        self.draw_possible_moves(self.selected_unit)
+        self.draw_possible_movement(self.selected_unit)
 
     def display_gameover(self, winner: owner):
         return display_gameover_screen(self, winner)

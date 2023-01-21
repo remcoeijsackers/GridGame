@@ -457,12 +457,12 @@ class unitcontroller:
         for spot in colsandrows():
             for coord in spot:
                 # check if its a cell
-                if self.count(selected_unit, coord) <= selected_unit.shoot_range and getattr(board.at[coord[0], coord[1]], 'walkable'):
+                if self.count(selected_unit, coord) <= selected_unit.melee_range and getattr(board.at[coord[0], coord[1]], 'walkable'):
                     yield coord
                 else:
                     # if its not a cell, but a piece of scenery or a unit, melee is posible
                     if coord != selected_unit.loc:
-                        if self.count(selected_unit, coord) <= selected_unit.shoot_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
+                        if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
                             yield coord
 
     def possible_ranged_moves(self, selected_unit, board: DataFrame, controlling_player: owner):

@@ -24,27 +24,36 @@ def make_admin_card(parent, parentwindow: tk.Frame, row=0):
         unit_health_label = tk.Label(admin_frame, text="Admin Action")
         unit_attack_label = tk.Label(admin_frame, text="Admin Action")
         unit_range_label = tk.Label(admin_frame, text="Admin Action")
+        show_stepped_tiles_button = tk.Button(admin_frame, text="show prev. moves", command=parent.show_stepped_tiles)
 
 
         unit_name_label.grid(column=0, row=secrow, sticky=tk.W)
         reset_game_button.grid(column=1, row=secrow, sticky=tk.E)
+
         unit_health_label.grid(column=0, row=secrow+1, sticky=tk.W)
+        show_stepped_tiles_button.grid(column=1, row=secrow+1,sticky=tk.E)
+
         unit_attack_label.grid(column=0, row=secrow+2, sticky=tk.W)
         unit_range_label.grid(column=0, row=secrow+3, sticky=tk.W)
+
 
         reset_game_button.bind('<Button-1>', parent.admin_reset_board)
 
 def make_player_card(parent: tk.Frame, player: owner, row= 0):
         parent.children.clear()
+
         panel = tk.Frame(parent,relief=tk.RIDGE, background=player.color)
-        panel.grid(row=0,column=0, columnspan=6,sticky=tk.W)
+
+        panel.grid(row=row, column=0,columnspan=6)
+
+        secrow = row + 2
         turn_label = tk.Label(panel, text="{}".format(player.name), background=player.color)
         actions_label = tk.Label(panel, text="Actions remaining: {}".format(player.available_actions + 1), background=player.color)
         buildings_label = tk.Label(panel, text= "Units: {}, Buildings: {}".format(len(player.units), player.buildings), background=player.color)
 
-        turn_label.grid(column=0, row=1, columnspan=3)
-        actions_label.grid(column=1, row=2, columnspan=3)
-        buildings_label.grid(column=2, row=3, columnspan=3)
+        turn_label.grid(column=0, row=secrow, columnspan=6)
+        actions_label.grid(column=0, row=secrow+1)
+        buildings_label.grid(column=0, row=secrow+2)
 
 def make_unit_event_card(parent: tk.Frame, unit: unit, row=0):
         parent.children.clear()

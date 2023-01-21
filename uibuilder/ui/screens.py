@@ -39,22 +39,20 @@ def initialise_game_screen(parent, player_one, player_two, settings: settings_co
         
         parent.header_label = tk.Label(parent.ui, text="Player info", background=color_context().gray_color)
 
-        parent.player_box = tk.Frame(parent.ui, background=color_context().black_color)
+        parent.player_box = tk.Frame(parent.ui, relief=tk.RIDGE, background=color_context().black_color)
 
         parent.control_label = tk.Label(parent.ui, text="Controls", background=color_context().black_color)
         parent.mode_label = tk.Label(parent.ui, text="Select and move Mode", background=color_context().green_color)
-        parent.action_details_label = tk.Label(parent.ui, text="Action details", background=color_context().gray_color)
-        parent.action_details_label_description = tk.Label(parent.ui, text="Action details", background=color_context().dark_gray_color)
+        parent.action_details_label = tk.Label(parent.ui, text="Action details", background=color_context().sub_gray_color, border=3)
 
         parent.move_button = tk.Button(parent.ui, text="Select or move", foreground=color_context().range_move_color)
         parent.inspect_button = tk.Button(parent.ui, text="Inspect Cell", foreground=color_context().symbol_dot_color)
         parent.melee_attack_button = tk.Button(parent.ui, text="Melee Attack", foreground=color_context().red_color)
-        parent.show_stepped_tiles_button = tk.Button(parent.ui, text="show stepped tiles", command=parent.show_stepped_tiles)
+        parent.end_turn_button = tk.Button(parent.ui, text="End Turn", command=parent.end_turn)
         parent.padding_label1 = tk.Label(parent.ui, text="")
         parent.padding_label2 = tk.Label(parent.ui, text="")
 
-        parent.end_turn_button = tk.Button(parent.ui, text="End turn")
-        parent.inspect_button_sub = tk.Button(parent.ui, text="Admin Inspect")
+        #parent.inspect_button_sub = tk.Button(parent.ui, text="Admin Inspect")
         
         parent.unit_header_label = tk.Label(parent.ui, text="Selected Unit", background=color_context().gray_color)
         parent.unit_box = tk.Frame(parent.ui, relief=tk.RIDGE)
@@ -64,38 +62,29 @@ def initialise_game_screen(parent, player_one, player_two, settings: settings_co
         parent.admin_box = tk.Frame(parent.ui, relief=tk.RIDGE)
         parent.admin_box.grid(column=0, row=22, columnspan=parent.max_ui_columns, sticky=tk.EW)
 
-
-
         parent.header_label.grid(column=0, row=0, sticky=tk.EW, columnspan = parent.max_ui_columns)
-        parent.player_box.grid(column=0, row=1, sticky=tk.EW, columnspan = parent.max_ui_columns)
+        parent.player_box.grid(column=0, row=2, columnspan = parent.max_ui_columns)
 
         parent.control_label.grid(column=0, row=5,sticky=tk.EW, columnspan = parent.max_ui_columns)
         parent.mode_label.grid(column=0, row=6,sticky=tk.EW, columnspan = parent.max_ui_columns)
 
         parent.move_button.grid(column=0, row=7, sticky=tk.EW, columnspan = parent.max_ui_columns)
         parent.melee_attack_button.grid(column=0, row=8, sticky=tk.EW, columnspan = parent.max_ui_columns)
-        parent.inspect_button.grid(column=0, row=10, sticky=tk.EW, columnspan = parent.max_ui_columns)
-        
+        parent.end_turn_button.grid(column=0,sticky=tk.EW,  row=10, columnspan = parent.max_ui_columns)
+        parent.inspect_button.grid(column=0, row=9, sticky=tk.EW, columnspan = parent.max_ui_columns)
+ 
+        parent.action_details_label.grid(column=0, row=11,sticky=tk.EW, columnspan = parent.max_ui_columns, rowspan=2)
 
-        parent.show_stepped_tiles_button.grid(column=0,sticky=tk.EW,  row=9, columnspan = parent.max_ui_columns)
-        parent.action_details_label_description.grid(column=int(abs((parent.max_ui_columns/2) )), row=11,sticky=tk.EW, columnspan = int(abs((parent.max_ui_columns/2)+2)))
-        parent.action_details_label.grid(column=0, row=11,sticky=tk.EW, columnspan = int(abs((parent.max_ui_columns/2)-1)))
-
-        #parent.padding_label1.grid(column=0, row=10, sticky=tk.W, columnspan = 4)
         parent.padding_label2.grid(column=0, row=13, sticky=tk.W, columnspan = 4)
 
-        
-        parent.end_turn_button.grid(column=0, row=15, sticky=tk.W, columnspan=3)
-        parent.inspect_button_sub.grid(column=3, row=15, sticky=tk.W, columnspan=3)
+        #parent.inspect_button_sub.grid(column=3, row=15, sticky=tk.W, columnspan=3)
         parent.unit_header_label.grid(column=0, row=19, sticky=tk.EW, columnspan = 6)
         parent.admin_header_label.grid(column=0, row=21, sticky=tk.EW, columnspan = 6)
 
-
-        
         parent.move_button.bind('<Button-1>', parent.switch_mode_selectmove)
         parent.inspect_button.bind('<Button-1>', parent.switch_mode_inspect)
         parent.melee_attack_button.bind('<Button-1>', parent.switch_mode_melee_attack)
-        parent.inspect_button_sub.bind('<Button-1>', parent.test_modal)
+        #parent.inspect_button_sub.bind('<Button-1>', parent.test_modal)
         parent.canvas.bind('<Button-1>', parent.select_move_click)
 
 def finalise_game_screen(parent):
