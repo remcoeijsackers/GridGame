@@ -45,7 +45,7 @@ class broken_cell(abstract_object):
     def __str__(self) -> str:
         return self.name
 
-class unit(abstract_object):
+class pawn(abstract_object):
     def __init__(self, args) -> None:
         self.name = args[0]
         self.description = "{}".format(self.name)
@@ -89,12 +89,7 @@ class unit(abstract_object):
         if self.health <= 0:
             self.destroyed = True
 
-class player(unit):
-    def __init__(self, args) -> None:
-        super().__init__(args)
-        self.description = "A unit"
-
-class enemy(unit):
+class enemy(pawn):
     def __init__(self, args) -> None:
         super().__init__(args)
         self.health = 4

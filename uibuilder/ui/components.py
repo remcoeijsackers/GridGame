@@ -2,7 +2,7 @@ import tkinter as tk
 from PIL import ImageTk, Image
 import random
 
-from src.objects import unit
+from src.objects import pawn
 from src.controller import owner
 from src.context import color_context, modal_context, settings_context
 from src.conversion import convert_coords
@@ -55,7 +55,7 @@ def make_player_card(parent: tk.Frame, player: owner, row= 0):
         actions_label.grid(column=0, row=secrow+1)
         buildings_label.grid(column=0, row=secrow+2)
 
-def make_unit_event_card(parent: tk.Frame, unit: unit, row=0):
+def make_unit_event_card(parent: tk.Frame, unit: pawn, row=0):
         parent.children.clear()
         event_frame = tk.Frame(parent, relief=tk.RIDGE)
         event_frame.grid(column=0, row=row, sticky=tk.EW, columnspan=6)
@@ -68,7 +68,7 @@ def make_unit_event_card(parent: tk.Frame, unit: unit, row=0):
 
         mylist.grid(column=0, row=row, columnspan=6,sticky=tk.EW)
 
-def make_unit_card(srcparent, parent: tk.Frame, unit: unit, row=0):
+def make_unit_card(srcparent, parent: tk.Frame, unit: pawn, row=0):
         parent.children.clear()
         unit_frame = tk.Frame(parent, relief=tk.RIDGE)
         unit_frame.grid(column=2, row=row,sticky=tk.W)

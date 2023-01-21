@@ -1,5 +1,5 @@
 # Game state monitoring
-from .objects import building, unit
+from .objects import building, pawn
 
 class owner:
     """
@@ -7,8 +7,8 @@ class owner:
     """
     def __init__(self, name, color) -> None:
         self.name = name
-        self.available_actions = 3
-        self.units:list(unit) = []
+        self.available_actions = 2
+        self.units:list(pawn) = []
         self.color = color
         self.buildings: list(building) = []
         
@@ -16,7 +16,7 @@ class owner:
         self.available_actions -= 1
     
     def clear(self):
-        self.available_actions = 3
+        self.available_actions = 2
         self.units = []
         self.buildings = []
 
@@ -33,14 +33,14 @@ class controller:
         if self.current_owner.available_actions >= 1:
             self.current_owner.action()
         else: 
-            self.current_owner.available_actions = 3
+            self.current_owner.available_actions = 2
             tmp = self.current_owner
             self.current_owner = self.other_owner
             self.other_owner = tmp
         return self.current_owner
 
     def switch_player(self):
-        self.current_owner.available_actions = 3
+        self.current_owner.available_actions = 2
         tmp = self.current_owner
         self.current_owner = self.other_owner
         self.other_owner = tmp

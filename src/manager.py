@@ -2,7 +2,7 @@ import random
 from pandas.core.frame import DataFrame
 
 from src.util import fullcols, placeip, colsandrows, placeip_near_wall, colsc, colsr
-from src.objects import cell, unit, player, scenery, building, broken_cell
+from src.objects import cell, pawn, scenery, building, broken_cell
 from src.settings import gridsize, debug
 
 from src.controller import owner
@@ -38,7 +38,7 @@ class placement:
 
     def generate(self, board):
         #placing units
-        pla = [unit(i) for i in ["E", "E"]]
+        pla = [pawn(i) for i in ["E", "E"]]
         [self.placeip(self.board, i) for i in pla]
 
         #placing obstacles
@@ -331,7 +331,7 @@ class manager:
         for i in self.get_coords_of_items_in_row(board, unit.loc[0]):
             col_unit = colsc().get(unit.loc[1])
             col_object = colsc().get(i[1])
-            if not isinstance(i, player):
+            if not isinstance(i, pawn):
                 if col_unit < col_object:
                     # + if object is to the right of player
                     if i[1] != 'J': 
@@ -351,7 +351,7 @@ class manager:
         for i in self.get_coords_of_items_in_col(board, unit.loc[1]):
             row_unit = unit.loc[0]
             row_object = i[0]
-            if not isinstance(i, player):
+            if not isinstance(i, pawn):
                 if row_unit < row_object:
                     # + if object is below player
                     if i[0] != 9: 
@@ -462,7 +462,7 @@ class unitcontroller:
                 else:
                     # if its not a cell, but a piece of scenery or a unit, melee is posible
                     if coord != selected_unit.loc:
-                        if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
+                        if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], pawn) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
                             yield coord
 
     def possible_ranged_moves(self, selected_unit, board: DataFrame, controlling_player: owner):
@@ -477,9 +477,9 @@ class unitcontroller:
                 else:
                     # if its not a cell, but a piece of scenery or a unit, melee is posible
                     if coord != selected_unit.loc:
-                        if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
+                        if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], pawn) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
                             yield coord
-    def place(self, unit: unit, loc, boardmanager: manager) -> DataFrame and bool:
+    def place(self, unit: pawn, loc, boardmanager: manager) -> DataFrame and bool:
         """
         Place an unit to another spot in the dataframe.
         """
@@ -514,8 +514,8 @@ class unitcontroller:
         else :
             if isinstance(board.iloc[int(loc[0])][int(pr)], scenery):
                 _remove_object()
-            if isinstance(board.iloc[int(loc[0])][int(pr)], unit):
-                attacked_unit: unit = board.iloc[int(loc[0])][int(pr)]
+            if isinstance(board.iloc[int(loc[0])][int(pr)], pawn):
+                attacked_unit: pawn = board.iloc[int(loc[0])][int(pr)]
                 attacked_unit.take_damage(damage)
         return board
 

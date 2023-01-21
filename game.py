@@ -4,7 +4,7 @@ from tkinter.filedialog import askopenfilename
 
 from src.manager import manager, unitcontroller
 from src.state import state
-from src.objects import broken_cell, player, cell, building, enemy, water, tree
+from src.objects import broken_cell, cell, building, enemy, water, tree, pawn
 
 from src.settings import debug, gridsize
 from src.conversion import convert_coords
@@ -173,7 +173,7 @@ class game(object):
             if isinstance(obj, water):
                 painter().draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(obj.loc),obj.color)
                 
-            if isinstance(obj, player) and not obj.destroyed:
+            if isinstance(obj, pawn) and not obj.destroyed:
                 if obj in self.player_one.units:
                     painter().draw_unit(self.convert, self.canvas, brd, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), self.player_one.color)
                     
@@ -244,7 +244,7 @@ class game(object):
             logical_position = self.convert.convert_grid_to_logical_position(grid_position)
             mappos = self.convert.convert_logical_to_map(logical_position)
 
-            if isinstance(brd.inspect(mappos), player) and brd.inspect(mappos) in self.controlling_player.units:
+            if isinstance(brd.inspect(mappos), pawn) and brd.inspect(mappos) in self.controlling_player.units:
                     self.selected_unit = brd.inspect(mappos)
                     make_unit_card(self, self.unit_box,self.selected_unit,row=20)
             self.reset(mappos, type="soft")
@@ -302,7 +302,7 @@ class game(object):
             if isinstance(structure, building) and structure.owner:
                 self.__capture_click(event, "empty")
 
-        if isinstance(un, player) or isinstance(un, enemy):
+        if isinstance(un, pawn) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
             self.draw_all_possible_moves(un, movecolor=colors.green_color, attackcolor=colors.gray_color, inspect=True)
             self.window.withdraw()

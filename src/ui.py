@@ -3,7 +3,7 @@ from PIL import ImageTk, Image
 import numpy as np
 import random
 
-from src.objects import unit
+from src.objects import pawn
 from src.controller import owner
 from src.context import color_context, modal_context, settings_context
 from src.conversion import convert_coords
@@ -25,7 +25,7 @@ class uihandler:
         actions_label.grid(column=0, row=2, columnspan=6)
         buildings_label.grid(column=0, row=3, columnspan=6)
 
-    def make_unit_card(self, parent: tk.Frame, unit: unit, row=0):
+    def make_unit_card(self, parent: tk.Frame, unit: pawn, row=0):
         parent.children.clear()
         unit_frame = tk.Frame(parent, relief=tk.RIDGE)
         unit_frame.grid(column=2, row=row,sticky=tk.W)

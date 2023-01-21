@@ -2,7 +2,7 @@ from src.unitgen import unitgenerator
 from src.manager import manager, unitcontroller, placement
 from src.util import placeip, placeipRigid
 from src.state import state
-from src.objects import broken_cell, player, cell, scenery, unit, building, enemy, water, tree
+from src.objects import broken_cell, cell, scenery, pawn, building, enemy, water, tree
 from src.grid import grid
 from src.settings import debug, gridsize, symbolsize
 from src.conversion import convert_coords
@@ -22,7 +22,7 @@ def create_pieces(parent, player_one, player_two, settings: settings_context, br
             brd.placeclus(water_clustr)
 
         for i in range(settings.var_units1):
-            soldier = player("P1-{}".format(i))
+            soldier = pawn("P1-{}".format(i))
             soldier.fullname = generator.unitgenerator.get_name()
             soldier.owner = player_one
             soldier.set_image(generator.unitgenerator.get_image())
@@ -32,7 +32,7 @@ def create_pieces(parent, player_one, player_two, settings: settings_context, br
                 placeipRigid(brd.board, soldier, "top")
 
         for i in range(settings.var_units2):
-            soldier = player("P2-{}".format(i))
+            soldier = pawn("P2-{}".format(i))
             soldier.fullname = generator.unitgenerator.get_name()
             soldier.owner = player_two
             soldier.set_image(generator.unitgenerator.get_image())
