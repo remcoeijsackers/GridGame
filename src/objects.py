@@ -94,6 +94,7 @@ class enemy(pawn):
         super().__init__(args)
         self.health = 4
         self.description = "An NPC, hostile"
+
 class map_object(abstract_object):
     def __init__(self) -> None:
         self.name = ""

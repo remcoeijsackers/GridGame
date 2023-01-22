@@ -2,8 +2,9 @@ import random
 from pandas.core.frame import DataFrame
 
 from src.util import fullcols, placeip, colsandrows, placeip_near_wall, colsc, colsr
-from src.objects import cell, pawn, scenery, building, broken_cell
+from src.objects import cell, scenery, building, broken_cell
 from src.settings import gridsize, debug
+from objectmanager.objects.pawn import pawn
 
 from src.controller import owner
 import math

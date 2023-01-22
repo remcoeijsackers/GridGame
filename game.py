@@ -4,8 +4,8 @@ from tkinter.filedialog import askopenfilename
 
 from src.manager import manager, unitcontroller
 from src.state import state
-from src.objects import broken_cell, cell, building, enemy, water, tree, pawn
-
+from src.objects import broken_cell, cell, building, enemy, water, tree
+from objectmanager.objects.pawn import pawn
 from src.settings import debug, gridsize
 from src.conversion import convert_coords
 from src.controller import  owner

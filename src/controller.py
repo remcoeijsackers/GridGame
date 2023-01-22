@@ -1,5 +1,6 @@
 # Game state monitoring
-from .objects import building, pawn
+from .objects import building
+from objectmanager.objects.pawn import pawn
 
 class owner:
     """

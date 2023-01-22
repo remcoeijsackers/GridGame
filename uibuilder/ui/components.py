@@ -2,11 +2,10 @@ import tkinter as tk
 from PIL import ImageTk, Image
 import random
 
-from src.objects import pawn
+from objectmanager.objects.pawn import pawn
 from src.controller import owner
-from src.context import color_context, modal_context, settings_context
-from src.conversion import convert_coords
-from src.util import unit_thickness, symbol_thickness
+from src.context import color_context, settings_context
+
 import datetime
 colors = color_context()
 
@@ -89,14 +88,14 @@ def make_unit_card(srcparent, parent: tk.Frame, unit: pawn, row=0):
         unit_health_label = tk.Label(unit_frame, text="Health: {}".format(unit.health))
         unit_attack_label = tk.Label(unit_frame, text="Attack: {}".format(unit.strength))
         unit_range_label = tk.Label(unit_frame, text="Range: {}".format(unit.range))
-        unit_equipment_label = tk.Label(unit_frame, text="Equipment: {}".format(unit.equipment))
+        unit_equipment_label = tk.Label(unit_frame, text="Equipment: \n{}".format(unit.equipment))
 
         unit_name_label.grid(column=0, row=0, sticky=tk.W)
         unit_age_label.grid(column=1, row=0, sticky=tk.E)
         unit_health_label.grid(column=0, row=1, sticky=tk.W)
         unit_attack_label.grid(column=0, row=2, sticky=tk.W)
         unit_range_label.grid(column=0, row=3, sticky=tk.W)
-        unit_equipment_label.grid(column=0, row=4, sticky=tk.W)
+        unit_equipment_label.grid(column=1, row=1, rowspan=5, sticky=tk.W)
         make_unit_event_card(unit_event_Frame, unit, 10)
         
 def initilise_settings(parent, settings: settings_context, home_init_func):

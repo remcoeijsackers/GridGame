@@ -1,25 +1,32 @@
-from objects.piece import boardItem
+from objectmanager.objects.piece import boardItem
 
 class pawnEquipment:
-    def __init__(self, place, armor, damage, Erange, equipmentType) -> None:
+    def __init__(self, place, armor, damage, Erange, equipmentType, name) -> None:
         self.place = place
         self.armor = armor
         self.damage = damage
         self.Erange = Erange
         self.equipmentType = equipmentType
+        self.name = name
+
+    def __repr__(self) -> str:
+        return """
+            {}
+             +ARM: {}  
+             +DMG: {} """.format(str(self.name), self.armor, self.damage)
 
 class pawnCarry:
     def __init__(self) -> None:
         self.kit = {
-            "head": pawnEquipment("head", 1, 0, 0, "armor"),
-            "body": pawnEquipment("body", 2, 0, 0, "armor"),
-            "melee": pawnEquipment("melee", 0, 1, 1, "meleeWeapon"),
-            "ranged": pawnEquipment("ranged", 1, 0, 3, "armor"),
-            "legs": pawnEquipment("legs", 1, 0, 1,"armor")
+            "head": pawnEquipment("head", 1, 0, 0, "armor", "Cap"),
+            "body": pawnEquipment("body", 2, 0, 0, "armor", "Shirt"),
+            "melee": pawnEquipment("melee", 0, 1, 1, "meleeWeapon", "Axe"),
+            "ranged": pawnEquipment("ranged", 1, 0, 3, "armor", "None"),
+            "legs": pawnEquipment("legs", 1, 0, 1,"armor", "Pants")
         }
     
-    def __repr__(self) -> dict:
-        return self.kit
+    def __repr__(self) -> str:
+        return str(self.kit)
 
     def equip(self, item: pawnEquipment):
         self.kit[item.place] = item
