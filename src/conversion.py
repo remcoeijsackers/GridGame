@@ -1,7 +1,6 @@
 import numpy as np
 
-from src.settings import gridsize
-from src.util import fullcols, colsr, colsc
+from src.util import  colsr, colsc
 
 class convert_coords:
     """
@@ -29,3 +28,13 @@ class convert_coords:
         number = colsc().get(map_position[1])
         log_pos = np.array([number, map_position[0]], dtype=int)
         return log_pos
+    
+    def convert_action_str_to_logical(self, unit, action):
+        loc = unit.loc
+        if action == "up":
+            if loc[0] != 0:
+                loc[0] -= 1
+        if action == "down":
+            if loc[0] != max(self.boardsize):
+                loc[0] += 1
+        return self.convert_map_to_logical(loc)

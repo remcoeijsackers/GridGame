@@ -1,43 +1,41 @@
 # Game state monitoring
-from .objects import building
-from objectmanager.objects.pawn import pawn
+from gamemanager.players.owners import owner
 
-class owner:
-    """
-    Reflects the user controlling the units.
-    """
-    def __init__(self, name, color) -> None:
-        self.name = name
-        self.available_actions = 2
-        self.units:list(pawn) = []
-        self.color = color
-        self.buildings: list(building) = []
-        
-    def action(self):
-        self.available_actions -= 1
-    
-    def clear(self):
-        self.available_actions = 2
-        self.units = []
-        self.buildings = []
-
-
-class controller:
+class gameController:
     """
     Handles game state monitoring.
     """
     def __init__(self, first_player, second_player, computer) -> None:
-        self.other_owner : owner = second_player
-        self.current_owner: owner = first_player
+        self.first_player : owner = second_player
+        self.second_player: owner = first_player
+        self.computer: owner = computer
+        self.turnOrder = ["p1","p2", "computer"]
+        self.openSlots = [self.first_player, self.second_player, self.computer]
+        self.closedSlots = []
+        self.current_player = self.first_player
 
+    def __getNextPlayer(self, current):
+        if len(self.openSlots) > 0:
+            nextplayer = dict(self.openSlots, key=lambda x:x['openTurn'])
+            if nextplayer:
+                return nextplayer
+                
     def action_or_switch(self):
-        if self.current_owner.available_actions >= 1:
-            self.current_owner.action()
+
+        if self.current_player.available_actions == 2:
+            print(self.current_player.startTurn())
+
+        if self.current_player.available_actions >= 1:
+            self.current_player.action()
+
         else: 
-            self.current_owner.available_actions = 2
+            self.current_player.available_actions = 2
+            self.openSlots.remove(self.current_player)
+            self.closedSlots.append(self.current_player)
             tmp = self.current_owner
             self.current_owner = self.other_owner
             self.other_owner = tmp
+
         return self.current_owner
 
     def switch_player(self):

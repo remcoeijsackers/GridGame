@@ -1,10 +1,10 @@
-import pandas as pd
 import random
 from pandas.core.frame import DataFrame
 
 from src.util import fullcols, placeip, colsandrows, placeip_near_wall, colsc, colsr
-from src.objects import cell, unit, player, scenery, building, broken_cell
+from src.objects import cell, scenery, building, broken_cell
 from src.settings import gridsize, debug
+from objectmanager.objects.pawn import pawn
 
 from src.controller import owner
 import math
@@ -28,7 +28,7 @@ class placement:
                 return random.choice(range(gridsize))
             r = rc()
             c = cl()
-            if hasattr(board.at[r, c], 'walkable'):
+            if  isinstance(board.at[i[0], i[1]], cell) and bool(getattr(board.at[i[0],i[1]], 'walkable')):
                 board.at[r, c] = placee
             else: 
                 placeip(board, placee)
@@ -39,7 +39,7 @@ class placement:
 
     def generate(self, board):
         #placing units
-        pla = [unit(i) for i in ["E", "E"]]
+        pla = [pawn(i) for i in ["E", "E"]]
         [self.placeip(self.board, i) for i in pla]
 
         #placing obstacles
@@ -54,6 +54,7 @@ class placement:
         return board
 
 class manager:
+
     def show(self) -> DataFrame:
         return self.board
     
@@ -199,6 +200,16 @@ class manager:
             for item in row:
                 if not isinstance(item, cell):
                     yield item
+
+    def get_all_pawns(self, board: DataFrame):
+        """
+        Get all (non cell) objects in the dataframe.
+        """
+        all_items_on_board = board.to_numpy()
+        for row in all_items_on_board:
+            for item in row:
+                if isinstance(item, pawn):
+                    yield item
     
     def get_coords_of_all_objects(self, board: DataFrame):
         """
@@ -332,7 +343,7 @@ class manager:
         for i in self.get_coords_of_items_in_row(board, unit.loc[0]):
             col_unit = colsc().get(unit.loc[1])
             col_object = colsc().get(i[1])
-            if not isinstance(i, player):
+            if not isinstance(i, pawn):
                 if col_unit < col_object:
                     # + if object is to the right of player
                     if i[1] != 'J': 
@@ -352,7 +363,7 @@ class manager:
         for i in self.get_coords_of_items_in_col(board, unit.loc[1]):
             row_unit = unit.loc[0]
             row_object = i[0]
-            if not isinstance(i, player):
+            if not isinstance(i, pawn):
                 if row_unit < row_object:
                     # + if object is below player
                     if i[0] != 9: 
@@ -377,10 +388,14 @@ class manager:
         placeip_near_wall(self.board, placee)
         for i in self.get_adjacent_cells(placee.loc, 2):
             x = classfromobject(name)
-            self.board.at[i[0], i[1]] = x
-            x.set_loc((i[0], i[1]))
+            if  isinstance(self.board.at[i[0], i[1]], cell) and bool(getattr(self.board.at[i[0],i[1]], 'walkable')): #hasattr(self.board.at[i[0],i[1]], 'walkable') and 
+                self.board.at[i[0], i[1]] = x
+                x.set_loc((i[0], i[1]))
 
 class unitcontroller:
+
+    def __init__(self) -> None:
+        pass
 
     def calculate_distance(self, unit, loc) -> int:
         x1 = unit.loc[0]
@@ -402,6 +417,32 @@ class unitcontroller:
         """
         return self.calculate_distance(unit, loc)
     
+    def is_above_or_below(self, unit, loc):
+        if self.is_above_me(unit, loc):
+            return "above"
+        if self.is_below_me(unit, loc):
+            return "below"
+        else:
+            return "neither"
+
+    def is_above_me(self, unit, loc) -> int:
+        """
+        Check if a loc is above the unit
+        """
+        if loc[0] < unit.loc[0]:
+            return True
+        else: 
+            return False
+
+    def is_below_me(self, unit, loc) -> int:
+        """
+        Check if a loc is above the unit
+        """
+        if loc[0] > unit.loc[0]:
+            return True
+        else: 
+            return False
+
     def sub_possible_moves(self, unit, boardmanager: manager, total=False, turns=0):
         """
         Return the coordinates an unit can walk to.
@@ -457,12 +498,12 @@ class unitcontroller:
         for spot in colsandrows():
             for coord in spot:
                 # check if its a cell
-                if self.count(selected_unit, coord) <= selected_unit.shoot_range and getattr(board.at[coord[0], coord[1]], 'walkable'):
+                if self.count(selected_unit, coord) <= selected_unit.melee_range and getattr(board.at[coord[0], coord[1]], 'walkable'):
                     yield coord
                 else:
                     # if its not a cell, but a piece of scenery or a unit, melee is posible
                     if coord != selected_unit.loc:
-                        if self.count(selected_unit, coord) <= selected_unit.shoot_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
+                        if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], pawn) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
                             yield coord
 
     def possible_ranged_moves(self, selected_unit, board: DataFrame, controlling_player: owner):
@@ -477,9 +518,9 @@ class unitcontroller:
                 else:
                     # if its not a cell, but a piece of scenery or a unit, melee is posible
                     if coord != selected_unit.loc:
-                        if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
+                        if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], pawn) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
                             yield coord
-    def place(self, unit: unit, loc, boardmanager: manager) -> DataFrame and bool:
+    def place(self, unit: pawn, loc, boardmanager: manager) -> DataFrame and bool:
         """
         Place an unit to another spot in the dataframe.
         """
@@ -514,8 +555,8 @@ class unitcontroller:
         else :
             if isinstance(board.iloc[int(loc[0])][int(pr)], scenery):
                 _remove_object()
-            if isinstance(board.iloc[int(loc[0])][int(pr)], unit):
-                attacked_unit: unit = board.iloc[int(loc[0])][int(pr)]
+            if isinstance(board.iloc[int(loc[0])][int(pr)], pawn):
+                attacked_unit: pawn = board.iloc[int(loc[0])][int(pr)]
                 attacked_unit.take_damage(damage)
         return board
 
@@ -537,9 +578,3 @@ class unitcontroller:
             _remove_object()
 
         return board
-
-class unitbrain:
-    def __init__(self) -> None:
-        pass
-
-    
