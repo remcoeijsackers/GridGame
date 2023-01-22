@@ -89,11 +89,6 @@ class pawn(abstract_object):
         if self.health <= 0:
             self.destroyed = True
 
-class enemy(pawn):
-    def __init__(self, args) -> None:
-        super().__init__(args)
-        self.health = 4
-        self.description = "An NPC, hostile"
 
 class map_object(abstract_object):
     def __init__(self) -> None:

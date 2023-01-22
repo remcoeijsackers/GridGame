@@ -4,8 +4,8 @@ from tkinter.filedialog import askopenfilename
 
 from src.manager import manager, unitcontroller
 from src.state import state
-from src.objects import broken_cell, cell, building, enemy, water, tree
-from objectmanager.objects.pawn import pawn
+from src.objects import broken_cell, cell, building, water, tree
+
 from src.settings import debug, gridsize
 from src.conversion import convert_coords
 from src.controller import  owner
@@ -16,6 +16,7 @@ from uibuilder.ui.screens import initialise_home_screen, initialise_game_screen,
 from uibuilder.ui.components import make_player_card, make_unit_card, initilise_settings, make_admin_card,make_unit_event_card
 
 from objectmanager.placement.inital import create_pieces
+from objectmanager.objects.pawn import pawn, enemy
 
 colors = color_context()
 brd = manager()   
@@ -50,12 +51,12 @@ class game(object):
     def initialise_home(self, settings: settings_context):
         return initialise_home_screen(self, settings, brd, gridsize)
 
-    def initialise_game(self, player_one, player_two, settings: settings_context):
-        initialise_game_screen(self, player_one, player_two, settings)
-        return self.place_initial_board(player_one,player_two,settings)
+    def initialise_game(self, player_one, player_two, computer, settings: settings_context):
+        initialise_game_screen(self, player_one, player_two, computer, settings)
+        return self.place_initial_board(player_one,player_two,computer, settings)
         
-    def place_initial_board(self, player_one, player_two, settings: settings_context):
-        create_pieces(self, player_one,player_two,settings, brd, placement_context('army'))
+    def place_initial_board(self, player_one, player_two, computer, settings: settings_context):
+        create_pieces(self, player_one,player_two,computer, settings, brd, placement_context('army'))
         self.controlling_player = player_one
         self.selected = False
         self.selected_unit = self.controlling_player.units[0]
@@ -73,11 +74,12 @@ class game(object):
     def admin_reset_board(self, event):
         self.player_one.clear()
         self.player_two.clear()
+        computer = owner("computer", color_context().red_color)
         for i in brd.get_all_objects(brd.board):
             i.remove()
         for i in brd.get_coords_of_all_objects(brd.board):
             brd.board.at[i[0], i[1]] = cell()
-        self.place_initial_board(self.player_one,self.player_two,self.game_settings)
+        self.place_initial_board(self.player_one,self.player_two, computer, self.game_settings)
         
         return self.draw_board_and_objects(brd)
 
@@ -195,7 +197,8 @@ class game(object):
         if self.show_stepped_on_tiles:
             for cl in boardmanager.get_all_cells(brd.board):
                 painter().draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(cl.loc),colors.green_color)
-        print(brd.board)
+        if debug:
+            print(brd.board)
 
     def draw_all_possible_moves(self, unit, movecolor=colors.symbol_dot_color, attackcolor=colors.symbol_attack_dot_color, inspect=False):
         """

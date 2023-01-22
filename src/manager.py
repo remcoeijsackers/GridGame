@@ -54,6 +54,7 @@ class placement:
         return board
 
 class manager:
+
     def show(self) -> DataFrame:
         return self.board
     
@@ -198,6 +199,16 @@ class manager:
         for row in all_items_on_board:
             for item in row:
                 if not isinstance(item, cell):
+                    yield item
+
+    def get_all_pawns(self, board: DataFrame):
+        """
+        Get all (non cell) objects in the dataframe.
+        """
+        all_items_on_board = board.to_numpy()
+        for row in all_items_on_board:
+            for item in row:
+                if isinstance(item, pawn):
                     yield item
     
     def get_coords_of_all_objects(self, board: DataFrame):
@@ -383,6 +394,9 @@ class manager:
 
 class unitcontroller:
 
+    def __init__(self) -> None:
+        pass
+
     def calculate_distance(self, unit, loc) -> int:
         x1 = unit.loc[0]
         y1 = colsc().get(unit.loc[1])
@@ -403,6 +417,32 @@ class unitcontroller:
         """
         return self.calculate_distance(unit, loc)
     
+    def is_above_or_below(self, unit, loc):
+        if self.is_above_me(unit, loc):
+            return "above"
+        if self.is_below_me(unit, loc):
+            return "below"
+        else:
+            return "neither"
+
+    def is_above_me(self, unit, loc) -> int:
+        """
+        Check if a loc is above the unit
+        """
+        if loc[0] < unit.loc[0]:
+            return True
+        else: 
+            return False
+
+    def is_below_me(self, unit, loc) -> int:
+        """
+        Check if a loc is above the unit
+        """
+        if loc[0] > unit.loc[0]:
+            return True
+        else: 
+            return False
+
     def sub_possible_moves(self, unit, boardmanager: manager, total=False, turns=0):
         """
         Return the coordinates an unit can walk to.
@@ -538,9 +578,3 @@ class unitcontroller:
             _remove_object()
 
         return board
-
-class unitbrain:
-    def __init__(self) -> None:
-        pass
-
-    

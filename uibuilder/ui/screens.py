@@ -14,13 +14,13 @@ def initialise_canvas(parent, settings: settings_context):
         parent.canvas.pack(side='left',anchor='nw', fill='x')
         
 
-def initialise_game_screen(parent, player_one, player_two, settings: settings_context):
+def initialise_game_screen(parent, player_one, player_two, computer, settings: settings_context):
         parent.symbol_size = symbolsize.get_symbolsize(settings.var_boardsize)
         parent.player_one = player_one
         parent.player_two = player_two
         parent.show_stepped_on_tiles = False
 
-        parent.game_controller = controller(player_one, player_two)
+        parent.game_controller = controller(player_one, player_two, computer)
 
         parent.statusbar = tk.Label(parent.window, text="Cell info", bd=1, relief=tk.SUNKEN, anchor=tk.W)
 
@@ -121,12 +121,14 @@ def initialise_home_screen( parent, settings: settings_context, brd, gridsize):
                 p = get_input()
                 pl1 = owner(p[0], entry_player_one['background'])
                 pl2 = owner(p[1], entry_player_two['background'])
+                pc = owner("computer", color_context().red_color)
+
                 parent.gridsize = settings.var_tiles
     
                 gridsize.set_gridsize(parent.gridsize)
                 parent.convert = convert_coords(parent.gridsize, settings.var_boardsize)
                 brd.set_board(grid(parent.gridsize).setup())
-                parent.initialise_game(pl1,pl2, settings)
+                parent.initialise_game(pl1,pl2, pc, settings)
                 parent.home_frame.destroy()
                 
             

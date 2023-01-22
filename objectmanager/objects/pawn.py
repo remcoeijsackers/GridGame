@@ -112,3 +112,9 @@ class pawn(boardItem):
         self.health -= damage
         if self.health <= 0:
             self.destroyed = True
+
+class enemy(pawn):
+    def __init__(self, name, fullname, age, image, owner) -> None:
+        super().__init__(name,fullname,age,image,owner)
+        self.owner = owner
+        self.description = "An NPC, hostile"
