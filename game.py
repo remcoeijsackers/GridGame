@@ -12,8 +12,8 @@ from src.controller import  owner
 from src.context import modal_context, settings_context, color_context, unit_modal_context, placement_context
 from src.ui import painter
 
-from uibuilder.ui.screens import initialise_home_screen, initialise_game_screen, display_gameover_screen, initialise_canvas, finalise_game_screen
-from uibuilder.ui.components import make_player_card, make_unit_card, initilise_settings, make_admin_card,make_unit_event_card
+from uibuilder.ui.screens import initialise_home_screen, initialise_game_screen, display_gameover_screen, finalise_game_screen
+from uibuilder.ui.components import make_player_card, make_unit_card, make_admin_card
 
 from objectmanager.placement.inital import create_pieces
 from objectmanager.objects.pawn import pawn, enemy
@@ -277,15 +277,6 @@ class game(object):
         
         else:
             _movefunc()
-
-    def test_modal(self, event):
-
-        toplevel = tk.Toplevel()
-        label1 = tk.Label(toplevel, text="ABOUT_TEXT", height=0, width=100)
-        label1.pack()
-        label2 = tk.Label(toplevel, text="DISCLAIMER", height=0, width=100)
-        label2.pack()
-
 
     def inspect_click(self, event):
         """

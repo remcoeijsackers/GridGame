@@ -84,7 +84,6 @@ def initialise_game_screen(parent, player_one, player_two, computer, settings: s
         parent.move_button.bind('<Button-1>', parent.switch_mode_selectmove)
         parent.inspect_button.bind('<Button-1>', parent.switch_mode_inspect)
         parent.melee_attack_button.bind('<Button-1>', parent.switch_mode_melee_attack)
-        #parent.inspect_button_sub.bind('<Button-1>', parent.test_modal)
         parent.canvas.bind('<Button-1>', parent.select_move_click)
 
 def finalise_game_screen(parent):
