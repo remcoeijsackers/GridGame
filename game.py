@@ -10,7 +10,7 @@ from src.settings import debug, gridsize
 from src.conversion import convert_coords
 from src.controller import  owner
 from src.context import modal_context, settings_context, color_context, unit_modal_context, placement_context
-from src.ui import painter
+from uibuilder.draw.painter import painter
 
 from uibuilder.ui.screens import initialise_home_screen, initialise_game_screen, display_gameover_screen, finalise_game_screen
 from uibuilder.ui.components import make_player_card, make_unit_card, make_admin_card

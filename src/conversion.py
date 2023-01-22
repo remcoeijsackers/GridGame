@@ -1,7 +1,6 @@
 import numpy as np
 
-from src.settings import gridsize
-from src.util import fullcols, colsr, colsc
+from src.util import  colsr, colsc
 
 class convert_coords:
     """

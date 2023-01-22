@@ -26,7 +26,7 @@ class controller:
     """
     Handles game state monitoring.
     """
-    def __init__(self, first_player, second_player) -> None:
+    def __init__(self, first_player, second_player, computer) -> None:
         self.other_owner : owner = second_player
         self.current_owner: owner = first_player
 
