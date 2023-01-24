@@ -1,7 +1,7 @@
 # Game state monitoring
 from gamemanager.players.owners import owner
 
-from src.settings import debug
+from gamemanager.settings import debug
 
 class gameRound:
     """

@@ -3,7 +3,7 @@ import os
 
 from pandas.core.frame import DataFrame
 from objectmanager.objects.grid import cell
-from gamemanager.settings.settings import gridsize
+from gamemanager.settings import gridsize
 
 symbol_thickness = 40
 unit_thickness = 10
@@ -16,7 +16,6 @@ def colsc():
     For mapping letters to ints.
     """
     return dict(zip(fullcols[:gridsize.get_gridsize()], list(range(gridsize.get_gridsize())))) #for mapping colname to ints
-
 def colsr():
     """
     For mapping ints to letters.
@@ -82,10 +81,3 @@ def placeip_near_wall(dataframe: DataFrame, placee):
         placeip_near_wall(dataframe, placee)
     
     return r, c
-
-def clearconsole():
-    command = 'clear'
-    if os.name in ('nt', 'dos'):
-        command = 'cls'
-    os.system(command)
-

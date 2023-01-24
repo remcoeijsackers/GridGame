@@ -1,13 +1,16 @@
-from src.util import placeip, placeipRigid
+from objectmanager.placement.functions import placeip, placeipRigid
 
-from src.objects import  building, water, tree
+from objectmanager.objects.scenery import  building, water, tree
 
-from src.context import settings_context,placement_context
+from contexts.settingscontext import settings_context, placement_context
 
 from objectmanager.objects.pawn import pawn, enemy
+
 from objectmanager import generator
 
+
 from gamemanager.players.owners import owner
+
 
 def create_pieces(parent, players: (owner), settings: settings_context, brd,  placement: placement_context ):
 
@@ -19,24 +22,14 @@ def create_pieces(parent, players: (owner), settings: settings_context, brd,  pl
             water_clustr = water("W")
             brd.placeclus(water_clustr)
 
-        for i in range(settings.var_units1):
-            soldier = pawn("P1-{}".format(i),generator.unitgenerator.get_name(),generator.unitgenerator.get_age(),generator.unitgenerator.get_image(), players[0])
-            players[0].units.append(soldier)
-            if parent.itemPlacement == "rigid":
-                placeipRigid(brd.board, soldier, "top")
+        for player in players:
+            for i in range(settings.var_units):
+                soldier = pawn("{}-{}".format(i, player.id),generator.unitgenerator.get_name(),generator.unitgenerator.get_age(),generator.unitgenerator.get_image(), player)
+                player.units.append(soldier)
+                if parent.itemPlacement == "rigid":
+                    placeipRigid(brd.board, soldier, "top")
 
-        for i in range(settings.var_units2):
-            soldier = pawn("P2-{}".format(i),generator.unitgenerator.get_name(),generator.unitgenerator.get_age(),generator.unitgenerator.get_image(), players[1])
-            players[1].units.append(soldier)
-            if parent.itemPlacement == "rigid":
-                placeipRigid(brd.board, soldier, "bottom")
-        
         for i in range(settings.var_factories):
             fct = building("F")
             placeip(brd.board, fct)
 
-        #for i in range(settings.var_npcs):
-        #    npc = enemy("NPC",generator.unitgenerator.get_name(),generator.unitgenerator.get_age(),generator.unitgenerator.get_image(), computer)
-        #    computer.units.append(npc)
-        #    placeip(brd.board, npc)
- 

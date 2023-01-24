@@ -1,4 +1,4 @@
-from src.objects import building
+from objectmanager.objects.scenery import building
 from objectmanager.objects.pawn import pawn
 
 class owner:

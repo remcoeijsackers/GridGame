@@ -1,8 +1,9 @@
 import pandas as pd
 from pandas.core.frame import DataFrame
 
-from src.util import fullcols
-from src.objects import cell
+from objectmanager.objects.grid import cell
+
+fullcols = [i for i in "abcdefghijklmnopqrstuvwxyz".upper()]
 
 class grid:
     """
@@ -14,8 +15,8 @@ class grid:
 
     def setup(self) -> DataFrame:
         grd = []
-        [grd.append(cell()) for i in range(self.gridsize)]
-        [self.base_grid.append(grd) for i in range(self.gridsize)]
+        [grd.append(cell()) for _ in range(self.gridsize)]
+        [self.base_grid.append(grd) for _ in range(self.gridsize)]
         
         df = pd.DataFrame(self.base_grid, columns=fullcols[:self.gridsize])
         return df

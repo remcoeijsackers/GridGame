@@ -3,11 +3,11 @@ from PIL import ImageTk, Image
 import random
 
 from objectmanager.objects.pawn import pawn
-from src.controller import owner
-from src.context import color_context, settings_context
-
+from gamemanager.players.owners import owner
+from contexts.settingscontext import  settings_context
+from contexts import colorContext
 import datetime
-colors = color_context()
+
 
 def make_admin_card(parent, parentwindow: tk.Frame, row=0):
         parentwindow.children.clear()
@@ -17,8 +17,8 @@ def make_admin_card(parent, parentwindow: tk.Frame, row=0):
         admin_frame.grid(column=0, row=row +1,sticky=tk.W)
 
         secrow = row + 2
-        unit_name_label = tk.Label(admin_frame, text="Reset game", background=colors.gray_color)
-        reset_game_button = tk.Button(admin_frame, text="reset", background=colors.red_color)
+        unit_name_label = tk.Label(admin_frame, text="Reset game", background=colorContext.gray_color)
+        reset_game_button = tk.Button(admin_frame, text="reset", background=colorContext.red_color)
         reset_game_button.grid(column=0, row=0, columnspan=parent.max_ui_columns)
         unit_health_label = tk.Label(admin_frame, text="Admin Action")
         unit_attack_label = tk.Label(admin_frame, text="Admin Action")
@@ -71,15 +71,15 @@ def make_unit_card(srcparent, parent: tk.Frame, unit: pawn, row=0):
         parent.children.clear()
         unit_frame = tk.Frame(parent, relief=tk.RIDGE)
         unit_frame.grid(column=2, row=row,sticky=tk.W)
-        unit_image_frame = tk.Frame(parent, relief=tk.RIDGE, background=colors.black_color)
+        unit_image_frame = tk.Frame(parent, relief=tk.RIDGE, background=colorContext.black_color)
         unit_image_frame.grid(column=0, row=row, columnspan=2, sticky=tk.W)
-        unit_event_Frame = tk.Frame(parent, relief=tk.RIDGE, background=colors.ui_background)
+        unit_event_Frame = tk.Frame(parent, relief=tk.RIDGE, background=colorContext.ui_background)
         unit_event_Frame.grid(column=0, row=row+5,sticky=tk.EW)
 
         img = Image.open(unit.image)
         img = img.resize((100, 100), Image.ANTIALIAS)
         img = ImageTk.PhotoImage(img)
-        panel = tk.Label(unit_image_frame, image = img, background=colors.black_color)
+        panel = tk.Label(unit_image_frame, image = img, background=colorContext.black_color)
         panel.image = img    
         panel.grid(row=0, column=0, sticky=tk.W)
 
@@ -175,7 +175,7 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
         back_home_button = tk.Button(
                 settings_frame,
                 text='back home',
-                command=validate, background=colors.board_background)
+                command=validate, background=colorContext.board_background)
 
         back_home_button.grid(column=0, row=9, columnspan=4)
         
