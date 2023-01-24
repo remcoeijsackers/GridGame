@@ -130,6 +130,7 @@ def initialise_home_screen( parent, settings: settings_context, brd, gridsize):
                 parent.initialise_game(pl1,pl2, pc, settings)
                 parent.home_frame.destroy()
                 
+                
             
             def open_settings():
                 initilise_settings(parent.window, settings, parent.initialise_home)
