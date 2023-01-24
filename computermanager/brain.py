@@ -1,9 +1,10 @@
 from src.conversion import convert_coords
-from src.manager import manager, unitcontroller
-from src.controller import owner
+from gamemanager.board import boardManager
+from gamemanager.units import unitController
+from gamemanager.players.owners import owner
 
 class NPCBrain:
-    def __init__(self, owner: owner, conversion: convert_coords, mang: manager) -> None:
+    def __init__(self, owner: owner, conversion: convert_coords, mang:  boardManager) -> None:
         self.conversion = conversion
         self.mang = mang
         self.owner = owner
@@ -17,8 +18,8 @@ class NPCBrain:
         pawns = self.mang.get_all_pawns(self.mang.board)
         options = []
         for i in pawns:
-            dist = unitcontroller().count(self.owner.units[0], i.loc)
-            options.append({"unit":i, "direction": unitcontroller().is_above_or_below(self.owner.units[0], i.loc), "distance": dist})
+            dist = unitController.count(self.owner.units[0], i.loc)
+            options.append({"unit":i, "direction": unitController.is_above_or_below(self.owner.units[0], i.loc), "distance": dist})
         closest = max(options, key=lambda x:x['distance'])
 
         def getAction():

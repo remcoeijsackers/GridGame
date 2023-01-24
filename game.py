@@ -2,27 +2,36 @@
 import tkinter as tk
 from tkinter.filedialog import askopenfilename
 
-from src.manager import manager, unitcontroller
-from src.state import state
-from src.objects import broken_cell, cell, building, water, tree
 
-from src.settings import debug, gridsize
+from objectmanager.objects.grid import broken_cell, cell
+from objectmanager.objects.scenery import building, water, tree
+
+from gamemanager.settings.settings import debug, gridsize
+
 from src.conversion import convert_coords
-from src.controller import  owner
-from src.context import modal_context, settings_context, color_context, unit_modal_context, placement_context
+from gamemanager.board import boardManager
+from gamemanager.units import unitController
+from src.state import state
+
+from contexts.settingscontext import settings_context, placement_context
+from contexts.uicontext import unit_modal_context, modal_context
+from contexts import colorContext
 from uibuilder.draw.painter import painter
 
-from uibuilder.ui.screens import initialise_home_screen, initialise_game_screen, display_gameover_screen, finalise_game_screen
+from uibuilder.ui.screens import initialise_game_screen, display_gameover_screen, finalise_game_screen
 from uibuilder.ui.components import make_player_card, make_unit_card, make_admin_card
 
+from uibuilder.ui.home import HomeScreen
 from objectmanager.placement.inital import create_pieces
 from objectmanager.objects.pawn import pawn, enemy
 
-colors = color_context()
-brd = manager()   
+from gamemanager.players.owners import owner
+from gamemanager.dm.dm import gameController
+
+brd = boardManager()   
 st = state()
-control = unitcontroller()
 game_settings = settings_context()
+
 
 class game(object):
     """
@@ -47,21 +56,25 @@ class game(object):
 
         self.window.config(menu=menubar)
         self.initialise_home(self.game_settings)
-        
+
+    def playerAction(self):
+        self.game_controller.playerAction("")
+
     def initialise_home(self, settings: settings_context):
-        return initialise_home_screen(self, settings, brd, gridsize)
 
-    def initialise_game(self, player_one, player_two, computer, settings: settings_context):
-        initialise_game_screen(self, player_one, player_two, computer, settings)
-        return self.place_initial_board(player_one,player_two,computer, settings)
+        return HomeScreen().initialise_home_screen(self, settings, brd, gridsize)
+
+    def initialise_game(self, players, settings: settings_context, game_controller: gameController):
+        self.game_controller = game_controller
+        initialise_game_screen(self, players, settings)
+        return self.place_initial_board(players, settings)
         
-    def place_initial_board(self, player_one, player_two, computer, settings: settings_context):
-        create_pieces(self, player_one,player_two,computer, settings, brd, placement_context('army'))
-        self.controlling_player = player_one
+    def place_initial_board(self, players, settings: settings_context):
+        create_pieces(self, players, settings, brd, placement_context('army'))
         self.selected = False
-        self.selected_unit = self.controlling_player.units[0]
+        self.selected_unit = self.game_controller.getCurrentPlayer().units[0]
 
-        make_player_card(self.player_box, self.controlling_player, row=2)
+        make_player_card(self.player_box, self.game_controller.getCurrentPlayer(), row=2)
         make_unit_card(self, self.unit_box, self.selected_unit, row=20)
      
         make_admin_card(self, self.admin_box, row=22)
@@ -72,14 +85,13 @@ class game(object):
         self.draw_possible_movement(self.selected_unit)
 
     def admin_reset_board(self, event):
-        self.player_one.clear()
-        self.player_two.clear()
-        computer = owner("computer", color_context().red_color)
+        self.game_controller.clearPlayers()
+
         for i in brd.get_all_objects(brd.board):
             i.remove()
         for i in brd.get_coords_of_all_objects(brd.board):
-            brd.board.at[i[0], i[1]] = cell()
-        self.place_initial_board(self.player_one,self.player_two, computer, self.game_settings)
+            brd.board.at[i[0], i[1]] = cell((i[0], i[1]))
+        self.place_initial_board(self.game_controller.players, self.game_settings)
         
         return self.draw_board_and_objects(brd)
 
@@ -87,17 +99,17 @@ class game(object):
         self.window.mainloop()
     
     def end_turn(self):
-        self.controlling_player = self.game_controller.switch_player()
+        self.game_controller.switch_player()
 
         self.mode_label['text'] = "Select and move Mode"
         self.canvas.bind('<Button-1>', self.select_move_click)
-        self.mode_label['background'] = colors.green_color
+        self.mode_label['background'] = colorContext.green_color
 
-        for p, unit in enumerate(self.controlling_player.units):
+        for p, unit in enumerate(self.game_controller.getCurrentPlayer().units):
             if unit.health > 0:
-                self.selected_unit = self.controlling_player.units[p]
+                self.selected_unit = self.game_controller.getCurrentPlayer().units[p]
 
-        make_player_card(self.player_box, self.controlling_player,row=2)
+        make_player_card(self.player_box, self.game_controller.getCurrentPlayer(),row=2)
         make_unit_card(self, self.unit_box,self.selected_unit,row=20)
         self.refresh_board()
         self.draw_possible_movement(self.selected_unit)
@@ -114,50 +126,50 @@ class game(object):
 
     def switch_mode_inspect(self, event):
         """
-        Switches the control mode to inspecting grid elements.
+        Switches the  control mode to inspecting grid elements.
         """
         self.mode_label['text'] = "Inspect Mode"
-        self.mode_label['background'] = colors.green_color
+        self.mode_label['background'] = colorContext.green_color
         self.canvas.bind('<Button-1>', self.inspect_click)
 
     def switch_mode_selectmove(self, event):
         """
-        Switches the control mode to selecting and moving owned units.
+        Switches the  control mode to selecting and moving owned units.
         """
         self.refresh_board()
         self.draw_possible_movement(self.selected_unit)
         self.mode_label['text'] = "Select and move Mode"
-        self.mode_label['background'] = colors.green_color
+        self.mode_label['background'] = colorContext.green_color
         self.canvas.bind('<Button-1>', self.select_move_click)
 
 
     def switch_mode_melee_attack(self, event):
         """
-        Switches the control mode to attacking with the selected unit.
+        Switches the  control mode to attacking with the selected unit.
         """
         self.refresh_board()
         self.draw_possible_melee_attacks(self.selected_unit)
         
         self.mode_label['text'] = "Melee Attack Mode"
-        self.mode_label['background'] = colors.red_color
+        self.mode_label['background'] = colorContext.red_color
         self.canvas.bind('<Button-1>', self.melee_attack_click)
 
     def get_event_info(self, event):
         """
         Changes the labels text to reflect the selected unit/cell/action
         """
-        self.statusbar['text'] = " Location: {} | Steps: {} | Description: {}".format(event, control.count(self.selected_unit, event),brd.explain(event))
+        self.statusbar['text'] = " Location: {} | Steps: {} | Description: {}".format(event,  unitController.count(self.selected_unit, event),brd.explain(event))
 
-    def draw_board_and_objects(self, boardmanager: manager):
+    def draw_board_and_objects(self, boardmanager: boardManager):
         """
         Cleans the board, and draws are elements in the dataframe.
         """
         def cleanup_func(obj):
-            boardmanager.board.at[obj.loc[0], obj.loc[1]] = cell()
-            if obj in self.player_one.units:
-                self.player_one.units.remove(obj)
-            if obj in self.player_two.units:
-                self.player_two.units.remove(obj)
+            boardmanager.board.at[obj.loc[0], obj.loc[1]] = cell((obj.loc[0], obj.loc[1]))
+            if obj in self.players.units:
+                self.players.units.remove(obj)
+            #if obj in self.player_two.units:
+            #    self.player_two.units.remove(obj)
 
         for i in range(self.gridsize):
             self.canvas.create_line((i + 1) * self.game_settings.var_boardsize / self.gridsize, 0, (i + 1) * self.game_settings.var_boardsize / self.gridsize, self.game_settings.var_boardsize)
@@ -176,11 +188,9 @@ class game(object):
                 painter().draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(obj.loc),obj.color)
                 
             if isinstance(obj, pawn) and not obj.destroyed:
-                if obj in self.player_one.units:
-                    painter().draw_unit(self.convert, self.canvas, brd, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), self.player_one.color)
-                    
-                if obj in self.player_two.units:
-                    painter().draw_unit(self.convert, self.canvas, brd, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), self.player_two.color)
+                for i in self.players:
+                    if obj in i.units:
+                        painter().draw_unit(self.convert, self.canvas, brd, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), i.color)
                     
             if isinstance(obj, tree)and not obj.destroyed:
                 painter().draw_tree(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc))
@@ -189,49 +199,49 @@ class game(object):
                 painter().draw_building(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), obj.color)
                 
             if isinstance(obj, enemy) and not obj.destroyed:
-                painter().draw_unit(self.convert, self.canvas, brd, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), colors.symbol_en_color)
+                painter().draw_unit(self.convert, self.canvas, brd, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), colorContext.symbol_en_color)
                 
             if isinstance(obj, broken_cell):
                 painter().draw_broken_cell(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc))
 
         if self.show_stepped_on_tiles:
             for cl in boardmanager.get_all_cells(brd.board):
-                painter().draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(cl.loc),colors.green_color)
+                painter().draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(cl.loc),colorContext.green_color)
         if debug:
             print(brd.board)
 
-    def draw_all_possible_moves(self, unit, movecolor=colors.symbol_dot_color, attackcolor=colors.symbol_attack_dot_color, inspect=False):
+    def draw_all_possible_moves(self, unit, movecolor=colorContext.symbol_dot_color, attackcolor=colorContext.symbol_attack_dot_color, inspect=False):
         """
         Draws the step / attack moves that are available to the selected unit.
         """
-        for i in control.possible_moves(unit, brd):
+        for i in  unitController.possible_moves(unit, brd):
             painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i),movecolor)
 
-        for i in control.possible_moves(unit, brd, total=True, turns=self.controlling_player.available_actions):
+        for i in  unitController.possible_moves(unit, brd, total=True, turns=self.game_controller.getCurrentPlayer().available_actions):
             if not inspect:
-                painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colors.range_move_color)
+                painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colorContext.range_move_color)
             else: 
-                painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colors.green_color)
-        for i in control.possible_melee_moves(unit, brd.board, self.controlling_player):
-            painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colors.symbol_ranged_attack_dot_color, 3)
+                painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colorContext.green_color)
+        for i in  unitController.possible_melee_moves(unit, brd.board, self.game_controller.getCurrentPlayer()):
+            painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colorContext.symbol_ranged_attack_dot_color, 3)
 
-        for i in control.possible_ranged_moves(unit, brd.board, self.controlling_player):
+        for i in  unitController.possible_ranged_moves(unit, brd.board, self.game_controller.getCurrentPlayer()):
             painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,attackcolor)
 
     def draw_possible_movement(self, unit, inspect=False ):
-        col=colors.symbol_dot_color
+        col=colorContext.symbol_dot_color
         if inspect:
-            col=colors.green_color
+            col=colorContext.green_color
 
-        for i in control.possible_moves(unit, brd, total=True, turns=self.controlling_player.available_actions):
+        for i in  unitController.possible_moves(unit, brd, total=True, turns=self.game_controller.getCurrentPlayer().available_actions):
             painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i),col)
 
     def draw_possible_melee_attacks(self, unit, inspect=False ):
-        col=colors.symbol_attack_dot_color
+        col=colorContext.symbol_attack_dot_color
         if inspect:
-            col=colors.green_color
+            col=colorContext.green_color
 
-        for i in control.possible_melee_moves(unit, brd.board, self.controlling_player):
+        for i in  unitController.possible_melee_moves(unit, brd.board, self.game_controller.getCurrentPlayer()):
             painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,col, 3)
 
     def select_move_click(self, event):
@@ -247,19 +257,27 @@ class game(object):
             logical_position = self.convert.convert_grid_to_logical_position(grid_position)
             mappos = self.convert.convert_logical_to_map(logical_position)
 
-            if isinstance(brd.inspect(mappos), pawn) and brd.inspect(mappos) in self.controlling_player.units:
+            if isinstance(brd.inspect(mappos), pawn) and brd.inspect(mappos) in self.game_controller.getCurrentPlayer().units:
                     self.selected_unit = brd.inspect(mappos)
                     make_unit_card(self, self.unit_box,self.selected_unit,row=20)
             self.reset(mappos, type="soft")
   
         def _movefunc():
+
             logical_position = self.convert.convert_grid_to_logical_position(grid_position)
             mappos = self.convert.convert_logical_to_map(logical_position)
 
+            if isinstance(brd.inspect(mappos), pawn) and brd.inspect(mappos) in self.game_controller.getCurrentPlayer().units:
+                    self.selected_unit = brd.inspect(mappos)
+            else: 
+                self.set_impossible_action_text("can't do that")   
+                    
             self.get_event_info(mappos)
             if hasattr(brd.inspect(mappos), 'walkable'):
-                action = control.place(self.selected_unit, mappos, brd)
+                action =  unitController.place(self.selected_unit, mappos, brd)
+
                 if action[1]:
+                    self.playerAction()
                     brd.board = action[0]
                     self.reset(mappos)
                 else: 
@@ -298,7 +316,7 @@ class game(object):
 
         if isinstance(un, pawn) or isinstance(un, enemy):
             self.reset(mappos, type="soft")
-            self.draw_all_possible_moves(un, movecolor=colors.green_color, attackcolor=colors.gray_color, inspect=True)
+            self.draw_all_possible_moves(un, movecolor=colorContext.green_color, attackcolor=colorContext.gray_color, inspect=True)
             self.window.withdraw()
             modal_popup(self, unit_modal_context("unit description", "unit", un))
         elif isinstance(un, building):
@@ -318,9 +336,10 @@ class game(object):
         grid_position = [event.x, event.y]
         logical_position = self.convert.convert_grid_to_logical_position(grid_position)
         mappos = self.convert.convert_logical_to_map(logical_position)
-        for i in control.possible_melee_moves(self.selected_unit, brd.board, self.controlling_player):
+        for i in  unitController.possible_melee_moves(self.selected_unit, brd.board, self.game_controller.getCurrentPlayer()):
             if i == mappos:
-                brd.board = control.attack(mappos, brd.board, self.selected_unit.strength)
+                self.playerAction()
+                brd.board =  unitController.attack(mappos, brd.board, self.selected_unit.strength)
                 self.reset(mappos)
             else:
                 self.set_impossible_action_text('{} has a melee range of {}'.format(self.selected_unit.fullname, self.selected_unit.melee_range))
@@ -333,9 +352,10 @@ class game(object):
         grid_position = [event.x, event.y]
         logical_position = self.convert.convert_grid_to_logical_position(grid_position)
         mappos = self.convert.convert_logical_to_map(logical_position)
-        for i in control.possible_ranged_moves(self.selected_unit, brd.board, self.controlling_player):
+        for i in  unitController.possible_ranged_moves(self.selected_unit, brd.board, self.game_controller.getCurrentPlayer()):
             if i == mappos:
-                brd.board = control.attack(mappos, brd.board, self.selected_unit.strength)
+                self.playerAction()
+                brd.board =  unitController.attack(mappos, brd.board, self.selected_unit.strength)
                 self.reset(mappos)
             else:
                 self.set_impossible_action_text('{} has a ranged range of {}'.format(self.selected_unit.fullname, self.selected_unit.melee_range))
@@ -348,16 +368,18 @@ class game(object):
         grid_position = [event.x, event.y]
         logical_position = self.convert.convert_grid_to_logical_position(grid_position)
         mappos = self.convert.convert_logical_to_map(logical_position)
-        for i in control.possible_melee_moves(self.selected_unit, brd.board, self.controlling_player):
+        for i in  unitController.possible_melee_moves(self.selected_unit, brd.board, self.game_controller.getCurrentPlayer()):
             if i == mappos:
                 structure = brd.inspect(i)
                 if isinstance(structure, building) and ctype == "normal":
-                    structure.set_color(self.controlling_player.color)
-                    self.controlling_player.buildings.append(structure)
-                    structure.set_owner(self.controlling_player)
+                    self.playerAction()
+                    structure.set_color(self.game_controller.getCurrentPlayer().color)
+                    self.game_controller.getCurrentPlayer().buildings.append(structure)
+                    structure.set_owner(self.game_controller.getCurrentPlayer())
                     self.reset(mappos)
                 elif isinstance(structure, building) and ctype == "empty":
-                    structure.set_color(colors.symbol_building_color)
+                    self.playerAction()
+                    structure.set_color(colorContext.symbol_building_color)
                     structure.owner = None 
                     #TODO: Make this remove the buildings from the other owner
                     #self.game_controller.other_owner.buildings.pop(structure)
@@ -371,21 +393,20 @@ class game(object):
         """
         Watch the current board status and monitor if a player has lost.
         """
-        current_controlling_player = self.controlling_player
-        self.controlling_player = self.game_controller.action_or_switch()
+        current_player = self.game_controller.getCurrentPlayer()
 
         # only force select the a unit of the other player, if the turn is over.
         # also set the action to select and move on player change.
-        if current_controlling_player != self.controlling_player:
+        if current_player != self.game_controller.getCurrentPlayer():
             self.mode_label['text'] = "Select and move Mode"
             self.canvas.bind('<Button-1>', self.select_move_click)
-            self.mode_label['background'] = colors.green_color
-
-            for p, unit in enumerate(self.controlling_player.units):
+            self.mode_label['background'] = colorContext.green_color
+        if self.selected_unit not in self.game_controller.getCurrentPlayer().units:
+            for p, unit in enumerate(self.game_controller.getCurrentPlayer().units):
                 if unit.health > 0:
-                    self.selected_unit = self.controlling_player.units[p]
+                    self.selected_unit = self.game_controller.getCurrentPlayer().units[p]
 
-        make_player_card(self.player_box, self.controlling_player,row=2)
+        make_player_card(self.player_box, self.game_controller.getCurrentPlayer(),row=2)
         make_unit_card(self, self.unit_box,self.selected_unit,row=20)
 
     def set_impossible_action_text(self, text):
@@ -403,11 +424,11 @@ class game(object):
         """
         Reset the board after an action, reflecting the new state.
         """
-        done = self.game_controller.check_game_state()
-        if done:
-            self.draw_board_and_objects(brd)
-            self.display_gameover(done)
-            return
+        #done = self.game_controller.check_game_state()
+        #if done:
+        #    self.draw_board_and_objects(brd)
+        #    self.display_gameover(done)
+        #    return
         self.set_impossible_action_text("")
         if mappos:
             self.get_event_info(mappos)
@@ -428,8 +449,8 @@ class game(object):
     def open_file(self):
         gameboard = st.load_file(askopenfilename())
         brd.set_board(gameboard)
-        pl1 = owner("player1", colors.symbol_tree_color)
-        pl2 = owner("player2", colors.symbol_water_color)
+        pl1 = owner("player1", colorContext.symbol_tree_color)
+        pl2 = owner("player2", colorContext.symbol_water_color)
         self.gridsize = 14
         gridsize.set_gridsize(self.gridsize)
         self.convert = convert_coords(self.gridsize)

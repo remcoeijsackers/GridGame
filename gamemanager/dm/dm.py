@@ -1,67 +1,101 @@
 # Game state monitoring
 from gamemanager.players.owners import owner
 
+from gamemanager.settings import debug
+
+class gameRound:
+    """
+    A singel round of gameplay
+    """
+    def __init__(self, id: int, players: (owner)) -> None:
+        self.id = id
+        self.players = players
+        self.turns = []
+        self.__setActions()
+        self.roundLength = len(players)
+        self.currentPlayer = self.__getNextPlayer()
+    
+    def getPlayerByID(self, id):
+        return [d for d in self.players if d.id == id][0]
+
+    def endPlayerTurn(self):
+        self.currentPlayer.available_actions = 0
+
+    def getCurrentPlayer(self):
+        if len(self.turns) == self.roundLength and self.currentPlayer.available_actions <= 0:
+            if debug:
+                print("round end. played this round: {}".format(self.turns))
+            return False
+
+        if self.currentPlayer.available_actions > 0:
+            if debug:
+                print("still {}s turn. actions: {}".format(self.currentPlayer, self.currentPlayer.available_actions))
+            return self.currentPlayer
+
+        if self.currentPlayer.available_actions <= 0:
+            nplayer = self.__getNextPlayer()
+            self.currentPlayer = nplayer
+
+            # if there is a owner with actions left, else send stop signal.
+            if isinstance(nplayer, owner):
+                if debug: 
+                    print("switched to {}".format(nplayer))
+                    print("{} actions: {}".format(nplayer, nplayer.available_actions))
+                return nplayer
+            else:
+                if debug:
+                    print("round end. played this round: {}".format(self.turns))
+                return False
+
+    def __setActions(self):
+        for i in self.players:
+            i.available_actions = 3
+
+    def __getNextPlayer(self) -> owner or False:
+        options = [i.__dict__ for i in self.players if i not in self.turns]
+        plstub = max(options, key=lambda x:x['available_actions'] > 0)
+
+        # if there are no more players with more than 0 actions
+        if plstub.get("available_actions") == 0:
+            return False
+        
+        pl = [d for d in self.players if d.id == plstub.get('id')][0]
+        self.turns.append(pl)
+        return pl
+    
+
 class gameController:
     """
     Handles game state monitoring.
     """
-    def __init__(self, first_player, second_player, computer) -> None:
-        self.first_player : owner = second_player
-        self.second_player: owner = first_player
-        self.computer: owner = computer
-        self.turnOrder = ["p1","p2", "computer"]
-        self.openSlots = [self.first_player, self.second_player, self.computer]
-        self.closedSlots = []
-        self.current_player = self.first_player
+    def __init__(self, players: (owner)) -> None:
+        self.players = players
+        self.rounds: (gameRound) = []
+        self.startRound()
+    
+    def startRound(self) -> owner:
+        Ground = gameRound(len(self.rounds)+1, self.players)
+        if debug:
+            print("starting round {}".format(Ground.id))
+        self.rounds.append(Ground)
+        return Ground.getCurrentPlayer()
 
-    def __getNextPlayer(self, current):
-        if len(self.openSlots) > 0:
-            nextplayer = dict(self.openSlots, key=lambda x:x['openTurn'])
-            if nextplayer:
-                return nextplayer
-                
-    def action_or_switch(self):
+    def playerAction(self, action):
+        self.getCurrentPlayer().action()
 
-        if self.current_player.available_actions == 2:
-            print(self.current_player.startTurn())
+    def getCurrentPlayer(self):
+        player = self.rounds[-1].getCurrentPlayer()
+        if player:
+            return player
+        else:
+            return self.startRound()
 
-        if self.current_player.available_actions >= 1:
-            self.current_player.action()
-
-        else: 
-            self.current_player.available_actions = 2
-            self.openSlots.remove(self.current_player)
-            self.closedSlots.append(self.current_player)
-            tmp = self.current_owner
-            self.current_owner = self.other_owner
-            self.other_owner = tmp
-
-        return self.current_owner
+    def clearPlayers(self):
+        for i in self.players:
+            i.clear()
 
     def switch_player(self):
-        self.current_owner.available_actions = 2
-        tmp = self.current_owner
-        self.current_owner = self.other_owner
-        self.other_owner = tmp
-        return self.current_owner
+        self.rounds[-1].endPlayerTurn()
+        return self.getCurrentPlayer()
 
-    def check_game_state(self):
-        all_units_owner1 = len(self.current_owner.units)
-        x = 0
 
-        for i in self.current_owner.units:
-            if i.destroyed == True:
-                x += 1
-        
-        if all_units_owner1 == x:
-            return self.other_owner
-
-        all_units_owner2 = len(self.other_owner.units)
-        x = 0
-
-        for i in self.other_owner.units:
-            if i.destroyed == True:
-                x += 1
-        if all_units_owner2 == x:
-            return self.current_owner
-        
