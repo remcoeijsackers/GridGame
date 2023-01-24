@@ -1,58 +1,17 @@
-import pandas as pd
-import random
 from pandas.core.frame import DataFrame
 
-from src.util import fullcols, placeip, colsandrows, placeip_near_wall, colsc, colsr
-from src.objects import cell, unit, player, scenery, building, broken_cell
-from src.settings import gridsize, debug
+from src.util import fullcols, colsandrows, placeip_near_wall, colsc, colsr
 
-from src.controller import owner
+from gamemanager.settings.settings import gridsize
 
-class placement:
-    """
-    Handles seed generation, random placement of units
-    """
-    def __init__(self, seed):
-        self.seed = seed
-        self.coreseed = seed[:len(seed)//2]
-        self.subseed = seed[len(seed)//2:]
+from objectmanager.objects.grid import cell
+from objectmanager.objects.grid import broken_cell
+from objectmanager.objects.pawn import pawn
 
-    def placeip(self, board, placee):
-        for i,x in list(zip(self.coreseed, self.subseed)):
-            def cl():
-                random.seed(int(i))
-                return random.choice(fullcols[:gridsize])
-            def rc():
-                random.seed(int(x))
-                return random.choice(range(gridsize))
-            r = rc()
-            c = cl()
-            if hasattr(board.at[r, c], 'walkable'):
-                board.at[r, c] = placee
-            else: 
-                placeip(board, placee)
-            placee.set_loc((r,c))
-            if debug:
-                print(r,c)
-        return r, c
 
-    def generate(self, board):
-        #placing units
-        pla = [unit(i) for i in ["E", "E"]]
-        [self.placeip(self.board, i) for i in pla]
 
-        #placing obstacles
-        random.seed(int(self.coreseed))
-        plb = [building(i) for i in ["B" for i in range(random.randint(1,6))]]
-        [self.placeip(board, i) for i in plb] 
+class boardManager:
 
-        #placing scenery
-        random.seed(int(self.subseed))
-        pls = [scenery(i) for i in ["T" for i in range(random.randint(1,6))]]
-        [self.placeip(board, i) for i in pls]  
-        return board
-
-class manager:
     def show(self) -> DataFrame:
         return self.board
     
@@ -198,6 +157,16 @@ class manager:
             for item in row:
                 if not isinstance(item, cell):
                     yield item
+
+    def get_all_pawns(self, board: DataFrame):
+        """
+        Get all (non cell) objects in the dataframe.
+        """
+        all_items_on_board = board.to_numpy()
+        for row in all_items_on_board:
+            for item in row:
+                if isinstance(item, pawn):
+                    yield item
     
     def get_coords_of_all_objects(self, board: DataFrame):
         """
@@ -331,7 +300,7 @@ class manager:
         for i in self.get_coords_of_items_in_row(board, unit.loc[0]):
             col_unit = colsc().get(unit.loc[1])
             col_object = colsc().get(i[1])
-            if not isinstance(i, player):
+            if not isinstance(i, pawn):
                 if col_unit < col_object:
                     # + if object is to the right of player
                     if i[1] != 'J': 
@@ -351,7 +320,7 @@ class manager:
         for i in self.get_coords_of_items_in_col(board, unit.loc[1]):
             row_unit = unit.loc[0]
             row_object = i[0]
-            if not isinstance(i, player):
+            if not isinstance(i, pawn):
                 if row_unit < row_object:
                     # + if object is below player
                     if i[0] != 9: 
@@ -376,167 +345,6 @@ class manager:
         placeip_near_wall(self.board, placee)
         for i in self.get_adjacent_cells(placee.loc, 2):
             x = classfromobject(name)
-            self.board.at[i[0], i[1]] = x
-            x.set_loc((i[0], i[1]))
-
-class unitcontroller:
-    def count(self, unit, loc) -> int:
-        """
-        Count how many steps an action would take.
-        """
-        z = unit.loc[0], colsc().get(unit.loc[1])
-        b = int(loc[0]), colsc().get(loc[1])
-        # for singular vertical moves
-        if abs(z[0] - b[0]) ==  1 and abs(z[1] - b[1]) == 1:
-            # both are one
-            outcome = 1
-        elif (abs(z[0] - b[0]) !=  1 and abs(z[1] - b[1]) != 1) and abs(z[0] - b[0]) == abs(z[1] - b[1]):
-            #both are the same, but not one
-            outcome = abs(z[0] - b[0])
-
-        else: 
-            outcome = abs(z[0] - b[0]) + abs(z[1] - b[1])
-        return outcome
-    
-    def sub_possible_moves(self, unit, boardmanager: manager, total=False, turns=1):
-        """
-        Return the coordinates an unit can walk to.
-        """
-        filter_coords = []
-        for i in boardmanager.block_walk_behind_object_in_row(boardmanager.board, unit):
-            filter_coords.append(i)
-        for i in boardmanager.block_walk_behind_object_in_col(boardmanager.board, unit):
-            filter_coords.append(i)
-        #for i in boardmanager.get_coords_of_items_in_diagonal_topleft_to_bottomright(boardmanager.board, unit):
-        #    filter_coords.append(i)
-        #for i in boardmanager.get_coords_of_items_in_diagonal_topright_to_bottomleft(boardmanager.board, unit):
-        #    filter_coords.append(i)
-        for spot in colsandrows():
-            for coord in spot:
-                if not total:
-                    if self.count(unit, coord) <= unit.range and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
-                        yield coord
-                else: 
-                    if turns > 0:
-                        if self.count(unit, coord) <= unit.range * (turns + 1) and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
-                            yield coord
-                    else:
-                        if self.count(unit, coord) <= unit.range * turns  and getattr(boardmanager.board.at[coord[0], coord[1]], 'walkable') and coord not in filter_coords:
-                            yield coord
-
-
-    def possible_moves(self, unit, boardmanager: manager, total=False, turns=1):
-        tmpcords = []
-        retcords = []
-        movecords = []
-
-        for spot in colsandrows():
-            for coord in spot:
-                tmpcords.append(coord)
-        
-        for coord in self.sub_possible_moves(unit, boardmanager, total, turns):
-            movecords.append(coord)
-
-        for i in tmpcords:
-            subcords = []
-            topsubcords = []
-            for crd in boardmanager.get_right_and_left_cells(i):
-                subcords.append(crd)
-            for crd in boardmanager.get_top_and_bottom_cells(i):
-                topsubcords.append(crd)
-
-            if subcords[0] in movecords and subcords[1] in movecords and not i == unit.loc:
-                retcords.append(i)
-            if topsubcords[0] in movecords and topsubcords[1] in movecords and not i == unit.loc: 
-                retcords.append(i)
-            subcords = []
-            topsubcords = []
-        
-        for i in movecords:
-            retcords.append(i)
-
-        for i in retcords:
-            yield i
-
-        retcords = []
-        movecords = []
-    
-    def possible_melee_moves(self, selected_unit, board: DataFrame, controlling_player: owner):
-        """
-        Return the coordinates an unit can attack.
-        """
-        for spot in colsandrows():
-            for coord in spot:
-                # check if its a cell
-                if self.count(selected_unit, coord) <= selected_unit.melee_range and getattr(board.at[coord[0], coord[1]], 'walkable'):
-                    yield coord
-                else:
-                    # if its not a cell, but a piece of scenery or a unit, melee is posible
-                    if coord != selected_unit.loc:
-                        if self.count(selected_unit, coord) <= selected_unit.melee_range and (isinstance(board.at[coord[0], coord[1]], scenery) or isinstance(board.at[coord[0], coord[1]], unit) or isinstance(board.at[coord[0], coord[1]], building) and not board.at[coord[0], coord[1]] in controlling_player.units):
-                            yield coord
-
-    def place(self, unit: unit, loc, boardmanager: manager) -> DataFrame and bool:
-        """
-        Place an unit to another spot in the dataframe.
-        """
-        pr = colsc().get(loc[1])
-        ul = colsc().get(unit.loc[1])
-        if getattr(boardmanager.board.at[loc[0], loc[1]], 'walkable') and loc in self.possible_moves(unit, boardmanager):
-            newboard = boardmanager.board
-            newboard.iloc[int(unit.loc[0])][int(ul)] = cell(stepped_on=1) 
-            newboard.iloc[int(loc[0])][int(pr)] = unit 
-            unit.set_loc((int(loc[0]),loc[1]))
-            return newboard, True
-        else:
-            return boardmanager.board, False
-
-
-    def attack(self, loc, board, damage) -> DataFrame:
-        """
-        Attack a cell, scenery or another unit.
-        """
-        pr = colsc().get(loc[1])
-        def __break():
-            broken_cell_object = broken_cell()
-            board.iloc[int(loc[0])][int(pr)] = broken_cell_object
-            broken_cell_object.loc = loc
-        def _remove_object():
-            object_to_remove = board.iloc[int(loc[0])][int(pr)]
-            object_to_remove.destroyed = True
-            board.iloc[int(loc[0])][int(pr)] = cell()
-            
-        if getattr(board.iloc[int(loc[0])][int(pr)], 'walkable'):
-            __break()
-        else :
-            if isinstance(board.iloc[int(loc[0])][int(pr)], scenery):
-                _remove_object()
-            if isinstance(board.iloc[int(loc[0])][int(pr)], unit):
-                attacked_unit: unit = board.iloc[int(loc[0])][int(pr)]
-                attacked_unit.take_damage(damage)
-        return board
-
-    def attack_on_loc(self, loc, board):
-        """
-        Remote Attack a cell, scenery or another unit.
-        """
-        pr = colsc().get(loc[1])
-        def __break():
-            broken_cell_object = broken_cell()
-            board.iloc[int(loc[0])][int(pr)] = broken_cell_object
-            broken_cell_object.loc = loc
-        def _remove_object():
-            board.iloc[int(loc[0])][int(pr)] = cell()
-            
-        if getattr(board.iloc[int(loc[0])][int(pr)], 'walkable'):
-            __break()
-        else :
-            _remove_object()
-
-        return board
-
-class unitbrain:
-    def __init__(self) -> None:
-        pass
-
-    
+            if  isinstance(self.board.at[i[0], i[1]], cell) and bool(getattr(self.board.at[i[0],i[1]], 'walkable')): #hasattr(self.board.at[i[0],i[1]], 'walkable') and 
+                self.board.at[i[0], i[1]] = x
+                x.set_loc((i[0], i[1]))
