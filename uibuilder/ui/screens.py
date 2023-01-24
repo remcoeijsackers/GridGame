@@ -1,11 +1,14 @@
 
 import tkinter as tk
 from tkinter.colorchooser import askcolor
-from src.controller import controller, owner
+#from src.controller import controller, owner
 from src.context import modal_context, settings_context, color_context, unit_modal_context
 from src.conversion import convert_coords
 from src.grid import grid
 from src.settings import symbolsize
+
+from gamemanager.dm.dm import gameController
+from gamemanager.players.owners import owner
 
 from uibuilder.ui.components import initilise_settings
 
@@ -14,13 +17,14 @@ def initialise_canvas(parent, settings: settings_context):
         parent.canvas.pack(side='left',anchor='nw', fill='x')
         
 
-def initialise_game_screen(parent, player_one, player_two, computer, settings: settings_context):
+def initialise_game_screen(parent, players, settings: settings_context ):
         parent.symbol_size = symbolsize.get_symbolsize(settings.var_boardsize)
-        parent.player_one = player_one
-        parent.player_two = player_two
+        #parent.player_one = player_one
+        #parent.player_two = player_two
+        parent.players = players
         parent.show_stepped_on_tiles = False
 
-        parent.game_controller = controller(player_one, player_two, computer)
+        #parent.game_controller = gameController(players)
 
         parent.statusbar = tk.Label(parent.window, text="Cell info", bd=1, relief=tk.SUNKEN, anchor=tk.W)
 
@@ -118,18 +122,20 @@ def initialise_home_screen( parent, settings: settings_context, brd, gridsize):
             
             def start_game():
                 p = get_input()
-                pl1 = owner(p[0], entry_player_one['background'])
-                pl2 = owner(p[1], entry_player_two['background'])
-                pc = owner("computer", color_context().red_color)
+                pl1 = owner(0, p[0], entry_player_one['background'])
+                pl2 = owner(1, p[1], entry_player_two['background'])
+                pc = owner(2, "computer", color_context().red_color)
+
+                controller = gameController([pl1,pl2])
 
                 parent.gridsize = settings.var_tiles
     
                 gridsize.set_gridsize(parent.gridsize)
                 parent.convert = convert_coords(parent.gridsize, settings.var_boardsize)
                 brd.set_board(grid(parent.gridsize).setup())
-                parent.initialise_game(pl1,pl2, pc, settings)
+                parent.initialise_game([pl1,pl2] ,settings,controller)
                 parent.home_frame.destroy()
-                
+
                 
             
             def open_settings():

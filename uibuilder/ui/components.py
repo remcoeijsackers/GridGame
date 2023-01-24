@@ -47,7 +47,7 @@ def make_player_card(parent: tk.Frame, player: owner, row= 0):
 
         secrow = row + 2
         turn_label = tk.Label(panel, text="{}".format(player.name), background=player.color)
-        actions_label = tk.Label(panel, text="Actions remaining: {}".format(player.available_actions + 1), background=player.color)
+        actions_label = tk.Label(panel, text="Actions remaining: {}".format(player.available_actions), background=player.color)
         buildings_label = tk.Label(panel, text= "Units: {}, Buildings: {}".format(len(player.units), player.buildings), background=player.color)
 
         turn_label.grid(column=0, row=secrow, columnspan=6)

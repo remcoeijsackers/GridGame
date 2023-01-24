@@ -14,6 +14,12 @@ class gameRound:
         self.__setActions()
         self.roundLength = len(players)
         self.currentPlayer = self.__getNextPlayer()
+    
+    def getPlayerByID(self, id):
+        return [d for d in self.players if d.id == id][0]
+
+    def endPlayerTurn(self):
+        self.currentPlayer.available_actions = 0
 
     def getCurrentPlayer(self):
         if len(self.turns) == self.roundLength and self.currentPlayer.available_actions <= 0:
@@ -43,7 +49,7 @@ class gameRound:
 
     def __setActions(self):
         for i in self.players:
-            i.available_actions = 2
+            i.available_actions = 3
 
     def __getNextPlayer(self) -> owner or False:
         options = [i.__dict__ for i in self.players if i not in self.turns]
@@ -83,12 +89,13 @@ class gameController:
             return player
         else:
             return self.startRound()
-                
+
+    def clearPlayers(self):
+        for i in self.players:
+            i.clear()
+
     def switch_player(self):
-        self.current_owner.available_actions = 2
-        tmp = self.current_owner
-        self.current_owner = self.other_owner
-        self.other_owner = tmp
-        return self.current_owner
+        self.rounds[-1].endPlayerTurn()
+        return self.getCurrentPlayer()
 
 
