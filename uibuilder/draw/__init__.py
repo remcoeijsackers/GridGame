@@ -1,1 +1,1 @@
-from .painter import painter
+from uibuilder.draw.painter import *

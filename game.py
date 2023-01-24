@@ -16,7 +16,7 @@ from src.state import state
 from contexts.settingscontext import settings_context, placement_context
 from contexts.uicontext import unit_modal_context, modal_context
 from contexts import colorContext
-from uibuilder.draw.painter import painter
+from uibuilder.draw import painter
 
 from uibuilder.ui.screens import initialise_game_screen, display_gameover_screen, finalise_game_screen
 from uibuilder.ui.components import make_player_card, make_unit_card, make_admin_card
@@ -179,34 +179,34 @@ class game(object):
         
         # Changes tiles color after movement slightly
         for obj in boardmanager.get_all_clean_cells(brd.board):
-            painter().draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(obj.loc),obj.color)
+             painter.draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(obj.loc),obj.color)
 
         for obj in boardmanager.get_all_objects(brd.board):
             if obj.destroyed:
                 cleanup_func(obj)
             if isinstance(obj, water):
-                painter().draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(obj.loc),obj.color)
+                painter.draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(obj.loc),obj.color)
                 
             if isinstance(obj, pawn) and not obj.destroyed:
                 for i in self.players:
                     if obj in i.units:
-                        painter().draw_unit(self.convert, self.canvas, brd, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), i.color)
+                        painter.draw_unit(self.convert, self.canvas, brd, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), i.color)
                     
             if isinstance(obj, tree)and not obj.destroyed:
-                painter().draw_tree(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc))
+                painter.draw_tree(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc))
                 
             if isinstance(obj, building) and not obj.destroyed:
-                painter().draw_building(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), obj.color)
+                painter.draw_building(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), obj.color)
                 
             if isinstance(obj, enemy) and not obj.destroyed:
-                painter().draw_unit(self.convert, self.canvas, brd, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), colorContext.symbol_en_color)
+                painter.draw_unit(self.convert, self.canvas, brd, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), colorContext.symbol_en_color)
                 
             if isinstance(obj, broken_cell):
-                painter().draw_broken_cell(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc))
+                painter.draw_broken_cell(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc))
 
         if self.show_stepped_on_tiles:
             for cl in boardmanager.get_all_cells(brd.board):
-                painter().draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(cl.loc),colorContext.green_color)
+                painter.draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(cl.loc),colorContext.green_color)
         if debug:
             print(brd.board)
 
@@ -215,18 +215,18 @@ class game(object):
         Draws the step / attack moves that are available to the selected unit.
         """
         for i in  unitController.possible_moves(unit, brd):
-            painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i),movecolor)
+            painter.draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i),movecolor)
 
         for i in  unitController.possible_moves(unit, brd, total=True, turns=self.game_controller.getCurrentPlayer().available_actions):
             if not inspect:
-                painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colorContext.range_move_color)
+                painter.draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colorContext.range_move_color)
             else: 
-                painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colorContext.green_color)
+                painter.draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colorContext.green_color)
         for i in  unitController.possible_melee_moves(unit, brd.board, self.game_controller.getCurrentPlayer()):
-            painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colorContext.symbol_ranged_attack_dot_color, 3)
+            painter.draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,colorContext.symbol_ranged_attack_dot_color, 3)
 
         for i in  unitController.possible_ranged_moves(unit, brd.board, self.game_controller.getCurrentPlayer()):
-            painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,attackcolor)
+            painter.draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,attackcolor)
 
     def draw_possible_movement(self, unit, inspect=False ):
         col=colorContext.symbol_dot_color
@@ -234,7 +234,7 @@ class game(object):
             col=colorContext.green_color
 
         for i in  unitController.possible_moves(unit, brd, total=True, turns=self.game_controller.getCurrentPlayer().available_actions):
-            painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i),col)
+            painter.draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i),col)
 
     def draw_possible_melee_attacks(self, unit, inspect=False ):
         col=colorContext.symbol_attack_dot_color
@@ -242,7 +242,7 @@ class game(object):
             col=colorContext.green_color
 
         for i in  unitController.possible_melee_moves(unit, brd.board, self.game_controller.getCurrentPlayer()):
-            painter().draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,col, 3)
+            painter.draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i) ,col, 3)
 
     def select_move_click(self, event):
         """
