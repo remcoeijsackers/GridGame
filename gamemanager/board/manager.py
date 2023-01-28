@@ -108,6 +108,24 @@ class boardManager:
             if __count(loc, i) <= distance:
                 yield i
 
+    def get_adjacent_enemy(self, loc, distance, owner):
+        """
+        check if something is adjacent to something else, in a square grid (including vertical)
+        """
+        def __count(mainloc, otherloc) -> int:
+            z = mainloc[0], colsc().get(mainloc[1])
+            b = int(otherloc[0]), colsc().get(otherloc[1])
+            outcome = abs(z[0] - b[0]) + abs(z[1] - b[1])
+            return outcome
+
+        for i in self.iter_coords():
+            if __count(loc, i) <= distance:
+                if isinstance(self.inspect(i), pawn):
+                    print(self.inspect(i))
+                    if self.inspect(i).owner != owner:
+                        return self.inspect(i)
+
+
     def get_right_and_left_cells(self, coord):
         """
         get the type of cell right and left

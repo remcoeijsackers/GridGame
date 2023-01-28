@@ -31,15 +31,17 @@ def count( unit, loc) -> int:
         """
         return calculate_distance(unit, loc)
     
-def is_above_or_below( unit, loc):
+def is_above_or_below_right_or_left( unit, loc):
         if  is_above_me(unit, loc):
             return "above"
         if  is_below_me(unit, loc):
             return "below"
-        else:
-            return "neither"
+        if is_left_me(unit, loc):
+            return "left"
+        if is_right_me(unit,loc):
+            return "right"
 
-def is_above_me( unit, loc) -> int:
+def is_above_me( unit, loc) -> bool:
         """
         Check if a loc is above the unit
         """
@@ -48,11 +50,29 @@ def is_above_me( unit, loc) -> int:
         else: 
             return False
 
-def is_below_me( unit, loc) -> int:
+def is_below_me( unit, loc) -> bool:
         """
         Check if a loc is above the unit
         """
         if loc[0] > unit.loc[0]:
+            return True
+        else: 
+            return False
+
+def is_left_me( unit, loc) -> bool:
+        """
+        Check if a loc is left from the unit
+        """
+        if colsc().get(loc[1]) < colsc().get(unit.loc[1]):
+            return True
+        else: 
+            return False
+
+def is_right_me( unit, loc) -> bool:
+        """
+        Check if a loc is right from the unit
+        """
+        if colsc().get(loc[1]) > colsc().get(unit.loc[1]):
             return True
         else: 
             return False

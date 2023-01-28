@@ -23,11 +23,12 @@ class cell(boardItem):
         return self.loc
 
 class broken_cell(cell):
-    def __init__(self, name = "x") -> None:
-        self.name = name
+    def __init__(self, name="x", stepped_on=0, loc=None) -> None:
         self.walkable = False
         self.description = "a broken cell on the grid"
         self.destroyed = False
+        super().__init__(name, stepped_on, loc)
+
 
     def __repr__(self) -> str:
         return self.name

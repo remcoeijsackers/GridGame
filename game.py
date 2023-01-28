@@ -2,7 +2,6 @@
 import tkinter as tk
 from tkinter.filedialog import askopenfilename
 
-
 from objectmanager.objects.grid import broken_cell, cell
 from objectmanager.objects.scenery import building, water, tree
 
@@ -26,6 +25,7 @@ from objectmanager.placement.inital import create_pieces
 from objectmanager.objects.pawn import pawn, enemy
 
 from gamemanager.players.owners import owner
+from gamemanager.players.npc import npc
 from gamemanager.dm.dm import gameController
 
 brd = boardManager()   
@@ -62,7 +62,7 @@ class game(object):
 
     def initialise_home(self, settings: settings_context):
 
-        return HomeScreen().initialise_home_screen(self, settings, brd, gridsize)
+        return HomeScreen().initialise_home_screen(self, settings, brd, gridsize, self.convert)
 
     def initialise_game(self, players, settings: settings_context, game_controller: gameController):
         self.game_controller = game_controller
@@ -166,10 +166,10 @@ class game(object):
         """
         def cleanup_func(obj):
             boardmanager.board.at[obj.loc[0], obj.loc[1]] = cell((obj.loc[0], obj.loc[1]))
-            if obj in self.players.units:
-                self.players.units.remove(obj)
-            #if obj in self.player_two.units:
-            #    self.player_two.units.remove(obj)
+            for player in self.players:
+                for unit in player.units:
+                    if unit == obj:
+                        player.units.remove(obj)
 
         for i in range(self.gridsize):
             self.canvas.create_line((i + 1) * self.game_settings.var_boardsize / self.gridsize, 0, (i + 1) * self.game_settings.var_boardsize / self.gridsize, self.game_settings.var_boardsize)
@@ -248,10 +248,12 @@ class game(object):
         """
         Allows the user to either move a unit, or select another of their units
         """
+        print("select move is called with this event:")
+        print(event)
         grid_position = [event.x, event.y]
         logical_position = self.convert.convert_grid_to_logical_position(grid_position)
         mappos = self.convert.convert_logical_to_map(logical_position)
-
+        print(mappos)
         def _select_unit_click(event):
             grid_position = [event.x, event.y]
             logical_position = self.convert.convert_grid_to_logical_position(grid_position)
@@ -408,6 +410,13 @@ class game(object):
 
         make_player_card(self.player_box, self.game_controller.getCurrentPlayer(),row=2)
         make_unit_card(self, self.unit_box,self.selected_unit,row=20)
+
+        # ! IF the current player is an npc, make an decision
+        print("checking if current player is an npc")
+        if isinstance( self.game_controller.getCurrentPlayer(), npc):
+            print("npc deciding")
+            self.game_controller.makePlayerDecision(self.selected_unit)
+            
 
     def set_impossible_action_text(self, text):
         """

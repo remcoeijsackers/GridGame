@@ -10,7 +10,7 @@ from gamemanager.settings.settings import debug
 
 from gamemanager.dm.dm import gameController
 from gamemanager.players.owners import owner
-
+from gamemanager.players.npc import npc
 from uibuilder.ui.components import initilise_settings
 
 class HomeScreen:
@@ -18,21 +18,31 @@ class HomeScreen:
         self.players = []
 
 
-    def initialise_home_screen(self, parent, settings: settings_context, brd, gridsize):
+    def initialise_home_screen(self, parent, settings: settings_context, brd, gridsize, conversion):
             parent.home_frame = tk.Frame(parent.window, padx= 100, pady=100, relief=tk.RIDGE, width=1000, height=600)
             header_label = tk.Label(parent.home_frame, text="GridGame", font=("Courier", 44))
             def addPlayer(): 
                 entry_player = tk.Entry(parent.home_frame)
                 entry_player.insert(0, 'player x')
-                entry_player['background'] = 'blue'
+                entry_player['background'] = colorContext.red_color
                 entry_player.grid(column=0)
+                entry_player_control = tk.Entry(parent.home_frame)
+                entry_player_control.insert(0, 'auto')
+                entry_player_control.grid()
+
                 def change_color():
                     colors = askcolor(title="Tkinter Color Chooser")
                     entry_player.configure(bg=colors[1])
                     return colors[1]
+
                 def save_player():
                     pl = entry_player.get()
-                    self.players.append(owner(len(self.players)+1, pl, entry_player_one['background']))
+                    if entry_player_control.get() != "auto":
+                        self.players.append(owner(len(self.players)+1, pl, entry_player['background']))
+                    if entry_player_control.get() == "auto":
+                        print("making a npc player")
+                        self.players.append(npc(len(self.players)+1, pl, entry_player['background'], conversion, brd))
+
                 butt = tk.Button(
                     parent.home_frame,
                     text='Select Color:',
@@ -43,6 +53,7 @@ class HomeScreen:
                     text='Save',
                     command=save_player
                     )
+
                 butt.grid()
                 save_butt.grid()
 
@@ -80,7 +91,7 @@ class HomeScreen:
                 if debug:
                     print(self.players)
 
-                controller = gameController(self.players)
+                controller = gameController(self.players, parent)
 
                 parent.gridsize = settings.var_tiles
     

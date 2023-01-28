@@ -118,7 +118,7 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
         npcs = tk.Scale(settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of NPC's")
         npcs.set(settings.var_npcs)
         units1 = tk.Scale(settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p1")
-        units1.set(settings.var_units1)
+        units1.set(settings.var_units)
         units2 = tk.Scale(settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p2")
         units2.set(settings.var_units2)
         placementRandom = tk.Checkbutton(settings_frame)

@@ -2,7 +2,7 @@
 from gamemanager.players.owners import owner
 
 from gamemanager.settings import debug
-
+from gamemanager.players.npc import npc
 class gameRound:
     """
     A singel round of gameplay
@@ -21,7 +21,7 @@ class gameRound:
     def endPlayerTurn(self):
         self.currentPlayer.available_actions = 0
 
-    def getCurrentPlayer(self):
+    def getCurrentPlayer(self) -> owner or npc or False:
         if len(self.turns) == self.roundLength and self.currentPlayer.available_actions <= 0:
             if debug:
                 print("round end. played this round: {}".format(self.turns))
@@ -36,7 +36,7 @@ class gameRound:
             nplayer = self.__getNextPlayer()
             self.currentPlayer = nplayer
 
-            # if there is a owner with actions left, else send stop signal.
+            # if there is a owner with actions left, else send the end turn signal.
             if isinstance(nplayer, owner):
                 if debug: 
                     print("switched to {}".format(nplayer))
@@ -55,12 +55,13 @@ class gameRound:
         options = [i.__dict__ for i in self.players if i not in self.turns]
         plstub = max(options, key=lambda x:x['available_actions'] > 0)
 
-        # if there are no more players with more than 0 actions
+        # if there are no more players with more than 0 actions, send the end turn signal.
         if plstub.get("available_actions") == 0:
             return False
         
-        pl = [d for d in self.players if d.id == plstub.get('id')][0]
+        pl:owner = [d for d in self.players if d.id == plstub.get('id')][0]
         self.turns.append(pl)
+        pl.startTurn()
         return pl
     
 
@@ -68,22 +69,37 @@ class gameController:
     """
     Handles game state monitoring.
     """
-    def __init__(self, players: (owner)) -> None:
+    def __init__(self, players: (owner), game) -> None:
         self.players = players
         self.rounds: (gameRound) = []
+        self.game = game
         self.startRound()
     
     def startRound(self) -> owner:
+        #players = [i for i in self.players if len(i.units) != 0 ]
         Ground = gameRound(len(self.rounds)+1, self.players)
         if debug:
             print("starting round {}".format(Ground.id))
         self.rounds.append(Ground)
         return Ground.getCurrentPlayer()
-
+    
+    def makePlayerDecision(self, unit):
+        """
+        get a decision from an npc, and carry it out
+        """
+        if self.getCurrentPlayer() and isinstance(self.getCurrentPlayer(), npc):
+            self.game.canvas.focus_set()
+            npcaction = self.getCurrentPlayer().decide(unit)
+            if npcaction[1] == "move":
+                return self.game.select_move_click(npcaction[0])
+            if npcaction[1] == "attack":
+                self.game.switch_mode_melee_attack("")
+                return self.game.melee_attack_click(npcaction[0])
+            
     def playerAction(self, action):
         self.getCurrentPlayer().action()
 
-    def getCurrentPlayer(self):
+    def getCurrentPlayer(self) -> owner or npc:
         player = self.rounds[-1].getCurrentPlayer()
         if player:
             return player
