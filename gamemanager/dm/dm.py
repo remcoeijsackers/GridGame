@@ -109,6 +109,15 @@ class gameController:
     def clearPlayers(self):
         for i in self.players:
             i.clear()
+    
+    def checkGameState(self):
+        for i in self.players:
+            if len(i.units) == 0:
+                del i
+        if len(self.players) == 1:
+            return True
+        else:
+            return False
 
     def switch_player(self):
         self.rounds[-1].endPlayerTurn()

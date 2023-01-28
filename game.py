@@ -11,6 +11,7 @@ from src.conversion import convert_coords
 from gamemanager.board import boardManager
 from gamemanager.units import unitController
 from src.state import state
+from src.util import topL, topR, bottomL, bottomR, getDiagonalLine
 
 from contexts.settingscontext import settings_context, placement_context
 from contexts.uicontext import unit_modal_context, modal_context
@@ -27,6 +28,8 @@ from objectmanager.objects.pawn import pawn, enemy
 from gamemanager.players.owners import owner
 from gamemanager.players.npc import npc
 from gamemanager.dm.dm import gameController
+
+import time 
 
 brd = boardManager()   
 st = state()
@@ -83,6 +86,19 @@ class game(object):
 
         self.draw_board_and_objects(brd)
         self.draw_possible_movement(self.selected_unit)
+
+        line = getDiagonalLine(self.selected_unit.loc)
+        print(getDiagonalLine(self.selected_unit.loc))
+        for i in line:
+            painter.draw_building(self.convert, self.canvas,30,self.convert.convert_map_to_logical(i))
+        #painter.draw_building(self.convert, self.canvas,30,self.convert.convert_map_to_logical(topL(self.selected_unit.loc)))
+        #painter.draw_building(self.convert, self.canvas,30,self.convert.convert_map_to_logical(bottomL(self.selected_unit.loc)))
+        #painter.draw_building(self.convert, self.canvas,30,self.convert.convert_map_to_logical(bottomR(self.selected_unit.loc)))
+
+        if isinstance(self.game_controller.getCurrentPlayer(), npc):
+            time.sleep(0.1)
+            self.monitor_state()
+
 
     def admin_reset_board(self, event):
         self.game_controller.clearPlayers()
@@ -205,7 +221,7 @@ class game(object):
                 painter.draw_broken_cell(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc))
 
         if self.show_stepped_on_tiles:
-            for cl in boardmanager.get_all_cells(brd.board):
+            for cl in boardmanager.get_all_used_cells(brd.board):
                 painter.draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(cl.loc),colorContext.green_color)
         if debug:
             print(brd.board)
@@ -394,6 +410,7 @@ class game(object):
     def monitor_state(self):
         """
         Watch the current board status and monitor if a player has lost.
+        Also checks if the player is an npc, and if so, calls the its 'makedecision' function.
         """
         current_player = self.game_controller.getCurrentPlayer()
 
@@ -433,11 +450,11 @@ class game(object):
         """
         Reset the board after an action, reflecting the new state.
         """
-        #done = self.game_controller.check_game_state()
-        #if done:
-        #    self.draw_board_and_objects(brd)
-        #    self.display_gameover(done)
-        #    return
+        done = self.game_controller.checkGameState()
+        if done:
+            self.draw_board_and_objects(brd)
+            self.display_gameover(done)
+            return
         self.set_impossible_action_text("")
         if mappos:
             self.get_event_info(mappos)

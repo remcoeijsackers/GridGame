@@ -11,6 +11,190 @@ unit_thickness = 10
 cols = ["A","B","C","D","E","F","G","H","I","J"]
 fullcols = [i for i in "abcdefghijklmnopqrstuvwxyz".upper()]
 
+def getDiagonalLine(loc, direction=["all"]):
+    locsBotL = [loc]
+    locsBotR = [loc]
+    locsTopL = [loc]
+    locsTopR = [loc]
+    locsLeft = [loc]
+    locsRight = [loc]
+    locsTop = [loc]
+    locsBottom = [loc]
+
+    def __bottom(i):
+        return bottom(locsBottom[i])
+    def __top(i):
+        return top(locsTop[i])
+    def __right(i):
+        return right(locsRight[i])
+    def __left(i):
+        return left(locsLeft[i])
+
+    def __botL(i):
+        return bottomL(locsBotL[i])
+
+    def __topR(i):
+        return topR(locsTopR[i])
+
+    def __botR(i):
+        return bottomR(locsBotR[i])
+
+    def __topL(i):
+        return topL(locsTopL[i])
+
+    for i in range(30):
+        if __right(i):
+            locsRight.append(__right(i))
+        else:
+            break
+
+    for i in range(30):
+        if __left(i):
+            locsLeft.append(__left(i))
+        else:
+            break
+
+    for i in range(30):
+        if __bottom(i):
+            locsBottom.append(__bottom(i))
+        else:
+            break
+
+    for i in range(30):
+        if __top(i):
+            locsTop.append(__top(i))
+        else:
+            break
+    
+    for i in range(30):
+        if __topR(i):
+            locsTopR.append(__topR(i))
+        else:
+            break
+
+    for i in range(30):
+        if __botL(i):
+            locsBotL.append(__botL(i))
+        else: 
+            break
+
+    for i in range(30):
+        if __botR(i):
+            locsBotR.append(__botR(i))
+        else: 
+            break
+
+    for i in range(30):
+        if __topL(i):
+            locsTopL.append(__topL(i))
+        else: 
+            break
+    
+    finalLocs = []
+    for i in locsBotL:
+        if i != loc and "all" in direction or "bottomleft" in direction:
+            finalLocs.append(i)
+    for i in locsBotR:
+        if i != loc and "all" in direction or "bottomright" in direction:
+            finalLocs.append(i)
+    for i in locsTopL:
+        if i != loc and "all" in direction or "topleft" in direction:
+            finalLocs.append(i)
+    for i in locsTopR:
+        if i != loc and "all" in direction or "topright" in direction:
+            finalLocs.append(i)
+    for i in locsTop:
+        if i != loc and "all" in direction or "top" in direction:
+            finalLocs.append(i)
+    for i in locsBottom:
+        if i != loc and "all" in direction or "bottom" in direction:
+            finalLocs.append(i)
+    for i in locsRight:
+        if i != loc and "all" in direction or "right" in direction:
+            finalLocs.append(i)
+    for i in locsLeft:
+        if i != loc and "all" in direction or "left" in direction:
+            finalLocs.append(i)
+
+
+    return finalLocs
+
+def top(loc):
+    if loc[0] - 1 >= 0:
+        r1 = loc[0] - 1
+    else:
+        return None
+    r2 = loc[1]
+    return (r1, r2)
+
+def bottom(loc):
+    if loc[0] + 1 <= gridsize.get_gridsize():
+        r1 = loc[0] + 1
+    else:
+        return None
+    r2 = loc[1]
+    return (r1, r2)
+
+def left(loc):
+    r1 = loc[0]
+    if colsr().get(colsc().get(loc[1]) - 1):
+        r2 = colsr().get(colsc().get(loc[1]) - 1)
+    else: 
+        return None
+    return (r1, r2)
+
+def right(loc):
+    r1 = loc[0]
+    if colsr().get(colsc().get(loc[1]) + 1):
+        r2 = colsr().get(colsc().get(loc[1]) + 1)
+    else:
+        return None
+    return (r1, r2)
+
+def topR(loc):
+    if loc[0] - 1 >= 0:
+        r1 = loc[0] - 1
+    else:
+        return None
+    if colsr().get(colsc().get(loc[1]) + 1):
+        r2 = colsr().get(colsc().get(loc[1]) + 1)
+    else:
+        return None
+    return (r1, r2)
+
+def topL(loc):
+    if loc[0] - 1 >= 0:
+        r1 = loc[0] - 1
+    else:
+        return None
+    if colsr().get(colsc().get(loc[1]) - 1):
+        r2 = colsr().get(colsc().get(loc[1]) - 1)
+    else:
+        return None
+    return (r1, r2)
+
+def bottomR(loc):
+    if loc[0] + 1 <= gridsize.get_gridsize():
+        r1 = loc[0] + 1
+    else:
+        return None
+    if colsr().get(colsc().get(loc[1]) + 1):
+        r2 = colsr().get(colsc().get(loc[1]) + 1)
+    else: 
+        return None
+    return (r1, r2)
+
+def bottomL(loc):
+    if loc[0] + 1 <= gridsize.get_gridsize():
+        r1 = loc[0] + 1
+    else:
+        return None
+    if colsr().get(colsc().get(loc[1]) - 1):
+        r2 = colsr().get(colsc().get(loc[1]) - 1)
+    else:
+        return None
+    return (r1, r2)
+
 def colsc():
     """
     For mapping letters to ints.

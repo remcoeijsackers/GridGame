@@ -15,7 +15,6 @@ class NPCBrain:
         2. move in that direction
         
         """
-        time.sleep(0.1)
         pawns = self.mang.get_all_pawns(self.mang.board)
         options = []
         for i in pawns:

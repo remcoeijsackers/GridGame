@@ -1,6 +1,7 @@
 from pandas.core.frame import DataFrame
 
-from src.util import fullcols, colsandrows, placeip_near_wall, colsc, colsr
+from src.util import fullcols, colsandrows, placeip_near_wall, colsc, colsr,\
+     topL, topR, bottomL, bottomR, top, bottom,left,right
 
 from gamemanager.settings.settings import gridsize
 
@@ -72,7 +73,7 @@ class boardManager:
                 if isinstance(cl, cell):
                     cl.set_loc(coord)
                 
-    def get_all_cells(self, board: DataFrame):
+    def get_all_used_cells(self, board: DataFrame):
         """
         Return all coordinates in the board.
         """
@@ -110,7 +111,7 @@ class boardManager:
 
     def get_adjacent_enemy(self, loc, distance, owner):
         """
-        check if something is adjacent to something else, in a square grid (including vertical)
+        check if an unit is adjacent to selected unit, in a square grid (including vertical)
         """
         def __count(mainloc, otherloc) -> int:
             z = mainloc[0], colsc().get(mainloc[1])
@@ -121,7 +122,6 @@ class boardManager:
         for i in self.iter_coords():
             if __count(loc, i) <= distance:
                 if isinstance(self.inspect(i), pawn):
-                    print(self.inspect(i))
                     if self.inspect(i).owner != owner:
                         return self.inspect(i)
 
@@ -173,8 +173,8 @@ class boardManager:
         all_items_on_board = board.to_numpy()
         for row in all_items_on_board:
             for item in row:
-                if not isinstance(item, cell):
-                    yield item
+                #if not isinstance(item, cell):
+                yield item
 
     def get_all_pawns(self, board: DataFrame):
         """

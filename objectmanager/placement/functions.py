@@ -58,6 +58,8 @@ def placeipRigid(dataframe, placee, place):
             return 0
         if place == "bottom":
             return gridsize.get_gridsize() -1
+        if place == "center":
+            return 5
     r = rc()
     c = cl()
     if isinstance(dataframe.at[r, c], cell) and bool(getattr(dataframe.at[r,c], 'walkable')):

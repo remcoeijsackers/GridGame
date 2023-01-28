@@ -23,16 +23,25 @@ def create_pieces(parent, players: (owner), settings: settings_context, brd,  pl
             water_clustr = water("W")
             brd.placeclus(water_clustr)
 
+        bottomUsed = False
+        topUsed = False
         for player in players:
             for i in range(settings.var_units):
                 soldier = pawn("{}-{}".format(i, player.id),generator.unitgenerator.get_name(),generator.unitgenerator.get_age(),generator.unitgenerator.get_image(), player)
                 player.units.append(soldier)
                 if isinstance(player, npc):
-                    placeip(brd.board, soldier)
+                    placeipRigid(brd.board, soldier, "center")
                     continue
                 if parent.itemPlacement == "rigid":
-                    placeipRigid(brd.board, soldier, "top")
-                    continue
+                    if bottomUsed == False:
+                        #bottomUsed = True
+                        placeipRigid(brd.board, soldier, "center")
+                        continue
+                    if topUsed == False:
+                        #topUsed = True
+                        #placeipRigid(brd.board, soldier, "top")
+                        continue
+                    
                 
 
         for i in range(settings.var_factories):

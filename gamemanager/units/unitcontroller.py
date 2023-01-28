@@ -175,7 +175,7 @@ def attack( loc, board, damage) -> DataFrame:
         def __break():
             broken_cell_object = broken_cell()
             board.iloc[int(loc[0])][int(pr)] = broken_cell_object
-            broken_cell_object.loc = loc
+            broken_cell_object.set_loc(loc)
         def _remove_object():
             object_to_remove = board.iloc[int(loc[0])][int(pr)]
             object_to_remove.destroyed = True
