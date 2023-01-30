@@ -70,7 +70,7 @@ class pawnStats:
         pass
 
 class pawn(boardItem):
-    def __init__(self, name, fullname, age, image, owner ) -> None:
+    def __init__(self, name, fullname, age, image, owner) -> None:
         super().__init__()
         self.name = name
         self.description = self.name
@@ -87,6 +87,7 @@ class pawn(boardItem):
         self.owner = owner
         self.age = age
         self.image = image
+        self.color = owner.color
         
 
     def __str__(self) -> str:

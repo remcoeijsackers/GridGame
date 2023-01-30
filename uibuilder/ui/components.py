@@ -8,7 +8,6 @@ from contexts.settingscontext import  settings_context
 from contexts import colorContext
 import datetime
 
-
 def make_admin_card(parent, parentwindow: tk.Frame, row=0):
         parentwindow.children.clear()
 
@@ -118,20 +117,19 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
         npcs = tk.Scale(settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of NPC's")
         npcs.set(settings.var_npcs)
         units1 = tk.Scale(settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p1")
-        units1.set(settings.var_units1)
-        units2 = tk.Scale(settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p2")
-        units2.set(settings.var_units2)
+        units1.set(settings.var_units)
+       
         placementRandom = tk.Checkbutton(settings_frame)
         placementRigid = tk.Checkbutton(settings_frame)
         
-        min_size_needed = tiles.get() + water_clusters.get() * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 10
+        min_size_needed = tiles.get() + water_clusters.get() * 5  + trees.get() + factories.get() + npcs.get() + units1.get()  + 10
 
         total_objects_label = tk.Label(settings_frame, text="total objects: {}".format(min_size_needed), width=15)
 
         def check_settings_possible():
                 watr = int(water_clusters.get())
                 total_tiles = tiles.get() * tiles.get()
-                min_size_needed = tiles.get() + watr * 5  + trees.get() + factories.get() + npcs.get() + units1.get() + units2.get() + 5
+                min_size_needed = tiles.get() + watr * 5  + trees.get() + factories.get() + npcs.get() + units1.get() +  5
                 if min_size_needed > total_tiles:
                     tiles.set(min_size_needed)
                     total_tiles_label['text'] = "total tiles: {}".format(total_tiles)
@@ -144,8 +142,7 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
             settings.var_trees = trees.get()
             settings.var_factories = factories.get()
             settings.var_npcs = npcs.get()
-            settings.var_units1 = units1.get()
-            settings.var_units2 = units2.get()
+            settings.var_units = units1.get()
             settings.var_boardsize = boardsize.get()
             settings_frame.destroy()
             home_init_func(settings)
@@ -153,7 +150,6 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
         header_label_settings.grid(column=0, row=0, columnspan=4)
 
         units1.grid(column=0, row=1,pady=10, padx=10, columnspan=4)
-        units2.grid(column=0, row=2,pady=10, padx=10, columnspan=4)
 
         tiles.grid(column=0, row=4, columnspan=4, pady=10, padx=10)
         boardsize.grid(column=0, row=5, columnspan=4, pady=10, padx=10)

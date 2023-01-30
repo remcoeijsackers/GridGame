@@ -5,6 +5,7 @@ boardcolors = ['#422102','#542b05', '#4a2a0c']
 
 class cell(boardItem):
     def __init__(self, name = ".", stepped_on=0, loc=None) -> None:
+        super().__init__()
         self.name = name
         self.walkable = True
         self.description = "a cell on the grid"
@@ -23,11 +24,13 @@ class cell(boardItem):
         return self.loc
 
 class broken_cell(cell):
-    def __init__(self, name = "x") -> None:
-        self.name = name
+    def __init__(self, name="x", stepped_on=0, loc=None) -> None:
+        super().__init__(name, stepped_on, loc)
         self.walkable = False
         self.description = "a broken cell on the grid"
         self.destroyed = False
+        
+
 
     def __repr__(self) -> str:
         return self.name

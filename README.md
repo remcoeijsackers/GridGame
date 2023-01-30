@@ -21,13 +21,17 @@
 
 ## Dataframe as board
 Everything in the game is saved and managed in a pandas dataframe.
-Tkinter is used to provide a visual frontend
+Tkinter is used to provide a visual frontend.
 <p align="center"> 
 <img src="assets/gridgame2.png?raw=true" width="200px" >
 <img src="assets/cli.png?raw=true" width="200px">
 
 </p>
 
+## Player vs Player, NPC vs Player, NPC vs NPC
+Watch the computer play itself and tweak its logic.
+
+![npc movement](assets/gridgame.gif?raw=true "NPC's")
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -93,5 +97,15 @@ If you have a suggestion that would make this better, please fork the repo and c
 ## Contact
 
 Remco Eijsackers - contact@remcoeijsackers.com
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+<!-- DISCLAIMER -->
+### Disclaimer
+
+This project is by no means an example of best practises for tkinter/pandas or python. 
+It is a proof of concept, a starting template for others to build on.
+Some functionality might be broken.
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
