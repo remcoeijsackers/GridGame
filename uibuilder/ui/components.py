@@ -8,7 +8,6 @@ from contexts.settingscontext import  settings_context
 from contexts import colorContext
 import datetime
 
-
 def make_admin_card(parent, parentwindow: tk.Frame, row=0):
         parentwindow.children.clear()
 

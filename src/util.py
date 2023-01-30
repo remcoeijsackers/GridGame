@@ -49,43 +49,43 @@ def getDiagonalLine(loc, direction=["all"]):
             break
 
     for i in range(30):
-        if __left(i):
+        if __left(i) and __left(i)[0] <= gridsize.get_gridsize() -1:
             locsLeft.append(__left(i))
         else:
             break
 
     for i in range(30):
-        if __bottom(i):
+        if __bottom(i) and __bottom(i)[0] <= gridsize.get_gridsize() -1:
             locsBottom.append(__bottom(i))
         else:
             break
 
     for i in range(30):
-        if __top(i):
+        if __top(i) and __top(i)[0] <= gridsize.get_gridsize() -1:
             locsTop.append(__top(i))
         else:
             break
     
     for i in range(30):
-        if __topR(i):
+        if __topR(i) and __topR(i)[0] <= gridsize.get_gridsize() -1:
             locsTopR.append(__topR(i))
         else:
             break
 
     for i in range(30):
-        if __botL(i):
+        if __botL(i) and __botL(i)[0] <= gridsize.get_gridsize() -1:
             locsBotL.append(__botL(i))
         else: 
             break
 
     for i in range(30):
-        if __botR(i):
+        if __botR(i) and __botR(i)[0] <= gridsize.get_gridsize() -1:
             locsBotR.append(__botR(i))
         else: 
             break
 
     for i in range(30):
-        if __topL(i):
+        if __topL(i) and __topL(i)[0] <= gridsize.get_gridsize() -1:
             locsTopL.append(__topL(i))
         else: 
             break

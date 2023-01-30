@@ -20,6 +20,8 @@ class boardManager:
         self.board = board 
 
     def inspect(self, loc):
+        if loc == None:
+            return None
         pr = colsc().get(loc[1])
         contents = self.board.iloc[int(loc[0])][int(pr)]
         return contents
@@ -109,21 +111,36 @@ class boardManager:
             if __count(loc, i) <= distance:
                 yield i
 
-    def get_adjacent_enemy(self, loc, distance, owner):
+    def get_adjacent_enemy(self, loc, owner):
         """
         check if an unit is adjacent to selected unit, in a square grid (including vertical)
         """
-        def __count(mainloc, otherloc) -> int:
-            z = mainloc[0], colsc().get(mainloc[1])
-            b = int(otherloc[0]), colsc().get(otherloc[1])
-            outcome = abs(z[0] - b[0]) + abs(z[1] - b[1])
-            return outcome
 
-        for i in self.iter_coords():
-            if __count(loc, i) <= distance:
-                if isinstance(self.inspect(i), pawn):
-                    if self.inspect(i).owner != owner:
-                        return self.inspect(i)
+        if  isinstance(self.inspect(top(loc)), pawn) and self.inspect(top(loc)).owner != owner:
+            return self.inspect(top(loc))
+
+        if  isinstance(self.inspect(bottom(loc)), pawn) and self.inspect(bottom(loc)).owner != owner:
+            return self.inspect(bottom(loc))
+
+        if  isinstance(self.inspect(left(loc)), pawn) and self.inspect(left(loc)).owner != owner:
+            return self.inspect(left(loc))
+
+        if  isinstance(self.inspect(right(loc)), pawn) and self.inspect(right(loc)).owner != owner:
+            return self.inspect(right(loc))
+
+        if  isinstance(self.inspect(topL(loc)), pawn) and self.inspect(topL(loc)).owner != owner:
+            return self.inspect(topL(loc))
+
+        if  isinstance(self.inspect(topR(loc)), pawn) and self.inspect(topR(loc)).owner != owner:
+            return self.inspect(topR(loc))
+
+        if  isinstance(self.inspect(bottomL(loc)), pawn) and self.inspect(bottomL(loc)).owner != owner:
+            return self.inspect(bottomL(loc))
+
+        if  isinstance(self.inspect(bottomR(loc)), pawn) and self.inspect(bottomR(loc)).owner != owner:
+            return self.inspect(bottomR(loc))
+
+
 
 
     def get_right_and_left_cells(self, coord):

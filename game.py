@@ -11,7 +11,6 @@ from src.conversion import convert_coords
 from gamemanager.board import boardManager
 from gamemanager.units import unitController
 from src.state import state
-from src.util import topL, topR, bottomL, bottomR, getDiagonalLine
 
 from contexts.settingscontext import settings_context, placement_context
 from contexts.uicontext import unit_modal_context, modal_context
@@ -61,11 +60,14 @@ class game(object):
         self.initialise_home(self.game_settings)
 
     def playerAction(self):
-        self.game_controller.playerAction("")
+        # if an action results in winning the game
+        done = self.game_controller.playerAction("")
+        if done[0]:
+            return self.display_gameover(done[1][0])
 
     def initialise_home(self, settings: settings_context):
-
         return HomeScreen().initialise_home_screen(self, settings, brd, gridsize, self.convert)
+
 
     def initialise_game(self, players, settings: settings_context, game_controller: gameController):
         self.game_controller = game_controller
@@ -82,23 +84,17 @@ class game(object):
      
         make_admin_card(self, self.admin_box, row=22)
 
-        finalise_game_screen(self)
+        boardDone = finalise_game_screen(self)
 
         self.draw_board_and_objects(brd)
         self.draw_possible_movement(self.selected_unit)
+        self.npc_player_start()
+        return boardDone
 
-        line = getDiagonalLine(self.selected_unit.loc)
-        print(getDiagonalLine(self.selected_unit.loc))
-        for i in line:
-            painter.draw_building(self.convert, self.canvas,30,self.convert.convert_map_to_logical(i))
-        #painter.draw_building(self.convert, self.canvas,30,self.convert.convert_map_to_logical(topL(self.selected_unit.loc)))
-        #painter.draw_building(self.convert, self.canvas,30,self.convert.convert_map_to_logical(bottomL(self.selected_unit.loc)))
-        #painter.draw_building(self.convert, self.canvas,30,self.convert.convert_map_to_logical(bottomR(self.selected_unit.loc)))
 
+    def npc_player_start(self):
         if isinstance(self.game_controller.getCurrentPlayer(), npc):
-            time.sleep(0.1)
-            self.monitor_state()
-
+                self.monitor_state()
 
     def admin_reset_board(self, event):
         self.game_controller.clearPlayers()
@@ -138,7 +134,6 @@ class game(object):
         else:
             self.show_stepped_on_tiles = False
             self.refresh_board()
-            #self.reset(self.selected_unit.loc,type="soft")
 
     def switch_mode_inspect(self, event):
         """
@@ -181,7 +176,7 @@ class game(object):
         Cleans the board, and draws are elements in the dataframe.
         """
         def cleanup_func(obj):
-            boardmanager.board.at[obj.loc[0], obj.loc[1]] = cell((obj.loc[0], obj.loc[1]))
+            boardmanager.board.at[obj.loc[0], obj.loc[1]] = cell(loc=(obj.loc[0], obj.loc[1]))
             for player in self.players:
                 for unit in player.units:
                     if unit == obj:
@@ -225,6 +220,8 @@ class game(object):
                 painter.draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(cl.loc),colorContext.green_color)
         if debug:
             print(brd.board)
+        
+        return True
 
     def draw_all_possible_moves(self, unit, movecolor=colorContext.symbol_dot_color, attackcolor=colorContext.symbol_attack_dot_color, inspect=False):
         """
@@ -264,12 +261,13 @@ class game(object):
         """
         Allows the user to either move a unit, or select another of their units
         """
-        print("select move is called with this event:")
-        print(event)
+        if debug:
+            print("select move is called with this event:")
+            print(event)
         grid_position = [event.x, event.y]
         logical_position = self.convert.convert_grid_to_logical_position(grid_position)
         mappos = self.convert.convert_logical_to_map(logical_position)
-        print(mappos)
+
         def _select_unit_click(event):
             grid_position = [event.x, event.y]
             logical_position = self.convert.convert_grid_to_logical_position(grid_position)
@@ -400,7 +398,6 @@ class game(object):
                     structure.set_color(colorContext.symbol_building_color)
                     structure.owner = None 
                     #TODO: Make this remove the buildings from the other owner
-                    #self.game_controller.other_owner.buildings.pop(structure)
                 else:
                     self.set_impossible_action_text('{} can only capture factories.'.format(self.selected_unit.fullname))
             else:
@@ -412,14 +409,11 @@ class game(object):
         Watch the current board status and monitor if a player has lost.
         Also checks if the player is an npc, and if so, calls the its 'makedecision' function.
         """
-        current_player = self.game_controller.getCurrentPlayer()
 
-        # only force select the a unit of the other player, if the turn is over.
-        # also set the action to select and move on player change.
-        if current_player != self.game_controller.getCurrentPlayer():
-            self.mode_label['text'] = "Select and move Mode"
-            self.canvas.bind('<Button-1>', self.select_move_click)
-            self.mode_label['background'] = colorContext.green_color
+        self.mode_label['text'] = "Select and move Mode"
+        self.canvas.bind('<Button-1>', self.select_move_click)
+        self.mode_label['background'] = colorContext.green_color
+
         if self.selected_unit not in self.game_controller.getCurrentPlayer().units:
             for p, unit in enumerate(self.game_controller.getCurrentPlayer().units):
                 if unit.health > 0:
@@ -429,10 +423,11 @@ class game(object):
         make_unit_card(self, self.unit_box,self.selected_unit,row=20)
 
         # ! IF the current player is an npc, make an decision
-        print("checking if current player is an npc")
         if isinstance( self.game_controller.getCurrentPlayer(), npc):
-            print("npc deciding")
             self.game_controller.makePlayerDecision(self.selected_unit)
+            self.draw_board_and_objects(brd)
+        
+        return True
             
 
     def set_impossible_action_text(self, text):
@@ -443,30 +438,35 @@ class game(object):
 
     def refresh_board(self):
         self.canvas.delete("all")
+        self.window.update()
         self.draw_board_and_objects(brd)
+        self.canvas.update()
+        self.canvas.update_idletasks()
+
 
 
     def reset(self, mappos=None, type="hard"):
         """
         Reset the board after an action, reflecting the new state.
         """
-        done = self.game_controller.checkGameState()
-        if done:
-            self.draw_board_and_objects(brd)
-            self.display_gameover(done)
-            return
         self.set_impossible_action_text("")
         if mappos:
             self.get_event_info(mappos)
+
+        self.refresh_board()
+
         if type == "hard":
             self.monitor_state()
         if debug:
             print(brd.show())
-        self.canvas.delete("all")
-        self.draw_board_and_objects(brd)
+
         self.draw_possible_movement(self.selected_unit)
+        return True
 
     def display_gameover(self, winner: owner):
+        #self.draw_board_and_objects(brd)
+        self.canvas.delete("all")
+        self.canvas.update()
         return display_gameover_screen(self, winner)
 
     def save_game(self):
@@ -475,12 +475,9 @@ class game(object):
     def open_file(self):
         gameboard = st.load_file(askopenfilename())
         brd.set_board(gameboard)
-        pl1 = owner("player1", colorContext.symbol_tree_color)
-        pl2 = owner("player2", colorContext.symbol_water_color)
         self.gridsize = 14
         gridsize.set_gridsize(self.gridsize)
         self.convert = convert_coords(self.gridsize)
-        #self.initialise_old_game(pl1, pl2)
         self.home_frame.destroy()
 
 class modal_popup(tk.Toplevel):

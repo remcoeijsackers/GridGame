@@ -3,6 +3,8 @@ from gamemanager.players.owners import owner
 
 from gamemanager.settings import debug
 from gamemanager.players.npc import npc
+
+import time 
 class gameRound:
     """
     A singel round of gameplay
@@ -49,7 +51,8 @@ class gameRound:
 
     def __setActions(self):
         for i in self.players:
-            i.available_actions = 3
+            if len(i.units) > 0:
+                i.available_actions = 3
 
     def __getNextPlayer(self) -> owner or False:
         options = [i.__dict__ for i in self.players if i not in self.turns]
@@ -72,11 +75,11 @@ class gameController:
     def __init__(self, players: (owner), game) -> None:
         self.players = players
         self.rounds: (gameRound) = []
+        self.losers = []
         self.game = game
         self.startRound()
     
     def startRound(self) -> owner:
-        #players = [i for i in self.players if len(i.units) != 0 ]
         Ground = gameRound(len(self.rounds)+1, self.players)
         if debug:
             print("starting round {}".format(Ground.id))
@@ -87,17 +90,25 @@ class gameController:
         """
         get a decision from an npc, and carry it out
         """
+        
         if self.getCurrentPlayer() and isinstance(self.getCurrentPlayer(), npc):
             self.game.canvas.focus_set()
             npcaction = self.getCurrentPlayer().decide(unit)
+            if npcaction[1] == "winner":
+                return self.game.display_gameover(self.getCurrentPlayer())
             if npcaction[1] == "move":
                 return self.game.select_move_click(npcaction[0])
             if npcaction[1] == "attack":
                 self.game.switch_mode_melee_attack("")
                 return self.game.melee_attack_click(npcaction[0])
+            time.sleep(1)
+            self.game.canvas.update()
+
+        
             
     def playerAction(self, action):
         self.getCurrentPlayer().action()
+        return self.checkGameState()
 
     def getCurrentPlayer(self) -> owner or npc:
         player = self.rounds[-1].getCurrentPlayer()
@@ -113,11 +124,14 @@ class gameController:
     def checkGameState(self):
         for i in self.players:
             if len(i.units) == 0:
+                self.losers.append(i)
                 del i
-        if len(self.players) == 1:
-            return True
+        print("checking if somebody won")
+        if len(self.losers) == len(self.players) -1:
+            print(f"somebody won: {self.players}")
+            return [True, self.players]
         else:
-            return False
+            return [False]
 
     def switch_player(self):
         self.rounds[-1].endPlayerTurn()

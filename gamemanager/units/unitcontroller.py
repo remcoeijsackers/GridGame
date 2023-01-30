@@ -1,6 +1,6 @@
 from pandas.core.frame import DataFrame
 
-from src.util import colsandrows, colsc
+from src.util import colsandrows, colsc, getDiagonalLine, topL, topR, bottomL, bottomR, top, left, right, bottom
 
 from objectmanager.objects.grid import cell
 from objectmanager.objects.scenery import scenery, building
@@ -30,22 +30,123 @@ def count( unit, loc) -> int:
         Count how many steps an action would take.
         """
         return calculate_distance(unit, loc)
-    
-def is_above_or_below_right_or_left( unit, loc):
+
+def coord_to_action_str(unit, coord):
+    if is_above_me(unit, coord):
+        return "top"
+    if  is_below_me(unit, coord):
+        return "bottom"
+    if is_left_me(unit, coord):
+        return "left"
+    if is_right_me(unit, coord):
+        return "right"
+    if topL(unit.loc) == coord:
+        return "topleft"
+    if topR(unit.loc) == coord:
+        return "topright"
+    if bottomL(unit.loc) == coord:
+        return "bottomleft"
+    if bottomR(unit.loc) == coord:
+        return "bottomRight"
+
+def is_above_or_below_right_or_left(unit, loc, brd):
+
+        action = "move"
+
+        if count(unit, loc) == 1:
+            action = "attack"
+
+        if check_for_enemy_in_coordslist(unit, getDiagonalLine(unit.loc, ["topleft"]), brd):
+            if action == "move":
+                if is_walkable(topL(unit.loc), brd):
+                    return "topleft"
+            else:
+                return "topleft"
+
+        if check_for_enemy_in_coordslist(unit, getDiagonalLine(unit.loc, ["topright"]), brd):
+            if action == "move":
+                if is_walkable(topR(unit.loc), brd):
+                    return "topright"
+            else:
+                return "topright"
+
+        if check_for_enemy_in_coordslist(unit, getDiagonalLine(unit.loc, ["bottomleft"]), brd):
+            if action == "move":
+                if is_walkable(bottomL(unit.loc), brd):
+                    return "bottomleft"
+            else:
+                return "bottomleft"
+
+        if check_for_enemy_in_coordslist(unit, getDiagonalLine(unit.loc, ["bottomright"]), brd):
+            if action == "move":
+                if is_walkable(bottomR(unit.loc), brd):
+                    return "bottomright"
+            else:
+                return "bottomright"
+
         if  is_above_me(unit, loc):
-            return "above"
+            if action == "move":
+                if is_walkable(top(unit.loc), brd):
+                    return "top"
+            else:
+                return "top"
+
         if  is_below_me(unit, loc):
-            return "below"
+            if action == "move":
+                if is_walkable(bottom(unit.loc), brd):
+                    return "bottom"
+            else:
+                return "bottom"
+
         if is_left_me(unit, loc):
-            return "left"
+            if action == "move":
+                if is_walkable(left(unit.loc), brd):
+                    return "left"
+            else:
+                return "left"
+
         if is_right_me(unit,loc):
-            return "right"
+            if action == "move":
+                if is_walkable(right(unit.loc), brd):
+                    return "right"
+            else: 
+                return "right"
+        
+
+
+        if action == "move":
+            return coord_to_action_str(unit, get_first_walkable(unit, brd))
+
+def check_for_enemy_in_coordslist(unit, coords, brd):
+    print("checking for enemy in coordslist")
+    for i in coords:
+        print(i)
+        if isinstance(brd.inspect(i), pawn):
+            if brd.inspect(i).owner != unit.owner:
+                return True
+    return False
+
+def check_for_object_in_coordlist(coords, objectclass, brd):
+    for i in coords:
+        if isinstance(brd.inspect(i.loc), objectclass):
+            return True
+    return False
+
+def is_walkable(loc, brd) -> bool:
+    if brd.inspect(loc).walkable == True:
+        return True
+    return False
+
+def get_first_walkable(unit, brd):
+    for i in brd.get_adjacent_cells(unit.loc, 1):
+        if brd.inspect(i).walkable == True:
+            return i
 
 def is_above_me( unit, loc) -> bool:
         """
         Check if a loc is above the unit
         """
-        if loc[0] < unit.loc[0]:
+        if unit.loc[0] > loc[0]:
             return True
         else: 
             return False
@@ -54,7 +155,7 @@ def is_below_me( unit, loc) -> bool:
         """
         Check if a loc is above the unit
         """
-        if loc[0] > unit.loc[0]:
+        if unit.loc[0] < loc[0]:
             return True
         else: 
             return False

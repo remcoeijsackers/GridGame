@@ -1,5 +1,6 @@
 from gamemanager.players.owners import owner
 from computermanager.brain import NPCBrain
+from objectmanager.objects.pawn import pawn
 
 class npc(owner):
 
@@ -8,8 +9,11 @@ class npc(owner):
         self.control = "auto"
         self.brain = NPCBrain(self, conversion, boardmanager)
     
-    def decide(self, unit):
+    def decide(self, unit: pawn):
         """
         Get a decision from the npc
         """
-        return self.brain.findTargetDirection(unit, "event")
+        if unit.health >= 2:
+            return self.brain.findTargetDirection(unit, "event")
+        else:
+            return self.brain.runTo(unit, "event")
