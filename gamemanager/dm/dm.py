@@ -97,6 +97,7 @@ class gameController:
             if npcaction[1] == "winner":
                 return self.game.display_gameover(self.getCurrentPlayer())
             if npcaction[1] == "move":
+                self.game.switch_mode_selectmove("")
                 return self.game.select_move_click(npcaction[0])
             if npcaction[1] == "attack":
                 self.game.switch_mode_melee_attack("")
@@ -122,13 +123,14 @@ class gameController:
             i.clear()
     
     def checkGameState(self):
+        """
+        Check if somebody won the game.
+        """
         for i in self.players:
             if len(i.units) == 0:
                 self.losers.append(i)
                 del i
-        print("checking if somebody won")
         if len(self.losers) == len(self.players) -1:
-            print(f"somebody won: {self.players}")
             return [True, self.players]
         else:
             return [False]

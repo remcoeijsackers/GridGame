@@ -31,7 +31,7 @@ class HomeScreen:
                     ] 
                 
                 variable = tk.StringVar(new_player_frame)
-                variable.set(OPTIONS[0]) # default value
+                variable.set(OPTIONS[0])
                 
                 entry_player_control = tk.OptionMenu(new_player_frame, variable, *OPTIONS)
             
@@ -45,7 +45,6 @@ class HomeScreen:
                     if variable.get() != "auto":
                         self.players.append(owner(len(self.players)+1, pl, entry_player['background']))
                     if variable.get() == "auto":
-                        print("making a npc player")
                         self.players.append(npc(len(self.players)+1, pl, entry_player['background'], conversion, brd))
 
                 butt = tk.Button(

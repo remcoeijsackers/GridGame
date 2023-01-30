@@ -1,6 +1,6 @@
 from pandas.core.frame import DataFrame
 
-from src.util import colsandrows, colsc, getDiagonalLine, topL, topR, bottomL, bottomR, top, left, right, bottom
+from src.util import colsandrows, colsc, getCoordLine, topL, topR, bottomL, bottomR, top, left, right, bottom
 
 from objectmanager.objects.grid import cell
 from objectmanager.objects.scenery import scenery, building
@@ -12,26 +12,28 @@ from gamemanager.board import boardManager
 import math
 
 def calculate_distance( unit, loc) -> int:
-        x1 = unit.loc[0]
-        y1 = colsc().get(unit.loc[1])
-        x2 = loc[0]
-        y2 = colsc().get(loc[1])
-
-        dx = abs(x2 - x1)
-        dy = abs(y2 - y1)
-        mind = min(dx, dy)
-        maxd = max(dx, dy)
-        diagstep = mind
-        straigthstep = maxd - mind
-        return round(math.sqrt(2) * diagstep + straigthstep)
+    x1 = unit.loc[0]
+    y1 = colsc().get(unit.loc[1])
+    x2 = loc[0]
+    y2 = colsc().get(loc[1])
+    dx = abs(x2 - x1)
+    dy = abs(y2 - y1)
+    mind = min(dx, dy)
+    maxd = max(dx, dy)
+    diagstep = mind
+    straigthstep = maxd - mind
+    return round(math.sqrt(2) * diagstep + straigthstep)
 
 def count( unit, loc) -> int:
-        """
-        Count how many steps an action would take.
-        """
-        return calculate_distance(unit, loc)
+    """
+    Count how many steps an action would take.
+    """
+    return calculate_distance(unit, loc)
 
 def coord_to_action_str(unit, coord):
+    """
+    Translate a a location and a unit into a action string for movement.
+    """
     if is_above_me(unit, coord):
         return "top"
     if  is_below_me(unit, coord):
@@ -50,34 +52,38 @@ def coord_to_action_str(unit, coord):
         return "bottomRight"
 
 def is_above_or_below_right_or_left(unit, loc, brd):
+        """
+        Get whether a location is (generally) above, below, a unit
+        If the loc falls in line with the units loc, get a specific: left, right, topleft, topright, bottomleft, bottomright.
+        """
 
         action = "move"
 
         if count(unit, loc) == 1:
             action = "attack"
 
-        if check_for_enemy_in_coordslist(unit, getDiagonalLine(unit.loc, ["topleft"]), brd):
+        if check_for_enemy_in_coordslist(unit, getCoordLine(unit.loc, ["topleft"]), brd):
             if action == "move":
                 if is_walkable(topL(unit.loc), brd):
                     return "topleft"
             else:
                 return "topleft"
 
-        if check_for_enemy_in_coordslist(unit, getDiagonalLine(unit.loc, ["topright"]), brd):
+        if check_for_enemy_in_coordslist(unit, getCoordLine(unit.loc, ["topright"]), brd):
             if action == "move":
                 if is_walkable(topR(unit.loc), brd):
                     return "topright"
             else:
                 return "topright"
 
-        if check_for_enemy_in_coordslist(unit, getDiagonalLine(unit.loc, ["bottomleft"]), brd):
+        if check_for_enemy_in_coordslist(unit, getCoordLine(unit.loc, ["bottomleft"]), brd):
             if action == "move":
                 if is_walkable(bottomL(unit.loc), brd):
                     return "bottomleft"
             else:
                 return "bottomleft"
 
-        if check_for_enemy_in_coordslist(unit, getDiagonalLine(unit.loc, ["bottomright"]), brd):
+        if check_for_enemy_in_coordslist(unit, getCoordLine(unit.loc, ["bottomright"]), brd):
             if action == "move":
                 if is_walkable(bottomR(unit.loc), brd):
                     return "bottomright"

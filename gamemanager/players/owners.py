@@ -1,5 +1,6 @@
 from objectmanager.objects.scenery import building
 from objectmanager.objects.pawn import pawn
+from gamemanager.settings import debug
 
 class owner:
     """
@@ -24,11 +25,12 @@ class owner:
         """
         Start a player turn.
         """
-        print(f"starting turn {self.name}")
+        if debug:
+            print(f"starting turn {self.name}")
         
     def action(self):
         """
-        +1 the action counter for this owner
+        -1 the available action counter for this owner
         """
         self.turns += 1
         self.available_actions -= 1

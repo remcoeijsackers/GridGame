@@ -95,7 +95,7 @@ def placementHandler(dataframe, placee, placemetDetails: placement_details_conte
             placee.set_loc((r,c))
             return True
         else: 
-            #placementHandler(dataframe, placee, placemetDetails)
+            placeip(dataframe, placee)
             return False
 
     r, c = getRowAndColFromDirectionContext(placemetDetails)

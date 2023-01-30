@@ -45,8 +45,6 @@ def initialise_game_screen(parent, players, settings: settings_context ):
         parent.melee_attack_button = tk.Button(parent.ui, text="Melee Attack", foreground=colorContext.red_color)
         parent.end_turn_button = tk.Button(parent.ui, text="End Turn", command=parent.end_turn)
         parent.padding_label1 = tk.Label(parent.ui, text="")
-
-        #parent.inspect_button_sub = tk.Button(parent.ui, text="Admin Inspect")
         
         parent.unit_header_label = tk.Label(parent.ui, text="Selected Unit", background=colorContext.gray_color)
         parent.unit_box = tk.Frame(parent.ui, relief=tk.RIDGE)

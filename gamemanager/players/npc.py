@@ -3,6 +3,9 @@ from computermanager.brain import NPCBrain
 from objectmanager.objects.pawn import pawn
 
 class npc(owner):
+    """
+    A non player controllable 'owner'
+    """
 
     def __init__(self, id, name, color: str, conversion, boardmanager) -> None:
         super().__init__(id, name, color)
@@ -11,9 +14,11 @@ class npc(owner):
     
     def decide(self, unit: pawn):
         """
-        Get a decision from the npc
+        Get a decision from the npc.
         """
-        if unit.health >= 2:
+        if unit.health > 2:
             return self.brain.findTargetDirection(unit, "event")
-        else:
+        if unit.health <= 2 and len(self.units) > 1:
             return self.brain.runTo(unit, "event")
+        else:
+            return self.brain.findTargetDirection(unit, "event")

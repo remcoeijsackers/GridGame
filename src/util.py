@@ -1,8 +1,3 @@
-import random
-import os
-
-from pandas.core.frame import DataFrame
-from objectmanager.objects.grid import cell
 from gamemanager.settings.settings import gridsize
 
 symbol_thickness = 40
@@ -11,7 +6,11 @@ unit_thickness = 10
 cols = ["A","B","C","D","E","F","G","H","I","J"]
 fullcols = [i for i in "abcdefghijklmnopqrstuvwxyz".upper()]
 
-def getDiagonalLine(loc, direction=["all"]):
+def getCoordLine(loc, direction=["all"]) -> list:
+    """
+    Get a list of coordinates, in a straight line.
+    Given a starting location and a direction.
+    """
     locsBotL = [loc]
     locsBotR = [loc]
     locsTopL = [loc]
@@ -115,11 +114,12 @@ def getDiagonalLine(loc, direction=["all"]):
     for i in locsLeft:
         if i != loc and "all" in direction or "left" in direction:
             finalLocs.append(i)
-
-
     return finalLocs
 
 def top(loc):
+    """
+    get the loc above the given loc.
+    """
     if loc[0] - 1 >= 0:
         r1 = loc[0] - 1
     else:
@@ -128,6 +128,9 @@ def top(loc):
     return (r1, r2)
 
 def bottom(loc):
+    """
+    get the loc below the given loc.
+    """
     if loc[0] + 1 <= gridsize.get_gridsize():
         r1 = loc[0] + 1
     else:
@@ -136,6 +139,9 @@ def bottom(loc):
     return (r1, r2)
 
 def left(loc):
+    """
+    get the loc left from the given loc.
+    """
     r1 = loc[0]
     if colsr().get(colsc().get(loc[1]) - 1):
         r2 = colsr().get(colsc().get(loc[1]) - 1)
@@ -144,6 +150,9 @@ def left(loc):
     return (r1, r2)
 
 def right(loc):
+    """
+    get the loc right from the given loc.
+    """
     r1 = loc[0]
     if colsr().get(colsc().get(loc[1]) + 1):
         r2 = colsr().get(colsc().get(loc[1]) + 1)
@@ -152,6 +161,9 @@ def right(loc):
     return (r1, r2)
 
 def topR(loc):
+    """
+    get the loc top right from the given loc.
+    """
     if loc[0] - 1 >= 0:
         r1 = loc[0] - 1
     else:
@@ -163,6 +175,9 @@ def topR(loc):
     return (r1, r2)
 
 def topL(loc):
+    """
+    get the loc top left from the given loc.
+    """
     if loc[0] - 1 >= 0:
         r1 = loc[0] - 1
     else:
@@ -174,6 +189,9 @@ def topL(loc):
     return (r1, r2)
 
 def bottomR(loc):
+    """
+    get the loc bottom right from the given loc.
+    """
     if loc[0] + 1 <= gridsize.get_gridsize():
         r1 = loc[0] + 1
     else:
@@ -185,6 +203,9 @@ def bottomR(loc):
     return (r1, r2)
 
 def bottomL(loc):
+    """
+    get the loc bottom left from the given loc.
+    """
     if loc[0] + 1 <= gridsize.get_gridsize():
         r1 = loc[0] + 1
     else:
@@ -208,21 +229,21 @@ def colsr():
     return dict(zip(list(range(gridsize.get_gridsize())), fullcols[:gridsize.get_gridsize()])) # for mapping ints to colname
 
 def rows():
+    """
+    return all rows.
+    """
     return [i for i in range(gridsize.get_gridsize())]
 
 def colsandrows():
+    """
+    return all cols and rows.
+    """
     colsandrows_ls = []
     for col in fullcols[:gridsize.get_gridsize()]:
         cl = []
-        for i in range(gridsize.get_gridsize()):
+        for _ in range(gridsize.get_gridsize()):
             cl.append(col)
         colsandrows_ls.append(list(zip(rows(), cl)))
     return colsandrows_ls
 
-
-def clearconsole():
-    command = 'clear'
-    if os.name in ('nt', 'dos'):
-        command = 'cls'
-    os.system(command)
 

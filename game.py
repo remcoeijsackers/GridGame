@@ -43,7 +43,6 @@ class game(object):
         self.window = window
         self.window.title('GridGame')
         self.window.minsize(width=1000, height=600)
-        self.itemPlacement = "rigid"
         self.game_settings = settings_context()
         self.convert = convert_coords(self.game_settings.var_tiles, self.game_settings.var_boardsize)
         self.selected = False
@@ -61,21 +60,36 @@ class game(object):
         self.initialise_home(self.game_settings)
 
     def playerAction(self):
+        """
+        - 1 from the available actions for the current player.
+
+        Check if somebody has won the game.
+        """
+
         # if an action results in winning the game
         done = self.game_controller.playerAction("")
         if done[0]:
             return self.display_gameover(done[1][0])
 
     def initialise_home(self, settings: settings_context):
+        """
+        Setup the screen that allows for inputting players.
+        """
         return HomeScreen().initialise_home_screen(self, settings, brd, gridsize, self.convert)
 
 
     def initialise_game(self, players, settings: settings_context, game_controller: gameController):
+        """
+        Setup the screen that contains the game board and control.
+        """
         self.game_controller = game_controller
         initialise_game_screen(self, players, settings)
         return self.place_initial_board(players, settings)
         
     def place_initial_board(self, players, settings: settings_context):
+        """
+        Create the pieces based on the game settings, and place them on the board.
+        """
         create_pieces(self, players, settings, brd, placement_context('army'))
         self.selected = False
         self.selected_unit = self.game_controller.getCurrentPlayer().units[0]
@@ -129,6 +143,9 @@ class game(object):
         
 
     def show_stepped_tiles(self):
+        """
+        Show the tiles that have been walked on.
+        """
         if not self.show_stepped_on_tiles:
             self.show_stepped_on_tiles = True
             self.refresh_board()
@@ -251,6 +268,9 @@ class game(object):
             painter.draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i),col)
 
     def draw_possible_melee_attacks(self, unit, inspect=False ):
+        """
+        Draws the places where an unit can attack (melee)
+        """
         col=colorContext.symbol_attack_dot_color
         if inspect:
             col=colorContext.green_color
@@ -438,13 +458,15 @@ class game(object):
         self.action_details_label['text'] = text
 
     def refresh_board(self):
+        """
+        Delete all objects on the board, and refresh the windows.
+        Then draw them again.
+        """
         self.canvas.delete("all")
         self.window.update()
         self.draw_board_and_objects(brd)
         self.canvas.update()
         self.canvas.update_idletasks()
-
-
 
     def reset(self, mappos=None, type="hard"):
         """
@@ -465,7 +487,10 @@ class game(object):
         return True
 
     def display_gameover(self, winner: owner):
-        #self.draw_board_and_objects(brd)
+        """
+        Delete all the objects on the board,
+        Display the end game screen that shows the winner.
+        """
         self.canvas.delete("all")
         self.canvas.update()
         return display_gameover_screen(self, winner)
