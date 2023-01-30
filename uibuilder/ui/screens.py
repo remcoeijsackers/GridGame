@@ -45,9 +45,6 @@ def initialise_game_screen(parent, players, settings: settings_context ):
         parent.melee_attack_button = tk.Button(parent.ui, text="Melee Attack", foreground=colorContext.red_color)
         parent.end_turn_button = tk.Button(parent.ui, text="End Turn", command=parent.end_turn)
         parent.padding_label1 = tk.Label(parent.ui, text="")
-        parent.padding_label2 = tk.Label(parent.ui, text="")
-
-        #parent.inspect_button_sub = tk.Button(parent.ui, text="Admin Inspect")
         
         parent.unit_header_label = tk.Label(parent.ui, text="Selected Unit", background=colorContext.gray_color)
         parent.unit_box = tk.Frame(parent.ui, relief=tk.RIDGE)
@@ -70,8 +67,6 @@ def initialise_game_screen(parent, players, settings: settings_context ):
  
         parent.action_details_label.grid(column=0, row=11,sticky=tk.EW, columnspan = parent.max_ui_columns, rowspan=2)
 
-        parent.padding_label2.grid(column=0, row=13, sticky=tk.W, columnspan = 4)
-
         #parent.inspect_button_sub.grid(column=3, row=15, sticky=tk.W, columnspan=3)
         parent.unit_header_label.grid(column=0, row=19, sticky=tk.EW, columnspan = 6)
         parent.admin_header_label.grid(column=0, row=21, sticky=tk.EW, columnspan = 6)
@@ -83,9 +78,7 @@ def initialise_game_screen(parent, players, settings: settings_context ):
 
 def finalise_game_screen(parent):
         parent.ui.pack(side='right',expand=True,fill='both')
-
-
-
+        return True
 
 def display_gameover_screen(parent, winner: owner):
         """
@@ -96,6 +89,7 @@ def display_gameover_screen(parent, winner: owner):
         parent.canvas.delete("all")
         for widget in parent.ui.winfo_children():
             widget.destroy()
+
         parent.ui['background'] = colorContext.board_background
         parent.canvas.unbind('<Button-1>')
         parent.statusbar['text'] = ""
@@ -105,8 +99,8 @@ def display_gameover_screen(parent, winner: owner):
         parent.canvas.create_text(parent.game_settings.var_boardsize / 2, 5 * parent.game_settings.var_boardsize / 8, font="cmr 40 bold", fill=colorContext.green_color,
                                 text=score_text)
 
-        score_text = '{} Units Left: '.format(parent.game_controller.current_owner.name) + "{}".format(len(parent.game_controller.current_owner.units)) + '\n'
-        score_text += '{} Units Left: '.format(parent.game_controller.other_owner.name) + "{}".format(len(parent.game_controller.other_owner.units)) + '\n'
+        #score_text = '{} Units Left: '.format(parent.game_controller.current_owner.name) + "{}".format(len(parent.game_controller.current_owner.units)) + '\n'
+        #score_text += '{} Units Left: '.format(parent.game_controller.other_owner.name) + "{}".format(len(parent.game_controller.other_owner.units)) + '\n'
 
-        parent.canvas.create_text(parent.game_settings.var_boardsize / 2, 3 * parent.game_settings.var_boardsize / 4, font="cmr 30 bold", fill=colorContext.green_color,
-                                text=score_text)
+        #parent.canvas.create_text(parent.game_settings.var_boardsize / 2, 3 * parent.game_settings.var_boardsize / 4, font="cmr 30 bold", fill=colorContext.green_color,
+        #                        text=score_text)

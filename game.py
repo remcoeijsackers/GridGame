@@ -2,7 +2,6 @@
 import tkinter as tk
 from tkinter.filedialog import askopenfilename
 
-
 from objectmanager.objects.grid import broken_cell, cell
 from objectmanager.objects.scenery import building, water, tree
 
@@ -26,7 +25,10 @@ from objectmanager.placement.inital import create_pieces
 from objectmanager.objects.pawn import pawn, enemy
 
 from gamemanager.players.owners import owner
+from gamemanager.players.npc import npc
 from gamemanager.dm.dm import gameController
+
+import time 
 
 brd = boardManager()   
 st = state()
@@ -41,9 +43,9 @@ class game(object):
         self.window = window
         self.window.title('GridGame')
         self.window.minsize(width=1000, height=600)
-        self.itemPlacement = "rigid"
         self.game_settings = settings_context()
         self.convert = convert_coords(self.game_settings.var_tiles, self.game_settings.var_boardsize)
+        self.selected = False
 
         menubar = tk.Menu(self.window)
         filemenu = tk.Menu(menubar)
@@ -58,18 +60,36 @@ class game(object):
         self.initialise_home(self.game_settings)
 
     def playerAction(self):
-        self.game_controller.playerAction("")
+        """
+        - 1 from the available actions for the current player.
+
+        Check if somebody has won the game.
+        """
+
+        # if an action results in winning the game
+        done = self.game_controller.playerAction("")
+        if done[0]:
+            return self.display_gameover(done[1][0])
 
     def initialise_home(self, settings: settings_context):
+        """
+        Setup the screen that allows for inputting players.
+        """
+        return HomeScreen().initialise_home_screen(self, settings, brd, gridsize, self.convert)
 
-        return HomeScreen().initialise_home_screen(self, settings, brd, gridsize)
 
     def initialise_game(self, players, settings: settings_context, game_controller: gameController):
+        """
+        Setup the screen that contains the game board and control.
+        """
         self.game_controller = game_controller
         initialise_game_screen(self, players, settings)
         return self.place_initial_board(players, settings)
         
     def place_initial_board(self, players, settings: settings_context):
+        """
+        Create the pieces based on the game settings, and place them on the board.
+        """
         create_pieces(self, players, settings, brd, placement_context('army'))
         self.selected = False
         self.selected_unit = self.game_controller.getCurrentPlayer().units[0]
@@ -79,10 +99,17 @@ class game(object):
      
         make_admin_card(self, self.admin_box, row=22)
 
-        finalise_game_screen(self)
+        boardDone = finalise_game_screen(self)
 
         self.draw_board_and_objects(brd)
         self.draw_possible_movement(self.selected_unit)
+        self.npc_player_start()
+        return boardDone
+
+
+    def npc_player_start(self):
+        if isinstance(self.game_controller.getCurrentPlayer(), npc):
+                self.monitor_state()
 
     def admin_reset_board(self, event):
         self.game_controller.clearPlayers()
@@ -116,13 +143,15 @@ class game(object):
         
 
     def show_stepped_tiles(self):
+        """
+        Show the tiles that have been walked on.
+        """
         if not self.show_stepped_on_tiles:
             self.show_stepped_on_tiles = True
             self.refresh_board()
         else:
             self.show_stepped_on_tiles = False
             self.refresh_board()
-            #self.reset(self.selected_unit.loc,type="soft")
 
     def switch_mode_inspect(self, event):
         """
@@ -165,11 +194,11 @@ class game(object):
         Cleans the board, and draws are elements in the dataframe.
         """
         def cleanup_func(obj):
-            boardmanager.board.at[obj.loc[0], obj.loc[1]] = cell((obj.loc[0], obj.loc[1]))
-            if obj in self.players.units:
-                self.players.units.remove(obj)
-            #if obj in self.player_two.units:
-            #    self.player_two.units.remove(obj)
+            boardmanager.board.at[obj.loc[0], obj.loc[1]] = cell(loc=(obj.loc[0], obj.loc[1]))
+            for player in self.players:
+                for unit in player.units:
+                    if unit == obj:
+                        player.units.remove(obj)
 
         for i in range(self.gridsize):
             self.canvas.create_line((i + 1) * self.game_settings.var_boardsize / self.gridsize, 0, (i + 1) * self.game_settings.var_boardsize / self.gridsize, self.game_settings.var_boardsize)
@@ -205,10 +234,12 @@ class game(object):
                 painter.draw_broken_cell(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc))
 
         if self.show_stepped_on_tiles:
-            for cl in boardmanager.get_all_cells(brd.board):
+            for cl in boardmanager.get_all_used_cells(brd.board):
                 painter.draw_square(self.convert,self.canvas,self.convert.convert_map_to_logical(cl.loc),colorContext.green_color)
         if debug:
             print(brd.board)
+        
+        return True
 
     def draw_all_possible_moves(self, unit, movecolor=colorContext.symbol_dot_color, attackcolor=colorContext.symbol_attack_dot_color, inspect=False):
         """
@@ -237,6 +268,9 @@ class game(object):
             painter.draw_dot(self.convert, self.canvas,self.convert.convert_map_to_logical(i),col)
 
     def draw_possible_melee_attacks(self, unit, inspect=False ):
+        """
+        Draws the places where an unit can attack (melee)
+        """
         col=colorContext.symbol_attack_dot_color
         if inspect:
             col=colorContext.green_color
@@ -248,6 +282,9 @@ class game(object):
         """
         Allows the user to either move a unit, or select another of their units
         """
+        if debug:
+            print("select move is called with this event:")
+            print(event)
         grid_position = [event.x, event.y]
         logical_position = self.convert.convert_grid_to_logical_position(grid_position)
         mappos = self.convert.convert_logical_to_map(logical_position)
@@ -382,7 +419,6 @@ class game(object):
                     structure.set_color(colorContext.symbol_building_color)
                     structure.owner = None 
                     #TODO: Make this remove the buildings from the other owner
-                    #self.game_controller.other_owner.buildings.pop(structure)
                 else:
                     self.set_impossible_action_text('{} can only capture factories.'.format(self.selected_unit.fullname))
             else:
@@ -392,15 +428,13 @@ class game(object):
     def monitor_state(self):
         """
         Watch the current board status and monitor if a player has lost.
+        Also checks if the player is an npc, and if so, calls the its 'makedecision' function.
         """
-        current_player = self.game_controller.getCurrentPlayer()
 
-        # only force select the a unit of the other player, if the turn is over.
-        # also set the action to select and move on player change.
-        if current_player != self.game_controller.getCurrentPlayer():
-            self.mode_label['text'] = "Select and move Mode"
-            self.canvas.bind('<Button-1>', self.select_move_click)
-            self.mode_label['background'] = colorContext.green_color
+        self.mode_label['text'] = "Select and move Mode"
+        self.canvas.bind('<Button-1>', self.select_move_click)
+        self.mode_label['background'] = colorContext.green_color
+
         if self.selected_unit not in self.game_controller.getCurrentPlayer().units:
             for p, unit in enumerate(self.game_controller.getCurrentPlayer().units):
                 if unit.health > 0:
@@ -409,6 +443,14 @@ class game(object):
         make_player_card(self.player_box, self.game_controller.getCurrentPlayer(),row=2)
         make_unit_card(self, self.unit_box,self.selected_unit,row=20)
 
+        # ! IF the current player is an npc, make an decision
+        if isinstance( self.game_controller.getCurrentPlayer(), npc):
+            self.game_controller.makePlayerDecision(self.selected_unit)
+            self.draw_board_and_objects(brd)
+        
+        return True
+            
+
     def set_impossible_action_text(self, text):
         """
         Lets the user now something is not possible
@@ -416,31 +458,41 @@ class game(object):
         self.action_details_label['text'] = text
 
     def refresh_board(self):
+        """
+        Delete all objects on the board, and refresh the windows.
+        Then draw them again.
+        """
         self.canvas.delete("all")
+        self.window.update()
         self.draw_board_and_objects(brd)
-
+        self.canvas.update()
+        self.canvas.update_idletasks()
 
     def reset(self, mappos=None, type="hard"):
         """
         Reset the board after an action, reflecting the new state.
         """
-        #done = self.game_controller.check_game_state()
-        #if done:
-        #    self.draw_board_and_objects(brd)
-        #    self.display_gameover(done)
-        #    return
         self.set_impossible_action_text("")
         if mappos:
             self.get_event_info(mappos)
+
+        self.refresh_board()
+
         if type == "hard":
             self.monitor_state()
         if debug:
             print(brd.show())
-        self.canvas.delete("all")
-        self.draw_board_and_objects(brd)
+
         self.draw_possible_movement(self.selected_unit)
+        return True
 
     def display_gameover(self, winner: owner):
+        """
+        Delete all the objects on the board,
+        Display the end game screen that shows the winner.
+        """
+        self.canvas.delete("all")
+        self.canvas.update()
         return display_gameover_screen(self, winner)
 
     def save_game(self):
@@ -449,12 +501,9 @@ class game(object):
     def open_file(self):
         gameboard = st.load_file(askopenfilename())
         brd.set_board(gameboard)
-        pl1 = owner("player1", colorContext.symbol_tree_color)
-        pl2 = owner("player2", colorContext.symbol_water_color)
         self.gridsize = 14
         gridsize.set_gridsize(self.gridsize)
         self.convert = convert_coords(self.gridsize)
-        #self.initialise_old_game(pl1, pl2)
         self.home_frame.destroy()
 
 class modal_popup(tk.Toplevel):

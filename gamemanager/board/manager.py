@@ -1,6 +1,7 @@
 from pandas.core.frame import DataFrame
 
-from src.util import fullcols, colsandrows, placeip_near_wall, colsc, colsr
+from src.util import fullcols, colsandrows, colsc, colsr,\
+     topL, topR, bottomL, bottomR, top, bottom,left,right
 
 from gamemanager.settings.settings import gridsize
 
@@ -19,6 +20,8 @@ class boardManager:
         self.board = board 
 
     def inspect(self, loc):
+        if loc == None:
+            return None
         pr = colsc().get(loc[1])
         contents = self.board.iloc[int(loc[0])][int(pr)]
         return contents
@@ -72,7 +75,7 @@ class boardManager:
                 if isinstance(cl, cell):
                     cl.set_loc(coord)
                 
-    def get_all_cells(self, board: DataFrame):
+    def get_all_used_cells(self, board: DataFrame):
         """
         Return all coordinates in the board.
         """
@@ -107,6 +110,38 @@ class boardManager:
         for i in self.iter_coords():
             if __count(loc, i) <= distance:
                 yield i
+
+    def get_adjacent_enemy(self, loc, owner):
+        """
+        check if an unit is adjacent to selected unit, in a square grid (including vertical)
+        """
+
+        if  isinstance(self.inspect(top(loc)), pawn) and self.inspect(top(loc)).owner != owner:
+            return self.inspect(top(loc))
+
+        if  isinstance(self.inspect(bottom(loc)), pawn) and self.inspect(bottom(loc)).owner != owner:
+            return self.inspect(bottom(loc))
+
+        if  isinstance(self.inspect(left(loc)), pawn) and self.inspect(left(loc)).owner != owner:
+            return self.inspect(left(loc))
+
+        if  isinstance(self.inspect(right(loc)), pawn) and self.inspect(right(loc)).owner != owner:
+            return self.inspect(right(loc))
+
+        if  isinstance(self.inspect(topL(loc)), pawn) and self.inspect(topL(loc)).owner != owner:
+            return self.inspect(topL(loc))
+
+        if  isinstance(self.inspect(topR(loc)), pawn) and self.inspect(topR(loc)).owner != owner:
+            return self.inspect(topR(loc))
+
+        if  isinstance(self.inspect(bottomL(loc)), pawn) and self.inspect(bottomL(loc)).owner != owner:
+            return self.inspect(bottomL(loc))
+
+        if  isinstance(self.inspect(bottomR(loc)), pawn) and self.inspect(bottomR(loc)).owner != owner:
+            return self.inspect(bottomR(loc))
+
+
+
 
     def get_right_and_left_cells(self, coord):
         """
@@ -155,8 +190,8 @@ class boardManager:
         all_items_on_board = board.to_numpy()
         for row in all_items_on_board:
             for item in row:
-                if not isinstance(item, cell):
-                    yield item
+                #if not isinstance(item, cell):
+                yield item
 
     def get_all_pawns(self, board: DataFrame):
         """
@@ -335,16 +370,3 @@ class boardManager:
                         z = (x, i[1])
                         yield z
 
-    def placeclus(self, placee):
-        """
-        Place a cluster around an object.
-        Creates new instances of the objects class.
-        """
-        classfromobject = placee.__class__
-        name = placee.name
-        placeip_near_wall(self.board, placee)
-        for i in self.get_adjacent_cells(placee.loc, 2):
-            x = classfromobject(name)
-            if  isinstance(self.board.at[i[0], i[1]], cell) and bool(getattr(self.board.at[i[0],i[1]], 'walkable')): #hasattr(self.board.at[i[0],i[1]], 'walkable') and 
-                self.board.at[i[0], i[1]] = x
-                x.set_loc((i[0], i[1]))
