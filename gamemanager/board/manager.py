@@ -1,6 +1,6 @@
 from pandas.core.frame import DataFrame
 
-from src.util import fullcols, colsandrows, placeip_near_wall, colsc, colsr,\
+from src.util import fullcols, colsandrows, colsc, colsr,\
      topL, topR, bottomL, bottomR, top, bottom,left,right
 
 from gamemanager.settings.settings import gridsize
@@ -370,16 +370,3 @@ class boardManager:
                         z = (x, i[1])
                         yield z
 
-    def placeclus(self, placee):
-        """
-        Place a cluster around an object.
-        Creates new instances of the objects class.
-        """
-        classfromobject = placee.__class__
-        name = placee.name
-        placeip_near_wall(self.board, placee)
-        for i in self.get_adjacent_cells(placee.loc, 2):
-            x = classfromobject(name)
-            if  isinstance(self.board.at[i[0], i[1]], cell) and bool(getattr(self.board.at[i[0],i[1]], 'walkable')): #hasattr(self.board.at[i[0],i[1]], 'walkable') and 
-                self.board.at[i[0], i[1]] = x
-                x.set_loc((i[0], i[1]))

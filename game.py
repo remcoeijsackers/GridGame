@@ -46,6 +46,7 @@ class game(object):
         self.itemPlacement = "rigid"
         self.game_settings = settings_context()
         self.convert = convert_coords(self.game_settings.var_tiles, self.game_settings.var_boardsize)
+        self.selected = False
 
         menubar = tk.Menu(self.window)
         filemenu = tk.Menu(menubar)

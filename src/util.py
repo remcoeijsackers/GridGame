@@ -219,53 +219,6 @@ def colsandrows():
         colsandrows_ls.append(list(zip(rows(), cl)))
     return colsandrows_ls
 
-def placeip(dataframe, placee):
-    def cl():
-        return random.choice(fullcols[:gridsize.get_gridsize()])
-    def rc():
-        return random.choice(range(gridsize.get_gridsize()))
-    r = rc()
-    c = cl()
-    if  isinstance(dataframe.at[r, c], cell) and bool(getattr(dataframe.at[r,c], 'walkable')):
-        dataframe.at[r, c] = placee
-        placee.set_loc((r,c))
-    else: 
-        placeip(dataframe, placee)
-
-    return r, c
-
-def placeipRigid(dataframe, placee, place):
-    columns_available = fullcols[:gridsize.get_gridsize()]
-    def cl():
-        return random.choice(fullcols[:gridsize.get_gridsize()])
-    def rc():
-        if place == "top":
-            return 0
-        if place == "bottom":
-            return gridsize.get_gridsize() -1
-    r = rc()
-    c = cl()
-    if isinstance(dataframe.at[r, c], cell) and bool(getattr(dataframe.at[r,c], 'walkable')):
-        dataframe.at[r, c] = placee
-        placee.set_loc((r,c))
-    else: 
-        placeipRigid(dataframe, placee, place)
-
-def placeip_near_wall(dataframe: DataFrame, placee):
-    columns_available = fullcols[:gridsize.get_gridsize()]
-    def cl():
-        return random.choice([columns_available[0], columns_available[-1]])
-    def rc():
-        return random.choice(range(gridsize.get_gridsize()))
-    r = rc()
-    c = cl()
-    if isinstance(dataframe.at[r, c], cell):
-        dataframe.at[r, c] = placee
-        placee.set_loc((r,c))
-    else: 
-        placeip_near_wall(dataframe, placee)
-    
-    return r, c
 
 def clearconsole():
     command = 'clear'

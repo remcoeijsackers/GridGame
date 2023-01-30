@@ -112,15 +112,11 @@ def is_above_or_below_right_or_left(unit, loc, brd):
             else: 
                 return "right"
         
-
-
         if action == "move":
             return coord_to_action_str(unit, get_first_walkable(unit, brd))
 
 def check_for_enemy_in_coordslist(unit, coords, brd):
-    print("checking for enemy in coordslist")
     for i in coords:
-        print(i)
         if isinstance(brd.inspect(i), pawn):
             if brd.inspect(i).owner != unit.owner:
                 return True
