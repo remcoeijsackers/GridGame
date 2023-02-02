@@ -11,7 +11,7 @@ import datetime
 def make_admin_card(parent, parentwindow: tk.Frame, row=0):
         parentwindow.children.clear()
 
-        admin_frame = tk.Frame(parentwindow, relief=tk.RIDGE)
+        admin_frame = tk.Frame(parentwindow)
 
         admin_frame.grid(column=0, row=row +1,sticky=tk.W)
 
@@ -39,41 +39,50 @@ def make_admin_card(parent, parentwindow: tk.Frame, row=0):
 
 def make_player_card(parent: tk.Frame, player: owner, row= 0):
         parent.children.clear()
+        parent["background"] = player.color
 
-        panel = tk.Frame(parent,relief=tk.RIDGE, background=player.color)
+        panel = tk.Frame(parent, background=player.color)
 
-        panel.grid(row=row, column=0,columnspan=6)
+        panel.grid(row=row, column=0, columnspan=6, sticky=tk.EW)
 
         secrow = row + 2
-        turn_label = tk.Label(panel, text="{}".format(player.name), background=player.color)
+        turn_label = tk.Label(panel, text="{}".format(player.name), background=player.color, font=("Courier", 20))
         actions_label = tk.Label(panel, text="Actions remaining: {}".format(player.available_actions), background=player.color)
-        buildings_label = tk.Label(panel, text= "Units: {}, Buildings: {}".format(len(player.units), player.buildings), background=player.color)
+        units_label = tk.Label(panel, text= "Units: {}".format(len(player.units)), background=player.color)
+        buildings_label = tk.Label(panel, text= "Buildings: {}".format(player.buildings), background=player.color)
 
         turn_label.grid(column=0, row=secrow, columnspan=6)
-        actions_label.grid(column=0, row=secrow+1)
-        buildings_label.grid(column=0, row=secrow+2)
+        units_label.grid(column=0, row=secrow+2, columnspan=3)
+        buildings_label.grid(column=1, row=secrow+3, columnspan=3)
 
-def make_unit_event_card(parent: tk.Frame, unit: pawn, row=0):
+        actions_label.grid(column=4, row=secrow+2, columnspan=3)
+
+def make_unit_event_card(parent: tk.Frame, unit: pawn, row):
         parent.children.clear()
-        event_frame = tk.Frame(parent, relief=tk.RIDGE)
-        event_frame.grid(column=0, row=row, sticky=tk.EW, columnspan=6)
+        event_frame = tk.Frame(parent) 
+        event_frame.grid(column=0, row=row, columnspan=6, sticky=tk.EW)
         scrollbar = tk.Scrollbar(event_frame)
-        scrollbar.grid(column=0, row=row, sticky=tk.EW, columnspan=6)
+        scrollbar.grid(column=0, row=row, sticky=tk.EW)
 
-        mylist =  tk.Listbox(parent, yscrollcommand = scrollbar.set )
+        mylist =  tk.Listbox(event_frame, yscrollcommand = scrollbar.set, width=60)
         for line in unit.events:
             mylist.insert(tk.END, "{}: ".format(datetime.datetime.now().time().replace(microsecond=0, second=0)) + str(line))
 
-        mylist.grid(column=0, row=row, columnspan=6,sticky=tk.EW)
+        mylist.grid(column=0, row=row, sticky=tk.EW, columnspan=6)
 
 def make_unit_card(srcparent, parent: tk.Frame, unit: pawn, row=0):
         parent.children.clear()
-        unit_frame = tk.Frame(parent, relief=tk.RIDGE)
-        unit_frame.grid(column=2, row=row,sticky=tk.W)
-        unit_image_frame = tk.Frame(parent, relief=tk.RIDGE, background=colorContext.black_color)
+        main_unit_frame = tk.Frame(parent)
+        main_unit_frame.grid(column=0, row=row)
+
+        unit_details_frame = tk.Frame(main_unit_frame)
+        unit_details_frame.grid()
+
+        unit_frame = tk.Frame(unit_details_frame)
+        unit_frame.grid(column=2, row=row) #, sticky=tk.W
+
+        unit_image_frame = tk.Frame(unit_details_frame, relief=tk.RIDGE, background=colorContext.black_color)
         unit_image_frame.grid(column=0, row=row, columnspan=2, sticky=tk.W)
-        unit_event_Frame = tk.Frame(parent, relief=tk.RIDGE, background=colorContext.ui_background)
-        unit_event_Frame.grid(column=0, row=row+5,sticky=tk.EW)
 
         img = Image.open(unit.image)
         img = img.resize((100, 100), Image.ANTIALIAS)
@@ -82,23 +91,40 @@ def make_unit_card(srcparent, parent: tk.Frame, unit: pawn, row=0):
         panel.image = img    
         panel.grid(row=0, column=0, sticky=tk.W)
 
-        unit_name_label = tk.Label(unit_frame, text=unit.fullname)
-        unit_age_label = tk.Label(unit_frame, text="Age: {}".format(unit.age))
+        unit_name_label = tk.Label(unit_frame, text=unit.fullname[:30])
+        #unit_age_label = tk.Label(unit_frame, text="Age: {}".format(unit.age))
         unit_health_label = tk.Label(unit_frame, text="Health: {}".format(unit.health))
         unit_attack_label = tk.Label(unit_frame, text="Attack: {}".format(unit.strength))
         unit_range_label = tk.Label(unit_frame, text="Range: {}".format(unit.range))
-        unit_equipment_label = tk.Label(unit_frame, text="Equipment: \n{}".format(unit.equipment))
+
+        unit_equipment_label_header = tk.Label(unit_frame, text="Armor", background=colorContext.symbol_tree_color)
+        unit_equipment_label_head = tk.Label(unit_frame, text="Head: {}".format(unit.equipment.kit["head"]))
+        unit_equipment_label_torso = tk.Label(unit_frame, text="Body: {}".format(unit.equipment.kit["body"]))
+        unit_equipment_label_legs = tk.Label(unit_frame, text="Legs: {}".format(unit.equipment.kit["legs"]))
+
+        unit_equipment_label_weapon_header = tk.Label(unit_frame, text="Weapons",  background=colorContext.red_color)
+        unit_equipment_label_melee = tk.Label(unit_frame, text="Melee: {}".format(unit.equipment.kit["melee"]))
 
         unit_name_label.grid(column=0, row=0, sticky=tk.W)
-        unit_age_label.grid(column=1, row=0, sticky=tk.E)
         unit_health_label.grid(column=0, row=1, sticky=tk.W)
         unit_attack_label.grid(column=0, row=2, sticky=tk.W)
         unit_range_label.grid(column=0, row=3, sticky=tk.W)
-        unit_equipment_label.grid(column=1, row=1, rowspan=5, sticky=tk.W)
-        make_unit_event_card(unit_event_Frame, unit, 10)
+
+        #unit_age_label.grid(column=1, row=0, sticky=tk.E)
+        unit_equipment_label_header.grid(column=1, row=0, sticky=tk.EW)
+        unit_equipment_label_head.grid(column=1, row=1, sticky=tk.E)
+        unit_equipment_label_torso.grid(column=1, row=2, sticky=tk.E)
+        unit_equipment_label_legs.grid(column=1, row=3, sticky=tk.E )
+
+        unit_equipment_label_weapon_header.grid(column=3, row=0, sticky=tk.EW)
+        unit_equipment_label_melee.grid(column=3, row=1, sticky=tk.E)
+
+        unit_event_Frame = tk.Frame(main_unit_frame,  background=colorContext.ui_background)
+        unit_event_Frame.grid(column=0, row=10)
+        make_unit_event_card(main_unit_frame, unit, 20)
         
 def initilise_settings(parent, settings: settings_context, home_init_func):
-        settings_frame = tk.Frame(parent, padx= 100, pady=100, relief=tk.RIDGE)
+        settings_frame = tk.Frame(parent, padx= 100, pady=100)
         header_label_settings = tk.Label(settings_frame, text="Settings", font=("Courier", 44))
         seed_entry = tk.Entry(settings_frame, width=15)
         seed_entry.insert(0, '{}'.format(random.randint(0, 9438132)))
@@ -114,22 +140,22 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
         trees.set(settings.var_trees)
         factories = tk.Scale(settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of factories")
         factories.set(settings.var_factories)
-        npcs = tk.Scale(settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of NPC's")
-        npcs.set(settings.var_npcs)
+        #npcs = tk.Scale(settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of NPC's")
+        #npcs.set(settings.var_npcs)
         units1 = tk.Scale(settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p1")
         units1.set(settings.var_units)
        
         placementRandom = tk.Checkbutton(settings_frame)
         placementRigid = tk.Checkbutton(settings_frame)
         
-        min_size_needed = tiles.get() + water_clusters.get() * 5  + trees.get() + factories.get() + npcs.get() + units1.get()  + 10
+        min_size_needed = tiles.get() + water_clusters.get() * 5  + trees.get() + factories.get() +  units1.get()  + 10
 
         total_objects_label = tk.Label(settings_frame, text="total objects: {}".format(min_size_needed), width=15)
 
         def check_settings_possible():
                 watr = int(water_clusters.get())
                 total_tiles = tiles.get() * tiles.get()
-                min_size_needed = tiles.get() + watr * 5  + trees.get() + factories.get() + npcs.get() + units1.get() +  5
+                min_size_needed = tiles.get() + watr * 5  + trees.get() + factories.get() +  units1.get() +  5
                 if min_size_needed > total_tiles:
                     tiles.set(min_size_needed)
                     total_tiles_label['text'] = "total tiles: {}".format(total_tiles)
@@ -141,7 +167,7 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
             settings.var_water_clusters = water_clusters.get()
             settings.var_trees = trees.get()
             settings.var_factories = factories.get()
-            settings.var_npcs = npcs.get()
+            #settings.var_npcs = npcs.get()
             settings.var_units = units1.get()
             settings.var_boardsize = boardsize.get()
             settings_frame.destroy()
@@ -158,7 +184,7 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
         water_clusters.grid(column=1, row=6, pady=10, padx=10)
 
         factories.grid(column=0, row=7,  pady=10, padx=10)
-        npcs.grid(column=1, row=7, pady=10, padx=10)
+        #npcs.grid(column=1, row=7, pady=10, padx=10)
 
         total_tiles_label.grid(column=0, row=8,  pady=10, padx=10)
         total_objects_label.grid(column=1, row=8,  pady=10, padx=10)

@@ -10,10 +10,7 @@ class pawnEquipment:
         self.name = name
 
     def __repr__(self) -> str:
-        return """
-            {}
-             +ARM: {}  
-             +DMG: {} """.format(str(self.name), self.armor, self.damage)
+        return "{} | +ARM: {}| +DMG:{}".format(str(self.name), self.armor, self.damage)
 
 class pawnCarry:
     def __init__(self) -> None:
@@ -26,7 +23,9 @@ class pawnCarry:
         }
     
     def __repr__(self) -> str:
-        return str(self.kit)
+        return self.kit
+
+    #def getHead(self)
 
     def equip(self, item: pawnEquipment):
         self.kit[item.place] = item

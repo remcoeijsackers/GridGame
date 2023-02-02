@@ -42,7 +42,7 @@ class game(object):
     def __init__(self, window):
         self.window = window
         self.window.title('GridGame')
-        self.window.minsize(width=1000, height=600)
+        self.window.minsize(width=1400, height=1000)
         self.game_settings = settings_context()
         self.convert = convert_coords(self.game_settings.var_tiles, self.game_settings.var_boardsize)
         self.selected = False
@@ -97,12 +97,14 @@ class game(object):
         make_player_card(self.player_box, self.game_controller.getCurrentPlayer(), row=2)
         make_unit_card(self, self.unit_box, self.selected_unit, row=20)
      
-        make_admin_card(self, self.admin_box, row=22)
+        #make_admin_card(self, self.admin_box, row=22)
 
         boardDone = finalise_game_screen(self)
 
         self.draw_board_and_objects(brd)
         self.draw_possible_movement(self.selected_unit)
+        
+        # A check to have a npc start moving directly when it is the first player.
         self.npc_player_start()
         return boardDone
 
@@ -536,5 +538,5 @@ class modal_popup(tk.Toplevel):
 if __name__ == "__main__":
     root = tk.Tk()
     main = game(root)
-    root.geometry("1400x1000")
+    root.geometry("1600x1000")
     main.mainloop()

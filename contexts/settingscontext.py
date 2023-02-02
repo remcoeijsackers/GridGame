@@ -12,7 +12,7 @@ class placement_details_context:
 
 
 class settings_context:
-    def __init__(self, var_tiles=14, var_water_clusters=2, var_trees=8, var_factories=2, var_npcs=0, var_units=2, var_boardsize=800) -> None:
+    def __init__(self, var_tiles=14, var_water_clusters=2, var_trees=8, var_factories=0, var_npcs=0, var_units=2, var_boardsize=800) -> None:
         self.var_tiles= var_tiles
         self.var_water_clusters= var_water_clusters
         self.var_trees= var_trees

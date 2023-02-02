@@ -12,7 +12,8 @@ from gamemanager.dm.dm import gameController
 from gamemanager.players.owners import owner
 from gamemanager.players.npc import npc
 from uibuilder.ui.components import initilise_settings
-import time 
+import random
+from objectmanager.generator import unitgenerator
 
 class HomeScreen:
     def __init__(self) -> None:
@@ -22,7 +23,7 @@ class HomeScreen:
                 new_player_frame = tk.Frame(parent.home_frame)
 
                 entry_player = tk.Entry(new_player_frame)
-                entry_player.insert(0, 'player x')
+                entry_player.insert(0, unitgenerator.get_name())
                 entry_player['background'] = colorContext.red_color
                 
                 OPTIONS = [
@@ -42,6 +43,8 @@ class HomeScreen:
 
                 def save_player():
                     pl = entry_player.get()
+                    save_butt["foreground"] = colorContext.symbol_tree_color
+                    save_butt["text"] = "√"
                     if variable.get() != "auto":
                         self.players.append(owner(len(self.players)+1, pl, entry_player['background']))
                     if variable.get() == "auto":
@@ -49,7 +52,7 @@ class HomeScreen:
 
                 butt = tk.Button(
                     new_player_frame,
-                    text='Select Color:',
+                    text='Select Color',
                     command=change_color, 
                     background=colorContext.board_background)
                 save_butt = tk.Button(
@@ -63,24 +66,24 @@ class HomeScreen:
 
                 butt.grid(column=2, row=0)
                 save_butt.grid(column=3,row=0)
-                new_player_frame.grid()
+                new_player_frame.grid(columnspan=6)
 
     def initialise_home_screen(self, parent, settings: settings_context, brd, gridsize, conversion):
-            parent.home_frame = tk.Frame(parent.window, padx= 100, pady=100, relief=tk.RIDGE, width=1000, height=600)
+            parent.home_frame = tk.Frame(parent.window, padx= 100, pady=100, relief=tk.RIDGE, width=1200, height=600)
             header_label = tk.Label(parent.home_frame, text="GridGame", font=("Courier", 44))
-            info_label = tk.Label(parent.home_frame, text="", font=("Courier", 15))
+            info_label = tk.Label(parent.home_frame, text="", font=("Courier", 12))
 
             def addPlayer(): 
                 return self.__addOwnerInput(parent, conversion, brd)
 
-            add_player_button = tk.Button(parent.home_frame, text="add player", command=addPlayer)
+            add_player_button = tk.Button(parent.home_frame, text="add player", command=addPlayer,  width=8, height=3)
 
             def start_game():
                 
                 if len(self.players) >= 2:
                     controller = gameController(self.players, parent)
                 else:
-                    info_label['text'] = "Please add two or more players, and save them, to start the game."
+                    info_label['text'] = "Please save at least 2 players \n To start the game."
                     return
 
                 parent.gridsize = settings.var_tiles
@@ -98,14 +101,15 @@ class HomeScreen:
                 initilise_settings(parent.window, settings, parent.initialise_home)
                 parent.home_frame.destroy()
             
-            start_button = tk.Button(parent.home_frame, text="Start Game", command=start_game, background=colorContext.board_background)
-            settings_button = tk.Button(parent.home_frame, text="Settings",command=open_settings,background=colorContext.board_background)
+            start_button = tk.Button(parent.home_frame, text="Start Game", command=start_game, background=colorContext.board_background, width=20, height=5)
+            settings_button = tk.Button(parent.home_frame, text="Settings",command=open_settings,background=colorContext.board_background, width=8, height=3)
 
-            header_label.grid(column=0, row=0, columnspan=3)
-            info_label.grid(column=0, row=1)
-            start_button.grid(column=0, row=2, columnspan=3, pady=10, padx=10)
-            settings_button.grid(column=0, row=3, columnspan=3)
+            header_label.grid(column=0, row=0, columnspan=6)
+            info_label.grid(column=0, row=1,columnspan=6)
 
-            add_player_button.grid(column=5, row=3,)
+            start_button.grid(column=0, row=2, columnspan=6, pady=5, padx=5)
+            settings_button.grid(column=0, row=3, columnspan=6, pady=2, padx=2)
+
+            add_player_button.grid(column=0, row=4, columnspan=6,pady=2, padx=2)
 
             parent.home_frame.pack()

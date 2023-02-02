@@ -1,7 +1,7 @@
 import random
 from objectmanager.objects.piece import boardItem
 
-boardcolors = ['#422102','#542b05', '#4a2a0c']
+boardcolors = ['#C5AE6B','#C5AE5C', '#C5AF7C']
 
 class cell(boardItem):
     def __init__(self, name = ".", stepped_on=0, loc=None) -> None:
