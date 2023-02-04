@@ -12,7 +12,8 @@ class placement_details_context:
 
 
 class settings_context:
-    def __init__(self, var_tiles=14, var_water_clusters=2, var_trees=8, var_factories=0, var_npcs=0, var_units=2, var_boardsize=800) -> None:
+    def __init__(self, var_tiles=14, var_water_clusters=2, var_trees=8, var_factories=0, var_npcs=0,
+    var_units=2, var_boardsize=800, var_object_placement="random", var_unit_placement="random") -> None:
         self.var_tiles= var_tiles
         self.var_water_clusters= var_water_clusters
         self.var_trees= var_trees
@@ -20,3 +21,5 @@ class settings_context:
         self.var_npcs= var_npcs
         self.var_units= var_units
         self.var_boardsize= var_boardsize
+        self.var_object_placement = var_object_placement
+        self.var_unit_placement = var_unit_placement

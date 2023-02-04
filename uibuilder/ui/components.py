@@ -8,8 +8,10 @@ from contexts.settingscontext import  settings_context
 from contexts import colorContext
 import datetime
 
+from uibuilder.ui.helpers import destroyChilds
+
 def make_admin_card(parent, parentwindow: tk.Frame, row=0):
-        parentwindow.children.clear()
+        destroyChilds(parent)
 
         admin_frame = tk.Frame(parentwindow)
 
@@ -38,7 +40,7 @@ def make_admin_card(parent, parentwindow: tk.Frame, row=0):
         reset_game_button.bind('<Button-1>', parent.admin_reset_board)
 
 def make_player_card(parent: tk.Frame, player: owner, row= 0):
-        parent.children.clear()
+        destroyChilds(parent)
         parent["background"] = player.color
 
         panel = tk.Frame(parent, background=player.color)
@@ -58,7 +60,6 @@ def make_player_card(parent: tk.Frame, player: owner, row= 0):
         actions_label.grid(column=4, row=secrow+2, columnspan=3)
 
 def make_unit_event_card(parent: tk.Frame, unit: pawn, row):
-        parent.children.clear()
         event_frame = tk.Frame(parent) 
         event_frame.grid(column=0, row=row, columnspan=6, sticky=tk.EW)
         scrollbar = tk.Scrollbar(event_frame)
@@ -70,8 +71,29 @@ def make_unit_event_card(parent: tk.Frame, unit: pawn, row):
 
         mylist.grid(column=0, row=row, sticky=tk.EW, columnspan=6)
 
+def make_gameevent_card(parentwindow, parentframe):
+        #parentwindow.event_label = tk.Label(parentframe, text="Events", background=colorContext.gray_color, width=88, height=5)
+        #parentwindow.event_label.pack(side='top',anchor='e')
+
+        parentwindow.rightcontrolframeevents =tk.Frame(parentframe)
+        parentwindow.rightcontrolframeevents.pack(side='top',anchor='e', fill='x')
+
+def make_generic_event_card(parent: tk.Frame, events=None):
+        destroyChilds(parent)
+        event_frame = tk.Frame(parent) 
+        event_frame.pack(fill='x')
+        scrollbar = tk.Scrollbar(parent,orient=tk.VERTICAL) #event_frame
+        scrollbar.pack(side=tk.RIGHT,fill=tk.Y)
+
+        mylist =  tk.Listbox(parent, yscrollcommand = scrollbar.set, width=60) #event_frame
+        if events != None:
+                for line in events:
+                        mylist.insert(tk.END, "{}: ".format(datetime.datetime.now().time().replace(microsecond=0, second=0)) + str(line))
+
+        mylist.pack(fill='x')
+
 def make_unit_card(srcparent, parent: tk.Frame, unit: pawn, row=0):
-        parent.children.clear()
+        destroyChilds(parent)
         main_unit_frame = tk.Frame(parent)
         main_unit_frame.grid(column=0, row=row)
 
@@ -119,7 +141,7 @@ def make_unit_card(srcparent, parent: tk.Frame, unit: pawn, row=0):
         unit_equipment_label_weapon_header.grid(column=3, row=0, sticky=tk.EW)
         unit_equipment_label_melee.grid(column=3, row=1, sticky=tk.E)
 
-        unit_event_Frame = tk.Frame(main_unit_frame,  background=colorContext.ui_background)
+        unit_event_Frame = tk.Frame(main_unit_frame)
         unit_event_Frame.grid(column=0, row=10)
         make_unit_event_card(main_unit_frame, unit, 20)
         
@@ -128,29 +150,26 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
         header_label_settings = tk.Label(settings_frame, text="Settings", font=("Courier", 44))
         seed_entry = tk.Entry(settings_frame, width=15)
         seed_entry.insert(0, '{}'.format(random.randint(0, 9438132)))
-        seed_entry_label = tk.Label(settings_frame, text="Seed", width=15)
-        tiles = tk.Scale(settings_frame, from_=6, to=20, orient=tk.HORIZONTAL, length=300, label="tiles in the game board (value x2)")
+        #seed_entry_label = tk.Label(settings_frame, text="Seed", width=15)
+        tiles = tk.Scale(settings_frame, from_=6, to=20, orient=tk.HORIZONTAL, length=300, label="Tiles on the board (value x2)")
         tiles.set(settings.var_tiles)
-        boardsize = tk.Scale(settings_frame, from_=300, to=1200, orient=tk.HORIZONTAL, length=300, label="size of the game board (value x2)")
+        boardsize = tk.Scale(settings_frame, from_=300, to=1200, orient=tk.HORIZONTAL, length=300, label="Size of the board (value x2)")
         boardsize.set(settings.var_boardsize)
         total_tiles_label = tk.Label(settings_frame, text="total tiles: {}".format(tiles.get() * tiles.get()), width=15)
-        water_clusters = tk.Scale(settings_frame, from_=0, to=3, orient=tk.HORIZONTAL, length=150, label="count of lakes")
+        water_clusters = tk.Scale(settings_frame, from_=0, to=3, orient=tk.HORIZONTAL, length=150, label="Lakes")
         water_clusters.set(settings.var_water_clusters)
-        trees = tk.Scale(settings_frame, from_=0, to=10, orient=tk.HORIZONTAL, length=150, label="count of trees")
+        trees = tk.Scale(settings_frame, from_=0, to=10, orient=tk.HORIZONTAL, length=150, label="Trees")
         trees.set(settings.var_trees)
-        factories = tk.Scale(settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of factories")
+        factories = tk.Scale(settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="Factories")
         factories.set(settings.var_factories)
         #npcs = tk.Scale(settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of NPC's")
         #npcs.set(settings.var_npcs)
-        units1 = tk.Scale(settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units p1")
+        units1 = tk.Scale(settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units per player")
         units1.set(settings.var_units)
-       
-        placementRandom = tk.Checkbutton(settings_frame)
-        placementRigid = tk.Checkbutton(settings_frame)
-        
+               
         min_size_needed = tiles.get() + water_clusters.get() * 5  + trees.get() + factories.get() +  units1.get()  + 10
 
-        total_objects_label = tk.Label(settings_frame, text="total objects: {}".format(min_size_needed), width=15)
+        total_objects_label = tk.Label(settings_frame, text="Total objects: {}".format(min_size_needed), width=15)
 
         def check_settings_possible():
                 watr = int(water_clusters.get())
@@ -158,7 +177,7 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
                 min_size_needed = tiles.get() + watr * 5  + trees.get() + factories.get() +  units1.get() +  5
                 if min_size_needed > total_tiles:
                     tiles.set(min_size_needed)
-                    total_tiles_label['text'] = "total tiles: {}".format(total_tiles)
+                    total_tiles_label['text'] = "Total tiles: {}".format(total_tiles)
                     return min_size_needed
 
         def validate():
@@ -167,7 +186,7 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
             settings.var_water_clusters = water_clusters.get()
             settings.var_trees = trees.get()
             settings.var_factories = factories.get()
-            #settings.var_npcs = npcs.get()
+
             settings.var_units = units1.get()
             settings.var_boardsize = boardsize.get()
             settings_frame.destroy()
@@ -184,21 +203,38 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
         water_clusters.grid(column=1, row=6, pady=10, padx=10)
 
         factories.grid(column=0, row=7,  pady=10, padx=10)
-        #npcs.grid(column=1, row=7, pady=10, padx=10)
 
-        total_tiles_label.grid(column=0, row=8,  pady=10, padx=10)
-        total_objects_label.grid(column=1, row=8,  pady=10, padx=10)
+        total_tiles_label.grid(column=0, row=10,  pady=10, padx=10)
+        total_objects_label.grid(column=1, row=10,  pady=10, padx=10)
 
-        seed_entry_label.grid(column=0, row=9,  pady=10, padx=10)
-        placementRandom.grid(column=0, row=10)
-        placementRigid.grid(column=0, row=11)
-        seed_entry.grid(column=1, row=12, pady=10, padx=10)
+        object_placement_mode_label = tk.Label(settings_frame, text="Object placement mode", width=30)
+        unit_placement_mode_label = tk.Label(settings_frame, text="Unit placement mode", width=30)
+
+        OPTIONS = [
+                    "random",
+                    "rigid",
+                    ] 
+                
+        unit_placement_mode_variable = tk.StringVar(settings_frame)
+        unit_placement_mode_variable.set(OPTIONS[0])
+
+        unit_placement_mode_label.grid(column=0, row=8)
+        unit_placement_mode = tk.OptionMenu(settings_frame, unit_placement_mode_variable, *OPTIONS)
+        unit_placement_mode.grid(column=1, row=8)
+
+        object_placement_variable = tk.StringVar(settings_frame)
+        object_placement_variable.set(OPTIONS[0])
+
+        object_placement_mode_label.grid(column=0, row=9)        
+        object_placement_mode = tk.OptionMenu(settings_frame, object_placement_variable, *OPTIONS)
+        object_placement_mode.grid(column=1, row=9)
+
 
         back_home_button = tk.Button(
                 settings_frame,
                 text='back home',
                 command=validate, background=colorContext.board_background)
 
-        back_home_button.grid(column=0, row=9, columnspan=4)
+        back_home_button.grid(column=0, row=12, columnspan=4)
         
         settings_frame.pack()

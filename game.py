@@ -18,7 +18,7 @@ from contexts import colorContext
 from uibuilder.draw import painter
 
 from uibuilder.ui.screens import initialise_game_screen, display_gameover_screen, finalise_game_screen
-from uibuilder.ui.components import make_player_card, make_unit_card, make_admin_card
+from uibuilder.ui.components import make_player_card, make_unit_card, make_admin_card, make_generic_event_card, make_gameevent_card
 
 from uibuilder.ui.home import HomeScreen
 from objectmanager.placement.inital import create_pieces
@@ -46,6 +46,7 @@ class game(object):
         self.game_settings = settings_context()
         self.convert = convert_coords(self.game_settings.var_tiles, self.game_settings.var_boardsize)
         self.selected = False
+        self.gameEvents = []
 
         menubar = tk.Menu(self.window)
         filemenu = tk.Menu(menubar)
@@ -59,6 +60,15 @@ class game(object):
         self.window.config(menu=menubar)
         self.initialise_home(self.game_settings)
 
+    def addEvent(self, event):
+        self.gameEvents.insert(0, event)
+
+        # remove the event frame to overcome duplicates with pack
+        self.rightcontrolframeevents.destroy()
+        make_gameevent_card(self, self.rightcontrolframe)
+        make_generic_event_card(self.rightcontrolframeevents, self.gameEvents)
+        return self.gameEvents
+        
     def playerAction(self):
         """
         - 1 from the available actions for the current player.
@@ -97,8 +107,6 @@ class game(object):
         make_player_card(self.player_box, self.game_controller.getCurrentPlayer(), row=2)
         make_unit_card(self, self.unit_box, self.selected_unit, row=20)
      
-        #make_admin_card(self, self.admin_box, row=22)
-
         boardDone = finalise_game_screen(self)
 
         self.draw_board_and_objects(brd)
@@ -111,6 +119,7 @@ class game(object):
 
     def npc_player_start(self):
         if isinstance(self.game_controller.getCurrentPlayer(), npc):
+                self.addEvent("npc is starting")
                 self.monitor_state()
 
     def admin_reset_board(self, event):
@@ -305,22 +314,37 @@ class game(object):
 
             logical_position = self.convert.convert_grid_to_logical_position(grid_position)
             mappos = self.convert.convert_logical_to_map(logical_position)
+            errorStatus = False
+            tmpPos = self.selected_unit.loc
 
             if isinstance(brd.inspect(mappos), pawn) and brd.inspect(mappos) in self.game_controller.getCurrentPlayer().units:
-                    self.selected_unit = brd.inspect(mappos)
+                errorStatus = False
+                self.selected_unit = brd.inspect(mappos)
+                self.reset(mappos, type="soft")
+                #return
             else: 
-                self.set_impossible_action_text("can't do that")   
+                errorStatus = True
+                #self.set_impossible_action_text(f"{self.selected_unit.fullname}: can't do that")   
                     
             self.get_event_info(mappos)
             if hasattr(brd.inspect(mappos), 'walkable'):
                 action =  unitController.place(self.selected_unit, mappos, brd)
 
                 if action[1]:
+                    errorStatus = False
                     self.playerAction()
+                    self.addEvent(f"{self.selected_unit.fullname}: moved from {tmpPos} to {self.selected_unit.loc}")
                     brd.board = action[0]
                     self.reset(mappos)
                 else: 
-                    self.set_impossible_action_text("can't do that")
+                    # check if it was not a unit switch
+                    if self.selected_unit != brd.inspect(mappos):
+                        errorStatus = True
+                    else:
+                        self.set_impossible_action_text(f"{self.game_controller.getCurrentPlayer().name} - selected unit: {self.selected_unit.fullname}")
+            
+            if errorStatus:
+                self.set_impossible_action_text(f"{self.selected_unit.fullname}: can't do that")
 
             self.selected = False
             
@@ -379,9 +403,10 @@ class game(object):
             if i == mappos:
                 self.playerAction()
                 brd.board =  unitController.attack(mappos, brd.board, self.selected_unit.strength)
+                self.addEvent(f"{self.selected_unit.fullname}: attacked {brd.inspect(mappos)} for {self.selected_unit.strength} DMG ")
                 self.reset(mappos)
-            else:
-                self.set_impossible_action_text('{} has a melee range of {}'.format(self.selected_unit.fullname, self.selected_unit.melee_range))
+        else:
+            self.set_impossible_action_text('{} has a melee range of {}'.format(self.selected_unit.fullname, self.selected_unit.melee_range))
         return mappos
 
     def ranged_attack_click(self, event):
@@ -457,7 +482,8 @@ class game(object):
         """
         Lets the user now something is not possible
         """
-        self.action_details_label['text'] = text
+        ertxt = "Error: " + text
+        self.addEvent(ertxt)
 
     def refresh_board(self):
         """
@@ -474,7 +500,6 @@ class game(object):
         """
         Reset the board after an action, reflecting the new state.
         """
-        self.set_impossible_action_text("")
         if mappos:
             self.get_event_info(mappos)
 
