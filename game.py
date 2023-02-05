@@ -2,40 +2,38 @@
 import tkinter as tk
 from tkinter.filedialog import askopenfilename
 
-from objectmanager.objects.grid import broken_cell, cell
-from objectmanager.objects.scenery import building, water, tree
+from src.objectmanager.objects.grid import broken_cell, cell
+from src.objectmanager.objects.scenery import building, water, tree
+from src.objectmanager.placement.inital import create_pieces
+from src.objectmanager.objects.pawn import pawn
 
-from gamemanager.settings.settings import debug, gridsize
+from src.gamemanager.settings.settings import debug, gridsize
+from src.gamemanager.board import boardManager
+from src.gamemanager.units import unitController
+from src.gamemanager.players.owners import owner
+from src.gamemanager.players.npc import npc
+from src.gamemanager.dm.dm import gameController
 
-from conversion.conversion import convert_coords
-from gamemanager.board import boardManager
-from gamemanager.units import unitController
-from saves.state import state
+from src.conversion.conversion import convert_coords
 
-from contexts.settingscontext import settings_context, placement_context
-from contexts.uicontext import unit_modal_context, modal_context
-from contexts import colorContext
-from uibuilder.draw import painter
+from src.saves.state import state
 
-from uibuilder.ui.screens import initialise_game_screen, display_gameover_screen, finalise_game_screen
-from uibuilder.ui.components import make_player_card, make_unit_card, make_admin_card, make_generic_event_card, make_gameevent_card
+from src.contexts.settingscontext import settings_context, placement_context
+from src.contexts.uicontext import unit_modal_context, modal_context
+from src.contexts import colorContext
 
-from uibuilder.ui.home import HomeScreen
-from objectmanager.placement.inital import create_pieces
-from objectmanager.objects.pawn import pawn
-
-from gamemanager.players.owners import owner
-from gamemanager.players.npc import npc
-from gamemanager.dm.dm import gameController
+from src.uibuilder.draw import painter
+from src.uibuilder.ui.screens import initialise_game_screen, display_gameover_screen, finalise_game_screen
+from src.uibuilder.ui.components import make_player_card, make_unit_card, make_admin_card, make_generic_event_card, make_gameevent_card
+from src.uibuilder.ui.home import HomeScreen
 
 brd = boardManager()   
 st = state()
 game_settings = settings_context()
 
-
 class game(object):
     """
-    Ties the dataframe game backend to a visual frontend.
+    Ties the dataframe backend to a visual frontend.
     """
     def __init__(self, window):
         self.window = window
@@ -476,7 +474,6 @@ class game(object):
             self.draw_board_and_objects(brd)
         
         return True
-            
 
     def set_impossible_action_text(self, text):
         """

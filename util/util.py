@@ -1,4 +1,4 @@
-from gamemanager.settings.settings import gridsize
+from src.gamemanager.settings.settings import gridsize
 
 symbol_thickness = 40
 unit_thickness = 10
