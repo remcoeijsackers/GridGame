@@ -3,7 +3,7 @@ from tkinter.colorchooser import askcolor
 
 from contexts.settingscontext import settings_context
 from contexts import colorContext
-from src.conversion import convert_coords
+from conversion.conversion import convert_coords
 
 from gamemanager.board.board import grid
 from gamemanager.settings.settings import debug

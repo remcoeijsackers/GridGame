@@ -2,8 +2,8 @@ import tkinter as tk
 import numpy as np
 
 from contexts import colorContext
-from src.conversion import convert_coords
-from src.util import unit_thickness, symbol_thickness
+from conversion.conversion import convert_coords
+from util.util import unit_thickness, symbol_thickness
 
 
 

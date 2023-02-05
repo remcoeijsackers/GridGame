@@ -97,7 +97,7 @@ class pawn(boardItem):
 
     def set_loc(self, loc):
         self.loc = loc
-        self.log_event(loc)
+        self.log_event(f"moved to:  {self.loc}")
         return self.loc
 
     def set_image(self, image):
@@ -110,11 +110,6 @@ class pawn(boardItem):
         
     def take_damage(self, damage):
         self.health -= damage
+        self.log_event(f"attacked with:  {damage} DMG")
         if self.health <= 0:
             self.destroyed = True
-
-class enemy(pawn):
-    def __init__(self, name, fullname, age, image, owner) -> None:
-        super().__init__(name,fullname,age,image,owner)
-        self.owner = owner
-        self.description = "An NPC, hostile"

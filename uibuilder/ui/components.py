@@ -39,7 +39,7 @@ def make_admin_card(parent, parentwindow: tk.Frame, row=0):
 
         reset_game_button.bind('<Button-1>', parent.admin_reset_board)
 
-def make_player_card(parent: tk.Frame, player: owner, row= 0):
+def make_player_card(srcparent, parent: tk.Frame, player: owner, row= 0):
         destroyChilds(parent)
         parent["background"] = player.color
 
@@ -53,11 +53,15 @@ def make_player_card(parent: tk.Frame, player: owner, row= 0):
         units_label = tk.Label(panel, text= "Units: {}".format(len(player.units)), background=player.color)
         buildings_label = tk.Label(panel, text= "Buildings: {}".format(player.buildings), background=player.color)
 
+        srcparent.end_turn_button = tk.Button(panel, text="End Turn", command=srcparent.end_turn)
+
         turn_label.grid(column=0, row=secrow, columnspan=6)
         units_label.grid(column=0, row=secrow+2, columnspan=3)
         buildings_label.grid(column=1, row=secrow+3, columnspan=3)
 
         actions_label.grid(column=4, row=secrow+2, columnspan=3)
+        srcparent.end_turn_button.grid(column=3,  columnspan=3, row=secrow+3, sticky=tk.E)
+        srcparent.end_turn_button.bind('<Button-1>', srcparent.end_turn)
 
 def make_unit_event_card(parent: tk.Frame, unit: pawn, row):
         event_frame = tk.Frame(parent) 
@@ -72,9 +76,6 @@ def make_unit_event_card(parent: tk.Frame, unit: pawn, row):
         mylist.grid(column=0, row=row, sticky=tk.EW, columnspan=6)
 
 def make_gameevent_card(parentwindow, parentframe):
-        #parentwindow.event_label = tk.Label(parentframe, text="Events", background=colorContext.gray_color, width=88, height=5)
-        #parentwindow.event_label.pack(side='top',anchor='e')
-
         parentwindow.rightcontrolframeevents =tk.Frame(parentframe)
         parentwindow.rightcontrolframeevents.pack(side='top',anchor='e', fill='x')
 
@@ -92,13 +93,13 @@ def make_generic_event_card(parent: tk.Frame, events=None):
 
         mylist.pack(fill='x')
 
-def make_unit_card(srcparent, parent: tk.Frame, unit: pawn, row=0):
+def make_unit_card(srcparent, parent: tk.Frame, unit: pawn, row=0): #srcparent is used for modal popups
         destroyChilds(parent)
         main_unit_frame = tk.Frame(parent)
-        main_unit_frame.grid(column=0, row=row)
+        main_unit_frame.grid(column=0, row=row,sticky=tk.EW)
 
-        unit_details_frame = tk.Frame(main_unit_frame)
-        unit_details_frame.grid()
+        unit_details_frame = tk.Frame(main_unit_frame,highlightbackground=colorContext.black_color, highlightthickness=2)
+        unit_details_frame.grid(sticky=tk.EW)
 
         unit_frame = tk.Frame(unit_details_frame)
         unit_frame.grid(column=2, row=row) #, sticky=tk.W
@@ -113,8 +114,11 @@ def make_unit_card(srcparent, parent: tk.Frame, unit: pawn, row=0):
         panel.image = img    
         panel.grid(row=0, column=0, sticky=tk.W)
 
+        unit_info_label_header = tk.Label(unit_frame, text="Info",  background=colorContext.symbol_water_color)
         unit_name_label = tk.Label(unit_frame, text=unit.fullname[:30])
         #unit_age_label = tk.Label(unit_frame, text="Age: {}".format(unit.age))
+
+        unit_stats_label_header = tk.Label(unit_frame, text="Status",  background=colorContext.gray_color)
         unit_health_label = tk.Label(unit_frame, text="Health: {}".format(unit.health))
         unit_attack_label = tk.Label(unit_frame, text="Attack: {}".format(unit.strength))
         unit_range_label = tk.Label(unit_frame, text="Range: {}".format(unit.range))
@@ -127,30 +131,45 @@ def make_unit_card(srcparent, parent: tk.Frame, unit: pawn, row=0):
         unit_equipment_label_weapon_header = tk.Label(unit_frame, text="Weapons",  background=colorContext.red_color)
         unit_equipment_label_melee = tk.Label(unit_frame, text="Melee: {}".format(unit.equipment.kit["melee"]))
 
-        unit_name_label.grid(column=0, row=0, sticky=tk.W)
-        unit_health_label.grid(column=0, row=1, sticky=tk.W)
-        unit_attack_label.grid(column=0, row=2, sticky=tk.W)
-        unit_range_label.grid(column=0, row=3, sticky=tk.W)
+        unit_special_label_header = tk.Label(unit_frame, text="Options",  background=colorContext.gray_color)
+
+        unit_info_label_header.grid(column=0, row=0, sticky=tk.EW)
+        unit_name_label.grid(column=0, row=1, sticky=tk.W)
+
+        unit_stats_label_header.grid(column=1, row=0, sticky=tk.EW)
+        unit_health_label.grid(column=1, row=1, sticky=tk.W)
+        unit_attack_label.grid(column=1, row=2, sticky=tk.W)
+        unit_range_label.grid(column=1, row=3, sticky=tk.W)
 
         #unit_age_label.grid(column=1, row=0, sticky=tk.E)
-        unit_equipment_label_header.grid(column=1, row=0, sticky=tk.EW)
-        unit_equipment_label_head.grid(column=1, row=1, sticky=tk.E)
-        unit_equipment_label_torso.grid(column=1, row=2, sticky=tk.E)
-        unit_equipment_label_legs.grid(column=1, row=3, sticky=tk.E )
+        unit_equipment_label_header.grid(column=2, row=0, sticky=tk.EW)
+        unit_equipment_label_head.grid(column=2, row=1, sticky=tk.E)
+        unit_equipment_label_torso.grid(column=2, row=2, sticky=tk.E)
+        unit_equipment_label_legs.grid(column=2, row=3, sticky=tk.E )
 
         unit_equipment_label_weapon_header.grid(column=3, row=0, sticky=tk.EW)
         unit_equipment_label_melee.grid(column=3, row=1, sticky=tk.E)
 
+        unit_special_label_header.grid(column=5, row=0, sticky=tk.EW)
+
         unit_event_Frame = tk.Frame(main_unit_frame)
         unit_event_Frame.grid(column=0, row=10)
-        make_unit_event_card(main_unit_frame, unit, 20)
+
+        def makeUnitEvents():
+                make_unit_event_card(main_unit_frame, unit, 20)
+
+        show_unit_event_btn = tk.Button(
+                unit_frame,
+                text='Show Events',
+                command=makeUnitEvents, background=colorContext.board_background)
+
+        show_unit_event_btn.grid(column=5, row=1,sticky=tk.E)
+
         
 def initilise_settings(parent, settings: settings_context, home_init_func):
         settings_frame = tk.Frame(parent, padx= 100, pady=100)
         header_label_settings = tk.Label(settings_frame, text="Settings", font=("Courier", 44))
-        seed_entry = tk.Entry(settings_frame, width=15)
-        seed_entry.insert(0, '{}'.format(random.randint(0, 9438132)))
-        #seed_entry_label = tk.Label(settings_frame, text="Seed", width=15)
+
         tiles = tk.Scale(settings_frame, from_=6, to=20, orient=tk.HORIZONTAL, length=300, label="Tiles on the board (value x2)")
         tiles.set(settings.var_tiles)
         boardsize = tk.Scale(settings_frame, from_=300, to=1200, orient=tk.HORIZONTAL, length=300, label="Size of the board (value x2)")
@@ -162,8 +181,7 @@ def initilise_settings(parent, settings: settings_context, home_init_func):
         trees.set(settings.var_trees)
         factories = tk.Scale(settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="Factories")
         factories.set(settings.var_factories)
-        #npcs = tk.Scale(settings_frame, from_=0, to=5, orient=tk.HORIZONTAL, length=150, label="count of NPC's")
-        #npcs.set(settings.var_npcs)
+
         units1 = tk.Scale(settings_frame, from_=1, to=10, orient=tk.HORIZONTAL, length=300, label="Units per player")
         units1.set(settings.var_units)
                

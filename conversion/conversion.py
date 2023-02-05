@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.util import  colsr, colsc, topL, topR, bottomL, bottomR, top, bottom, left, right
+from util.util import  colsr, colsc, topL, topR, bottomL, bottomR, top, bottom, left, right
 import dataclasses 
 from gamemanager.settings import debug
 

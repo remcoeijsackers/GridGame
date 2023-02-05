@@ -7,10 +7,10 @@ from objectmanager.objects.scenery import building, water, tree
 
 from gamemanager.settings.settings import debug, gridsize
 
-from src.conversion import convert_coords
+from conversion.conversion import convert_coords
 from gamemanager.board import boardManager
 from gamemanager.units import unitController
-from src.state import state
+from saves.state import state
 
 from contexts.settingscontext import settings_context, placement_context
 from contexts.uicontext import unit_modal_context, modal_context
@@ -22,13 +22,11 @@ from uibuilder.ui.components import make_player_card, make_unit_card, make_admin
 
 from uibuilder.ui.home import HomeScreen
 from objectmanager.placement.inital import create_pieces
-from objectmanager.objects.pawn import pawn, enemy
+from objectmanager.objects.pawn import pawn
 
 from gamemanager.players.owners import owner
 from gamemanager.players.npc import npc
 from gamemanager.dm.dm import gameController
-
-import time 
 
 brd = boardManager()   
 st = state()
@@ -46,6 +44,7 @@ class game(object):
         self.game_settings = settings_context()
         self.convert = convert_coords(self.game_settings.var_tiles, self.game_settings.var_boardsize)
         self.selected = False
+        self.gameDone = False
         self.gameEvents = []
 
         menubar = tk.Menu(self.window)
@@ -79,6 +78,7 @@ class game(object):
         # if an action results in winning the game
         done = self.game_controller.playerAction("")
         if done[0]:
+            self.gameDone = True
             return self.display_gameover(done[1][0])
 
     def initialise_home(self, settings: settings_context):
@@ -104,10 +104,13 @@ class game(object):
         self.selected = False
         self.selected_unit = self.game_controller.getCurrentPlayer().units[0]
 
-        make_player_card(self.player_box, self.game_controller.getCurrentPlayer(), row=2)
+        make_player_card(self, self.player_box, self.game_controller.getCurrentPlayer(), row=2)
         make_unit_card(self, self.unit_box, self.selected_unit, row=20)
      
         boardDone = finalise_game_screen(self)
+
+        # Game over screen can be tested from here.
+        #self.display_gameover(self.game_controller.getCurrentPlayer())
 
         self.draw_board_and_objects(brd)
         self.draw_possible_movement(self.selected_unit)
@@ -147,7 +150,7 @@ class game(object):
             if unit.health > 0:
                 self.selected_unit = self.game_controller.getCurrentPlayer().units[p]
 
-        make_player_card(self.player_box, self.game_controller.getCurrentPlayer(),row=2)
+        make_player_card(self, self.player_box, self.game_controller.getCurrentPlayer(),row=2)
         make_unit_card(self, self.unit_box,self.selected_unit,row=20)
         self.refresh_board()
         self.draw_possible_movement(self.selected_unit)
@@ -204,6 +207,8 @@ class game(object):
         """
         Cleans the board, and draws are elements in the dataframe.
         """
+        if self.gameDone:
+            return
         def cleanup_func(obj):
             boardmanager.board.at[obj.loc[0], obj.loc[1]] = cell(loc=(obj.loc[0], obj.loc[1]))
             for player in self.players:
@@ -237,9 +242,6 @@ class game(object):
                 
             if isinstance(obj, building) and not obj.destroyed:
                 painter.draw_building(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), obj.color)
-                
-            if isinstance(obj, enemy) and not obj.destroyed:
-                painter.draw_unit(self.convert, self.canvas, brd, self.symbol_size, self.convert.convert_map_to_logical(obj.loc), colorContext.symbol_en_color)
                 
             if isinstance(obj, broken_cell):
                 painter.draw_broken_cell(self.convert, self.canvas, self.symbol_size, self.convert.convert_map_to_logical(obj.loc))
@@ -321,10 +323,8 @@ class game(object):
                 errorStatus = False
                 self.selected_unit = brd.inspect(mappos)
                 self.reset(mappos, type="soft")
-                #return
             else: 
                 errorStatus = True
-                #self.set_impossible_action_text(f"{self.selected_unit.fullname}: can't do that")   
                     
             self.get_event_info(mappos)
             if hasattr(brd.inspect(mappos), 'walkable'):
@@ -377,7 +377,7 @@ class game(object):
             if isinstance(structure, building) and structure.owner:
                 self.__capture_click(event, "empty")
 
-        if isinstance(un, pawn) or isinstance(un, enemy):
+        if isinstance(un, pawn):
             self.reset(mappos, type="soft")
             self.draw_all_possible_moves(un, movecolor=colorContext.green_color, attackcolor=colorContext.gray_color, inspect=True)
             self.window.withdraw()
@@ -467,7 +467,7 @@ class game(object):
                 if unit.health > 0:
                     self.selected_unit = self.game_controller.getCurrentPlayer().units[p]
 
-        make_player_card(self.player_box, self.game_controller.getCurrentPlayer(),row=2)
+        make_player_card(self, self.player_box, self.game_controller.getCurrentPlayer(),row=2)
         make_unit_card(self, self.unit_box,self.selected_unit,row=20)
 
         # ! IF the current player is an npc, make an decision
@@ -490,11 +490,12 @@ class game(object):
         Delete all objects on the board, and refresh the windows.
         Then draw them again.
         """
-        self.canvas.delete("all")
-        self.window.update()
-        self.draw_board_and_objects(brd)
-        self.canvas.update()
-        self.canvas.update_idletasks()
+        if not self.gameDone:
+            self.canvas.delete("all")
+            self.window.update()
+            self.draw_board_and_objects(brd)
+            self.canvas.update()
+            self.canvas.update_idletasks()
 
     def reset(self, mappos=None, type="hard"):
         """
@@ -503,14 +504,15 @@ class game(object):
         if mappos:
             self.get_event_info(mappos)
 
-        self.refresh_board()
+        if not self.gameDone:
+            self.refresh_board()
 
-        if type == "hard":
+        if type == "hard" and not self.gameDone:
             self.monitor_state()
         if debug:
             print(brd.show())
-
-        self.draw_possible_movement(self.selected_unit)
+        if not self.gameDone:
+            self.draw_possible_movement(self.selected_unit)
         return True
 
     def display_gameover(self, winner: owner):
@@ -518,8 +520,8 @@ class game(object):
         Delete all the objects on the board,
         Display the end game screen that shows the winner.
         """
-        self.canvas.delete("all")
-        self.canvas.update()
+        #self.canvas.delete("all")
+        #self.canvas.update()
         return display_gameover_screen(self, winner)
 
     def save_game(self):

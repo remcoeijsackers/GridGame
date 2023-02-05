@@ -4,7 +4,7 @@ from objectmanager.objects.scenery import  building, water, tree
 
 from contexts.settingscontext import settings_context, placement_context, placement_details_context
 
-from objectmanager.objects.pawn import pawn, enemy
+from objectmanager.objects.pawn import pawn
 
 from objectmanager import generator
 

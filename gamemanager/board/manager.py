@@ -1,6 +1,6 @@
 from pandas.core.frame import DataFrame
 
-from src.util import fullcols, colsandrows, colsc, colsr,\
+from util import fullcols, colsandrows, colsc, colsr,\
      topL, topR, bottomL, bottomR, top, bottom,left,right
 
 from gamemanager.settings.settings import gridsize

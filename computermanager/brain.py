@@ -1,4 +1,4 @@
-from src.conversion import convert_coords
+from conversion.conversion import convert_coords
 from gamemanager.board import boardManager
 from gamemanager.units import unitController
 from gamemanager.players.owners import owner

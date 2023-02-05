@@ -1,6 +1,6 @@
 from pandas.core.frame import DataFrame
 
-from src.util import colsandrows, colsc, getCoordLine, topL, topR, bottomL, bottomR, top, left, right, bottom
+from util.util import colsandrows, colsc, getCoordLine, topL, topR, bottomL, bottomR, top, left, right, bottom
 
 from objectmanager.objects.grid import cell
 from objectmanager.objects.scenery import scenery, building
