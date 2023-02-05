@@ -1,1 +1,0 @@
-from uibuilder.draw.painter import *

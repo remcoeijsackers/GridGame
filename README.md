@@ -13,7 +13,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-![Game Screenshot](assets/gridgame.png?raw=true "GridGame")
+![Game Screenshot](assets/gameplay.jpg?raw=true "GridGame")
 <p align="center"> 
 <img src="assets/home.png?raw=true" width="200px">
 <img src="assets/settings.png?raw=true" width="200px">
@@ -29,7 +29,7 @@ Tkinter is used to provide a visual frontend.
 </p>
 
 ## Player vs Player, NPC vs Player, NPC vs NPC
-Watch the computer play itself and tweak its logic.
+Watch the computer play itself or tweak its logic.
 
 ![npc movement](assets/gridgame.gif?raw=true "NPC's")
 
